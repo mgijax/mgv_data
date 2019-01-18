@@ -26,6 +26,14 @@ def getOpts () :
     action='append',
     default=[],
     help='Name of the genome(s) to dump. Repeatable. (default=dump all available genomes)')
+  parser.add_argument('-d', '--output-dir',
+    dest='outputDir', 
+    default='./output',
+    help='Output directory. Writes the gff3 file to this directory. Specify "-" to write to standard out. (default=%(default)s)')
+  parser.add_argument('-t', '--timestamp',
+    dest='timestamp', 
+    default=TIMESTAMP,
+    help='Timestamp to add to the file output file header. (default=current time).')
   parser.add_argument('--sample', dest='sample', 
     default=False,
     action='store_true',
@@ -49,10 +57,25 @@ def doMouseMineQuery(wsurl, q):
 class GenomeDumper :
     def __init__ (self, opts) :
         self.gname = opts.gname
+        self.outputDir = opts.outputDir
         self.url = opts.url
         self.sample = opts.sample
         self.lFd = sys.stderr
         self.ofd = sys.stdout
+        self.timestamp = opts.timestamp
+
+    def ensureDir(self, d):
+        if not os.path.exists(d):
+          os.makedirs(d)
+
+    def open (self):
+        if self.outputDir == '-':
+          self.ofn = '<STDOUT>'
+          self.ofd = sys.stdout
+        else:
+          self.ofn = os.path.join(self.outputDir, self.gname.replace('/','').lower() + '.gff3')
+          self.ensureDir(self.outputDir)
+          self.ofd = open(self.ofn, 'w')
 
     def log(self, s, NL='\n'):
         self.lFd.write(s)
@@ -253,8 +276,12 @@ class GenomeDumper :
         # end for g
 
     def writeHeader(self):
+        self.open()
         self.ofd.write(gff3lite.GFF3HEADER)
-        self.ofd.write('# %s \n' % json.dumps(self.genomeInfo))
+        self.ofd.write('##genome-name %s\n' % self.genomeInfo['name'])
+        self.ofd.write('##date %s\n' % self.timestamp)
+        for c in self.genomeInfo['chromosomes']:
+          self.ofd.write('##sequence-region %s 1 %d\n' % (c['name'], c['length']))
 
     def main (self):
         self.getGenomeInfo()

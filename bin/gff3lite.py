@@ -20,7 +20,9 @@ import sys
 import types
 import urllib
 import json
+import re
 
+GFF3HEADER = '##gff-version 3\n'
 TAB = '\t'
 NL = '\n'
 SEMI = ';'
@@ -53,6 +55,7 @@ class Gff3Parser :
     self.open()
     header = []
     group = []
+    currSeqid = None
     for line in self.sfd:
       # Comment line
       if line.startswith(HASH):
@@ -67,14 +70,18 @@ class Gff3Parser :
       if header != None and self.returnHeader:
         # User wants header and this is the first feature. 
         # Yield the header then remember that we did so.
-        yield ''.join(header)
+        yield parsePragmas(header)
         header = None
       #
       record = map(lambda a: self.convertDots if a == '.' else a, parseLine(line))
       if self.returnGroups:
+        if record[0] != currSeqid:
+          if group: yield group
+          group = []
         group.append(record)
       else:
         yield record
+      currSeqid = record[0]
     # end for loop
     if self.returnGroups and group:
       yield group
@@ -106,8 +113,10 @@ def formatColumn9(c9):
     nn = urllib.quote(n)
     if type(v) is types.StringType:
       vv = urllib.quote(v)
-    else:
+    elif type(v) is types.ListType:
       vv = COMMA.join(map(urllib.quote, v))
+    else:
+      vv = urllib.quote(str(vv))
     parts.append("%s=%s" % (nn, vv))
   return SEMI.join(parts)
     
@@ -124,6 +133,23 @@ def parseLine (line) :
   return flds
 
 #
+PRAGMA_RE = re.compile(r'##([-\w]+) (.*)')
+def parsePragmas(lines):
+  ps = {}
+  for l in lines:
+    m = PRAGMA_RE.match(l)
+    if m:
+      n = m.group(1)
+      v = m.group(2)
+      if n in ps:
+        if type(ps[n]) is types.StringType:
+          ps[n] = [ps[n], v]
+        else:
+          ps[n].append(v)
+      else:
+        ps[n] = v
+  return ps
+#
 #
 def formatLine (row):
   r = row[:]
@@ -131,5 +157,5 @@ def formatLine (row):
   return TAB.join(map(str, r)) + NL
 
 if __name__ == "__main__":
-  for r in Gff3Parser(sys.stdin,returnGroups=True).iterate():
-    print json.dumps(r)
+  for r in Gff3Parser(sys.stdin,returnGroups=True, returnHeader=True).iterate():
+    print r
