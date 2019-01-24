@@ -63,6 +63,7 @@ class GenomeDumper :
         self.lFd = sys.stderr
         self.ofd = sys.stdout
         self.timestamp = opts.timestamp
+        self.taxonid = opts.taxonid
 
     def ensureDir(self, d):
         if not os.path.exists(d):
@@ -231,6 +232,7 @@ class GenomeDumper :
             chrs = chrs[0:2]
         self.genomeInfo = {
           "name" : self.gname,
+          "taxonid" : self.taxonid,
           "chromosomes" : chrs,
           "timestamp" : TIMESTAMP
         }
@@ -279,6 +281,7 @@ class GenomeDumper :
         self.open()
         self.ofd.write(gff3lite.GFF3HEADER)
         self.ofd.write('##genome-name %s\n' % self.genomeInfo['name'])
+        self.ofd.write('##taxonid %s\n' % self.genomeInfo['taxonid'])
         self.ofd.write('##date %s\n' % self.timestamp)
         for c in self.genomeInfo['chromosomes']:
           self.ofd.write('##sequence-region %s 1 %d\n' % (c['name'], c['length']))
@@ -290,25 +293,30 @@ class GenomeDumper :
           self.doChromosome(c)
 
 def getAvailableGenomes (url) :
+    # returns strain name, taxonid pairs
     q='''
-    <query model="genomic" view="Strain.name" sortOrder="Strain.name asc">
+    <query model="genomic" view="Strain.name Strain.organism.taxonId" sortOrder="Strain.name asc">
       <constraint path="Strain" op="IN" value="Annotated strains"/>
       </query>
     '''
-    return [ r[0] for r in doMouseMineQuery(url, q)]
+    return doMouseMineQuery(url, q)
 
 if __name__ == "__main__":
     opts = getOpts()
     allGenomes = getAvailableGenomes(opts.url)
     if len(opts.genomes) == 0:
-        opts.genomes = allGenomes[:]
+        genomes = allGenomes[:]
         if opts.sample:
-            opts.genomes = opts.genomes[0:2]
+            genomes = opts.genomes[0:2]
     else:
+        genomes = []
         for gn in opts.genomes:
-            if not gn in allGenomes:
+            gngs = filter(lambda g: gn == g[0], allGenomes)
+            if len(gngs) == 0:
                 raise RuntimeError('Genome %s not found.' % gn)
-    for gn in opts.genomes:
-        opts.gname = gn
+            genomes += gngs
+    for g in genomes:
+        opts.gname = g[0]
+        opts.taxonid = g[1]
         GenomeDumper(opts).main()
 

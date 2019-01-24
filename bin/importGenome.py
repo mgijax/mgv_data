@@ -5,6 +5,14 @@
 # usage:
 #    python importGff3.py < MyGenomeAnnotations.gff3
 #
+# Chunking:
+#    For efficiency, output can be chunked at specified granularities.
+#       chunkSize   meaning
+#       0           No chunking. Everything in one file. The file's name is the track name.
+#                   It is located in the root directory for the genome.
+#       1           Chunk by chromosome. Track name = subdirectory in genome root dir.
+#                   Then one subdir per chromosome below this.One file per chromosome.
+#       > 1         Chunk size. As above, but output per chromosome is chunked by this size block factor.
  
 import types
 import os
@@ -36,7 +44,6 @@ class Gff3Importer:
     self.outputFiles = {}
     self.currFileName = None
     self.currFile = None
-    self.fileNameTemplate = '%04d'
     # top-level file name and file handle
     self.tlFileName = None
     self.tlFile = None
@@ -55,6 +62,7 @@ class Gff3Importer:
   def processHeader (self) :
 
     self.pragmas = self.datastream.next()
+    self.genomeInfo['taxonid'] = self.getOpt('taxonid')
     self.genomeInfo['name'] = self.getOpt('genome')
     self.genomeInfo['timestamp'] = self.getOpt('timestamp')
     #
@@ -80,20 +88,40 @@ class Gff3Importer:
       self.genomeInfo['chromosomes'] = chrs
     #
     self.genomeInfo['tracks'] = [{
-      'name': self.getOpt('track'),
-      'chunkSize': self.opts.chunkSize
+      'name': 'genes',
+      'reader' : {
+        'type' : 'ChunkedGff3FileReader',
+        'chunkSize' : 0
+      }
+    }, {
+      'name': 'transcripts',
+      'reader' : {
+        'type' : 'ChunkedGff3FileReader',
+        'chunkSize': self.opts.chunkSize
+      }
+    }, {
+      'name': 'sequences',
+      'reader' : {
+        'type' : 'MouseMineSequenceReader'
+      }
     }]
-    self.outputDir = os.path.join(self.opts.outputDir, self.genomeInfo['name'].lower().replace('/',''))
+    self.outputDir = os.path.join(self.opts.outputDir, self.sanitizeName(self.genomeInfo['name']))
     
   def log(self, s):
     sys.stderr.write(s)
+
+  def sanitizeName (self, n):
+    return n.replace('/','').lower()
 
   def ensureDirectory (self, d):
     if not os.path.exists(d):
       os.makedirs(d)
 
-  def getFileName(self, chr, blk):
-    return os.path.join(self.outputDir, self.getOpt('track'), chr, self.fileNameTemplate % blk)
+  def getFileName(self, track, chr, blk):
+    if chr:
+      return os.path.join(self.outputDir, track, chr, str(blk))
+    else:
+      return os.path.join(self.outputDir, track, str(blk))
 
   def getFileHandle(self, fname):
     if fname == self.currFileName:
@@ -118,33 +146,40 @@ class Gff3Importer:
   def formatFeature(self, f):
     return formatLine(f)
 
-  def writeGrpToBlk(self, grp, chr, blk):
-    fname = self.getFileName(chr, blk)
+  def writeGrpToBlk(self, grp, track, chr, blk):
+    fname = self.getFileName(track, chr, blk)
     fd = self.getFileHandle(fname)
     for f in grp:
       if 'exons' in f[8]:
         fd.write(self.formatFeature(f))
         self.outputFiles[fname] += 1
 
-  def writeGrp (self, grp) :
-    startBlk = 0 if not self.opts.chunkSize else min(map(lambda f: f[3], grp)) / self.opts.chunkSize
-    endBlk = 0 if not self.opts.chunkSize else max(map(lambda f: f[4], grp)) / self.opts.chunkSize
+  def writeGrp (self, track, grp) :
     chr = grp[0][0]
-    # if endBlk > startBlk:
-    #   self.log('%d .. %d: %s\n' % (startBlk, endBlk, str(grp[0])))
-    for blk in range(startBlk, endBlk+1):
-      self.writeGrpToBlk(grp, chr, blk)
+    if self.opts.chunkSize == 0 :
+      self.writeGrpToBlk(grp, track, None, 0)
+    elif self.opts.chunkSize == 1:
+      self.writeGrpToBlk(grp, track, chr, 0)
+    else:
+      gStart = min(map(lambda f: f[3], grp))
+      gEnd = max(map(lambda f: f[4], grp))
+      startBlk = gStart / self.opts.chunkSize
+      endBlk = gEnd / self.opts.chunkSize
+      for blk in range(startBlk, endBlk+1):
+        self.writeGrpToBlk(grp, track, chr, blk)
 
-  def writeTopLevelFeatures(self, lst):
-    for f in lst:
-      self.tlFile.write(self.formatFeature(f))
+  def writeGene(self, f):
+    self.tlFile.write(self.formatFeature(f))
 
   # Processes a gene model group. For top level features, adds a tCount attribute that contains the
   # number of transcripts for that gene. For transcripts, adds an exons attribute whose value is a list 
   # of exon coordinates. Each exon is encoded as 'offset_length', where offset is equal to
   # exon.start - transcript.start, and length is equal to exon.end - exon.start + 1.
   # Also keeps track of all chromosomes seen in the file and the max coordinate seen on each.
+  # Writes genes to genes track and transcripts to transcripts track.
   def processGrp(self, grp):
+    # Build index from ID to the features that have a Parent attribute with that ID.
+    # Keep track of the chromosome in the file, their order, and the max coordinate of features on each.
     pid2kids = {}
     for f in grp:
       seqid = f[0]
@@ -156,39 +191,42 @@ class Gff3Importer:
       c['length'] = max(c['length'], f[4])
       for pid in f[8].get('Parent',[]):
         pid2kids.setdefault(pid, []).append(f)
-    toplevel = []
+    # For genes, count transcripts and store in tCount attribute.
+    # For transcripts, encode exon coordinates and store in exons attribute
+    transcripts = []
     for f in grp:
       fid = f[8]['ID']
       if 'Parent' not in f[8]:
         # top level feature
         f[8]['tCount'] = len(pid2kids.get(fid,[]))
-        toplevel.append(f)
+        self.writeGene(f)
       elif fid in pid2kids:
         # mid level feature
-        exons = pid2kids[f[8]['ID']]
+        exons = pid2kids[fid]
+        exons.sort(key=lambda e: e[3])
         eexons = f[8].setdefault('exons',[])
         for e in exons:
           offset = e[3] - f[3]
-          length = e[4] - f[3] + 1
+          length = e[4] - e[3] + 1
           eexons.append('%d_%d' % (offset,length))
+        transcripts.append(f)
       else:
         # leaf level feature
         pass
-    return toplevel
+    self.writeGrp('transcripts', transcripts)
 
   def writeGenomeInfo(self):
     fd = open(os.path.join(self.outputDir, 'index.json'), 'w')
-    fd.write(json.dumps(self.genomeInfo))
+    fd.write(json.dumps(self.genomeInfo, indent=2))
     fd.close()
 
   def main (self) :
     self.ensureDirectory(self.outputDir)
-    self.tlFileName = os.path.join(self.outputDir, 'features.gff3')
+    self.ensureDirectory(os.path.join(self.outputDir, 'genes'))
+    self.tlFileName = os.path.join(self.outputDir, 'genes', '0')
     self.tlFile = open(self.tlFileName, 'w')
     for i,grp in enumerate(self.datastream):
       toplevel = self.processGrp(grp)
-      self.writeTopLevelFeatures(toplevel)
-      self.writeGrp(grp)
       if self.opts.sample and i > 1000:
          break
     #
@@ -204,11 +242,11 @@ def getArgs () :
     default='##genome-name',
     dest='genome',
     help='Name of the genome. Required. Either specify the name directly (eg, "C57BL/6J") or provide the name of a pragma in the GFF3 header (eg "##genome-name")')
-  parser.add_argument('-t','--trackName',
-    metavar='NAME',
-    default='models',
-    dest='track',
-    help='Name of the track.')
+  parser.add_argument('-x','--taxonid',
+    metavar='TAXONID',
+    default='##taxonid',
+    dest='taxonid',
+    help='NCBI taxon identifier.')
   parser.add_argument('-T','--timestamp',
     metavar='TIME',
     dest='timestamp',
@@ -227,8 +265,8 @@ def getArgs () :
     type=int,
     metavar='K',
     dest='chunkSize',
-    default=0,
-    help='Chunk size. Set to 0 for no chunking (the default).')
+    default=1,
+    help='Transcript file chunk size. 0 = everything in one file (no chunking); 1 = one chunk per chromosome; >1 = chunk by chromosome and by start position / chunkSize.')
   parser.add_argument('--sample',
     action='store_true',
     dest='sample',

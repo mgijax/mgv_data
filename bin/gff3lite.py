@@ -116,7 +116,7 @@ def formatColumn9(c9):
     elif type(v) is types.ListType:
       vv = COMMA.join(map(urllib.quote, v))
     else:
-      vv = urllib.quote(str(vv))
+      vv = urllib.quote(str(v))
     parts.append("%s=%s" % (nn, vv))
   return SEMI.join(parts)
     
