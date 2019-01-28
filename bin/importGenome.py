@@ -102,7 +102,8 @@ class Gff3Importer:
     }, {
       'name': 'sequences',
       'reader' : {
-        'type' : 'MouseMineSequenceReader'
+        'type' : 'MouseMineSequenceReader',
+        'url' : 'http://www.mousemine.org/mousemine/service'
       }
     }]
     self.outputDir = os.path.join(self.opts.outputDir, self.sanitizeName(self.genomeInfo['name']))
@@ -155,6 +156,7 @@ class Gff3Importer:
         self.outputFiles[fname] += 1
 
   def writeGrp (self, track, grp) :
+    if len(grp) == 0: return
     chr = grp[0][0]
     if self.opts.chunkSize == 0 :
       self.writeGrpToBlk(grp, track, None, 0)

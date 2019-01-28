@@ -305,7 +305,7 @@ if __name__ == "__main__":
     opts = getOpts()
     allGenomes = getAvailableGenomes(opts.url)
     if len(opts.genomes) == 0:
-        genomes = allGenomes[:]
+        genomes = list(allGenomes)
         if opts.sample:
             genomes = opts.genomes[0:2]
     else:
