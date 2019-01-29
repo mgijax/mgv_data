@@ -86,7 +86,7 @@ class GenomeDumper :
         return s.lower().replace('/','')
 
     def convertStrand (self, s) :
-        return '+' if s == 1 else '-'
+        return '+' if s == '1' else '-'
 
     # Returns iterator over chromosomes for the given genome
     # Args:
