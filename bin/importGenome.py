@@ -197,7 +197,7 @@ class Gff3Importer:
     # For transcripts, encode exon coordinates and store in exons attribute
     transcripts = []
     for f in grp:
-      fid = f[8]['ID']
+      fid = f[8].get('ID', None)
       if 'Parent' not in f[8]:
         # top level feature
         f[8]['tCount'] = len(pid2kids.get(fid,[]))
