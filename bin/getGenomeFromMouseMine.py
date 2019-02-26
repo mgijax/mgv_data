@@ -186,9 +186,60 @@ class GenomeDumper :
               '.',
               { 'ID': r[1],
                 'Parent': r[0],
-                'exons' : []
+                'exons' : [],
+                'cds' : []
               }
           ]
+
+    def getCdss (self, c):
+      q = '''<query
+        model="genomic"
+        view="
+          CDS.gene.primaryIdentifier
+          CDS.transcript.primaryIdentifier
+          CDS.primaryIdentifier
+          CDS.locations.start
+          CDS.locations.end
+          CDS.locations.strand
+        "
+        sortOrder="CDS.transcript.primaryIdentifier asc CDS.primaryIdentifier asc CDS.locations.start asc"
+        >
+        <constraint path="CDS.strain.name" op="=" value="%s"/>
+        <constraint path="CDS.chromosome.primaryIdentifier" op="=" value="%s"/>
+        </query>''' % (self.gname, c)
+      for cid, citer in itertools.groupby(doMouseMineQuery(self.url, q), lambda x: x[2]):
+          cdsparts = list(citer)
+          strand = self.convertStrand(cdsparts[0][5])
+          if strand == "-":
+            cdsparts.reverse()
+          totLength = 0
+          for r in cdsparts:
+            gid,tid,x,start,end,y = r
+            start = int(start)
+            end = int(end)
+            length = end - start + 1
+            phase = totLength % 3
+            if phase:
+              phase = 3 - phase
+            totLength += length
+            r.append(phase)
+          if strand == "-":
+            cdsparts.reverse()
+          for r in cdsparts:  
+            yield [
+                c,
+                'MGI',
+                'CDS',
+                r[3],
+                r[4],
+                '.',
+                self.convertStrand(r[5]),
+                r[6],
+                { 'ID': r[2],
+                  'Parent': r[1],
+                  'gene_id' : r[0]
+                }
+            ]
 
     def getExons (self, c):
       q = '''<query
@@ -254,6 +305,14 @@ class GenomeDumper :
           gts = gid2g[gid][8]['transcripts']
           gts[tid] = t
         self.log('%d transcripts ...' % (it+1), '')
+        for (ic,cds) in enumerate(self.getCdss(c['name'])):
+          attrs = cds[8]
+          cid = attrs['ID']
+          tid = attrs['Parent']
+          gid = attrs['gene_id']
+          ts = gid2g[gid][8]['transcripts']
+          ts[tid][8]['cds'].append(cds)
+        self.log('%d CDSs' % (ic+1), '')
         for ie, e in enumerate(self.getExons(c['name'])):
           attrs = e[8]
           eid = attrs['ID']
@@ -261,8 +320,9 @@ class GenomeDumper :
           gid = attrs['gene_id']
           ts = gid2g[gid][8]['transcripts']
           ts[tid][8]['exons'].append(e)
-        self.log('%d exons' % (ie+1))
+        self.log('%d exons ...' % (ie+1), '')
         # Output
+        self.log('')
         genes = gid2g.values()
         genes.sort(lambda a,b: a[3] - b[3])
         for g in genes:
@@ -270,9 +330,12 @@ class GenomeDumper :
           self.ofd.write(gff3lite.formatLine(g))
           for t in transcripts:
             exons = t[8].pop('exons')
+            cds = t[8].pop('cds')
             self.ofd.write(gff3lite.formatLine(t))
             for e in exons:
               self.ofd.write(gff3lite.formatLine(e))
+            for cc in cds:
+              self.ofd.write(gff3lite.formatLine(cc))
           # end for t
           self.ofd.write('###\n')
         # end for g

@@ -57,6 +57,7 @@ def getMgiEnsembl () :
     <constraint path="Gene.organism.taxonId" code="A" op="=" value="10090"/>
     <constraint path="Gene.homologues.homologue.organism.taxonId" code="B" op="=" value="9606"/>
     <constraint path="Gene.primaryIdentifier" code="C" op="CONTAINS" value="MGI:"/>
+    <constraint path="Gene.homologues.type" code="D" op="==" value="least diverged orthologue"/>
   </query>
   '''
   return doIndexQuery(HUMANMINE, q)
@@ -81,6 +82,7 @@ def getMgiRgd () :
     view="Gene.primaryIdentifier Gene.homologues.homologue.primaryIdentifier">
     <constraint path="Gene.organism.taxonId" code="A" op="=" value="10090"/>
     <constraint path="Gene.homologues.homologue.organism.taxonId" code="B" op="=" value="10116"/>
+    <constraint path="Gene.homologues.type" code="C" op="==" value="least diverged orthologue"/>
   </query>
   '''
   return doIndexQuery(MOUSEMINE, q, mapper=lambda r: [r[0], r[1].replace('RGD:','')])

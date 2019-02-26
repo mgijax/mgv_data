@@ -1,5 +1,15 @@
 #!/bin/bash
 #
+# Build script for preparing data files for MGV.
+#
+# Example of a full build:
+# bash build.sh \
+#   -H ftp://ftp.ensembl.org/pub/release-95/gff3/homo_sapiens/Homo_sapiens.GRCh38.95.chr.gff3.gz\
+#   -R ftp://ftp.ensembl.org/pub/release-95/gff3/rattus_norvegicus/Rattus_norvegicus.Rnor_6.0.95.chr.gff3.gz \
+#   -M http://www.mousemine.org/mousemine/service \
+#   -o ./output \
+#   -d ./downloads
+#
 set -o pipefail
 #
 # ---------------------
@@ -43,7 +53,7 @@ function doMouse {
 
   # Import genomes - chunk the files.
   for  i in $( ls ${downloadsdir} ); do
-    python importGenome.py -d ${outputdir} -k ${chunksize} < ${downloadsdir}/$i
+    python importGenome.py -d ${outputdir} -k ${chunksize} -c "##sequence-region" < ${downloadsdir}/$i
     checkExit "Import genome $i"
   done
 }
@@ -51,14 +61,14 @@ function doMouse {
 # ---------------------
 function doHuman {
   logit "Human url=${humanurl}"
-  curl ${humanurl} | gunzip | python prepEnsembl.py -g human | python importGenome.py -x 9606 -g "H.sapiens" -k ${chunksize} -d ${outputdir}
+  curl ${humanurl} | gunzip | python prepEnsembl.py -g human | python importGenome.py -c "##sequence-region" -x 9606 -g "H.sapiens" -k ${chunksize} -d ${outputdir}
   checkExit
 }
 
 # ---------------------
 function doRat {
   logit "Rat url=${raturl}"
-  curl ${raturl} | gunzip | python prepEnsembl.py -g rat | python importGenome.py -x 10116 -g "R.norvegicus" -k ${chunksize} -d ${outputdir}
+  curl ${raturl} | gunzip | python prepEnsembl.py -g rat | python importGenome.py -c "##sequence-region" -x 10116 -g "R.norvegicus" -k ${chunksize} -d ${outputdir}
   checkExit
 }
 # ---------------------

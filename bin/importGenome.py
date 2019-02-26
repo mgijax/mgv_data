@@ -204,13 +204,22 @@ class Gff3Importer:
         self.writeGene(f)
       elif fid in pid2kids:
         # mid level feature
-        exons = pid2kids[fid]
+        exons = filter(lambda x: x[2] == 'exon', pid2kids[fid])
         exons.sort(key=lambda e: e[3])
         eexons = f[8].setdefault('exons',[])
         for e in exons:
           offset = e[3] - f[3]
           length = e[4] - e[3] + 1
           eexons.append('%d_%d' % (offset,length))
+        #
+        cdss = filter(lambda x: x[2] == 'CDS', pid2kids[fid])
+        if cdss:
+          cdss.sort(key=lambda x: x[3])
+          cid = cdss[0][8]['ID']
+          cstart = cdss[0][3]
+          cend = cdss[-1][4]
+          f[8]['cds'] = '%s|%d|%d' % (cid, cstart, cend)
+        #
         transcripts.append(f)
       else:
         # leaf level feature
