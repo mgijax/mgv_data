@@ -13,7 +13,7 @@
 #       1           Chunk by chromosome. Track name = subdirectory in genome root dir.
 #                   Then one subdir per chromosome below this.One file per chromosome.
 #       > 1         Chunk size. As above, but output per chromosome is chunked by this size block factor.
- 
+# 
 import types
 import os
 import sys

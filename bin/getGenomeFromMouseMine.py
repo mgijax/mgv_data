@@ -312,7 +312,7 @@ class GenomeDumper :
           gid = attrs['gene_id']
           ts = gid2g[gid][8]['transcripts']
           ts[tid][8]['cds'].append(cds)
-        self.log('%d CDSs' % (ic+1), '')
+        self.log('%d CDSs ...' % (ic+1), '')
         for ie, e in enumerate(self.getExons(c['name'])):
           attrs = e[8]
           eid = attrs['ID']
