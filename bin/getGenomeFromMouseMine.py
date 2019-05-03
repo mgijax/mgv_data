@@ -16,16 +16,17 @@ import gff3lite
 
 # Web service address root for mousemine
 MOUSEMINE="http://www.mousemine.org/mousemine/service"
-#
+# Current time
 TIMESTAMP=time.asctime(time.localtime(time.time()))
 
+# Parse command line options.
 def getOpts () :
   parser = argparse.ArgumentParser(description='Dumps files for MGV from MouseMine.')
   parser.add_argument('-g', '--genome-name',
     dest='genomes', 
     action='append',
     default=[],
-    help='Name of the genome(s) to dump. Repeatable. (default=dump all available genomes)')
+    help='Name of a genome to dump. Repeatable. If not specified, dumps all available genomes.')
   parser.add_argument('-d', '--output-dir',
     dest='outputDir', 
     default='./output',
@@ -45,6 +46,8 @@ def getOpts () :
     help='Base web service URL. (default=%(default)s)')
   return parser.parse_args()
 
+# Passes the given XML to the query endpoint at the given web service address,
+# Yields each line as a list of tokens.
 def doMouseMineQuery(wsurl, q):
     fmt = 'tab'
     url = '%s/query/results?format=%s&query=%s' % (wsurl,fmt,urllib.quote_plus(q))
@@ -54,6 +57,7 @@ def doMouseMineQuery(wsurl, q):
         yield toks
     fd.close()
 
+# Generates a GFF3 file for a genome in MouseMine.
 class GenomeDumper :
     def __init__ (self, opts) :
         self.gname = opts.gname
@@ -65,10 +69,7 @@ class GenomeDumper :
         self.timestamp = opts.timestamp
         self.taxonid = opts.taxonid
 
-    def ensureDir(self, d):
-        if not os.path.exists(d):
-          os.makedirs(d)
-
+    # opens the output file
     def open (self):
         if self.outputDir == '-':
           self.ofn = '<STDOUT>'
@@ -78,13 +79,17 @@ class GenomeDumper :
           self.ensureDir(self.outputDir)
           self.ofd = open(self.ofn, 'w')
 
+    # Outputs a message to the log.
     def log(self, s, NL='\n'):
         self.lFd.write(s)
         self.lFd.write(NL)
 
+    # The idea is to make a genome name safe for using in a path. Right now all it does is
+    # remove "/" characters.
     def convertGenomeName (self, s):
         return s.lower().replace('/','')
 
+    # Converts strand values as stored in mousemine (+1/-1) into a string '+' or '-'
     def convertStrand (self, s) :
         return '+' if s == '1' else '-'
 
@@ -114,8 +119,7 @@ class GenomeDumper :
     # Args:
     #    c (string) the chromosome, eg, "13"
     # Returns:
-    #    Iterator that yields one row per gene in the specified genome.
-    #    Each row has: strain name, gene id, chromosome location (chr, start, end, strand)
+    #    Iterator that yields one GFF3 row per gene in the specified genome.
     def getGenes (self, c) :
         q = '''<query 
         model="genomic"
@@ -136,7 +140,7 @@ class GenomeDumper :
         <constraint path="Gene.strain.name" op="=" value="%s"/>
         <constraint path="Gene.chromosome.primaryIdentifier" op="=" value="%s"/>
         </query>''' % (self.gname, c)
-
+        #
         for r in doMouseMineQuery(self.url, q):
             attrs = {
               'ID': r[1],
@@ -158,6 +162,11 @@ class GenomeDumper :
             ]
             yield gf
 
+    # Returns an iterator over transcripts on the specified chromosome for the specified genome.
+    # Args:
+    #    c (string) the chromosome, eg, "13"
+    # Returns:
+    #    Iterator that yields one GFF3 row per transcript in the specified genome.
     def getTranscripts (self, c):
       q = '''<query
       model="genomic"
@@ -174,6 +183,7 @@ class GenomeDumper :
       <constraint path="Gene.chromosome.primaryIdentifier" op="=" value="%s"/>
       </query>
       ''' % (self.gname, c)
+      #
       for r in doMouseMineQuery(self.url, q):
           yield [
               c,
@@ -191,6 +201,11 @@ class GenomeDumper :
               }
           ]
 
+    # Returns an iterator over CDSs on the specified chromosome for the specified genome.
+    # Args:
+    #    c (string) the chromosome, eg, "13"
+    # Returns:
+    #    Iterator that yields one GFF3 row per segment per CDS
     def getCdss (self, c):
       q = '''<query
         model="genomic"
@@ -207,12 +222,14 @@ class GenomeDumper :
         <constraint path="CDS.strain.name" op="=" value="%s"/>
         <constraint path="CDS.chromosome.primaryIdentifier" op="=" value="%s"/>
         </query>''' % (self.gname, c)
+      # Iterate over the raw result and group them by CDS ID.
       for cid, citer in itertools.groupby(doMouseMineQuery(self.url, q), lambda x: x[2]):
           cdsparts = list(citer)
           strand = self.convertStrand(cdsparts[0][5])
           if strand == "-":
             cdsparts.reverse()
           totLength = 0
+          # calculate phase of each CDS segment
           for r in cdsparts:
             gid,tid,x,start,end,y = r
             start = int(start)
@@ -225,6 +242,7 @@ class GenomeDumper :
             r.append(phase)
           if strand == "-":
             cdsparts.reverse()
+          # output one row per CDS segment
           for r in cdsparts:  
             yield [
                 c,
@@ -241,6 +259,11 @@ class GenomeDumper :
                 }
             ]
 
+    # Returns an iterator over exons on the specified chromosome for the specified genome.
+    # Args:
+    #    c (string) the chromosome, eg, "13"
+    # Returns:
+    #    Iterator that yields one GFF3 row per exons in the specified genome.
     def getExons (self, c):
       q = '''<query
       model="genomic"
@@ -273,10 +296,12 @@ class GenomeDumper :
               }
           ]
 
+    # Ensures that the directory d exists. Creates it an intervening dirs as needed.
     def ensureDir(self, d):
         if not os.path.exists(d):
             os.makedirs(d)
 
+    # returns the descriptor for this genome. 
     def getGenomeInfo (self):
         chrs = list(self.getChromosomes())
         if self.sample:
@@ -289,15 +314,19 @@ class GenomeDumper :
         }
         self.log('\nGenome: %s' % self.genomeInfo['name'])
 
+    # For one chromosome of my genome, assemble all the models and write them out.
     def doChromosome(self, c):
         # Assemble the models
         self.log('Chromosome %s ...' % c['name'], '')
         gid2g = {}
+        # get all the genes. index by ID so we can attach its parts
         for ig, g in enumerate(self.getGenes(c['name'])):
           attrs = g[8]
           gid = attrs['ID']
           gid2g[gid] = g
         self.log('%d genes ...' % (ig+1), '')
+        # get all the transcripts on this chr. attach to their genes. build index by transcript id so
+        # we can attachs its parts.
         for it, t in enumerate(self.getTranscripts(c['name'])):
           attrs = t[8]
           tid = attrs['ID']
@@ -305,6 +334,7 @@ class GenomeDumper :
           gts = gid2g[gid][8]['transcripts']
           gts[tid] = t
         self.log('%d transcripts ...' % (it+1), '')
+        # get all the CDSs. attach to their transcripts
         for (ic,cds) in enumerate(self.getCdss(c['name'])):
           attrs = cds[8]
           cid = attrs['ID']
@@ -313,6 +343,7 @@ class GenomeDumper :
           ts = gid2g[gid][8]['transcripts']
           ts[tid][8]['cds'].append(cds)
         self.log('%d CDSs ...' % (ic+1), '')
+        # get all exons. attach to their transcripts
         for ie, e in enumerate(self.getExons(c['name'])):
           attrs = e[8]
           eid = attrs['ID']
@@ -324,6 +355,7 @@ class GenomeDumper :
         # Output
         self.log('')
         genes = gid2g.values()
+        # sort genes by start coord.
         genes.sort(lambda a,b: a[3] - b[3])
         for g in genes:
           transcripts = g[8].pop('transcripts').values()
@@ -354,7 +386,10 @@ class GenomeDumper :
         self.writeHeader()
         for c in self.genomeInfo['chromosomes']:
           self.doChromosome(c)
+# end class
 
+# Returns a list of all available genomes in MouseMine.
+# Each returned genome has: genomeName  taxonId
 def getAvailableGenomes (url) :
     # returns strain name, taxonid pairs
     q='''
@@ -363,8 +398,9 @@ def getAvailableGenomes (url) :
       </query>
     '''
     return doMouseMineQuery(url, q)
-
+#
 if __name__ == "__main__":
+    # determine the list of genomes
     opts = getOpts()
     allGenomes = getAvailableGenomes(opts.url)
     if len(opts.genomes) == 0:
@@ -378,6 +414,7 @@ if __name__ == "__main__":
             if len(gngs) == 0:
                 raise RuntimeError('Genome %s not found.' % gn)
             genomes += gngs
+    # for eeach genome, dump it
     for g in genomes:
         opts.gname = g[0]
         opts.taxonid = g[1]
