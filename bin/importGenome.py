@@ -204,6 +204,11 @@ class Gff3Importer:
         self.writeGene(f)
       elif fid in pid2kids:
         # mid level feature
+        # For efficiency of transfer, encode the exons for a transcript into a col9 attribute.
+        # For each exon, just need its offset from the start of the transcript and its length.
+        # This requires a lot less space (~time) to transfor than representing each exon as a separate
+        # feature with full coordinates. NOTE that we lose exon IDs (and potentially other attributes) 
+        # by doing this. Maybe worth it, maybe not?
         exons = filter(lambda x: x[2] == 'exon', pid2kids[fid])
         exons.sort(key=lambda e: e[3])
         eexons = f[8].setdefault('exons',[])

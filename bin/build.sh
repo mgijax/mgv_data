@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-# Build script for preparing data files for MGV.
+# Build script for preparing data files for MGV from the mouse genomes data in MouseMine.
+# Also includes options for including human and rat genomes, but this is considered experimental at this time.
 #
 # Example of a full build:
 # bash build.sh \
+#   -M http://www.mousemine.org/mousemine/service \
 #   -H ftp://ftp.ensembl.org/pub/release-95/gff3/homo_sapiens/Homo_sapiens.GRCh38.95.chr.gff3.gz\
 #   -R ftp://ftp.ensembl.org/pub/release-95/gff3/rattus_norvegicus/Rattus_norvegicus.Rnor_6.0.95.chr.gff3.gz \
-#   -M http://www.mousemine.org/mousemine/service \
 #   -o ./output \
 #   -d ./downloads
 #
@@ -61,14 +62,20 @@ function doMouse {
 # ---------------------
 function doHuman {
   logit "Human url=${humanurl}"
-  curl ${humanurl} | gunzip | python prepEnsembl.py -g human | python importGenome.py -c "##sequence-region" -x 9606 -g "H.sapiens" -k ${chunksize} -d ${outputdir}
+  curl ${humanurl} | gunzip > ${downloadsdir}/hsapiens.gff3 
+  cat ${downloadsdir}/hsapiens.gff3 | \
+      python prepEnsembl.py -g human | \
+      python importGenome.py -c "##sequence-region" -x 9606 -g "H.sapiens" -k ${chunksize} -d ${outputdir}
   checkExit
 }
 
 # ---------------------
 function doRat {
   logit "Rat url=${raturl}"
-  curl ${raturl} | gunzip | python prepEnsembl.py -g rat | python importGenome.py -c "##sequence-region" -x 10116 -g "R.norvegicus" -k ${chunksize} -d ${outputdir}
+  curl ${raturl} | gunzip > ${downloadsdir}/rnorvegicus.gff3
+  cat ${downloadsdir}/rnorvegicus.gff3 | \
+      python prepEnsembl.py -g rat | \
+      python importGenome.py -c "##sequence-region" -x 10116 -g "R.norvegicus" -k ${chunksize} -d ${outputdir}
   checkExit
 }
 # ---------------------
