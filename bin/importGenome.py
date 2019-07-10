@@ -61,7 +61,7 @@ class Gff3Importer:
 
   def processHeader (self) :
 
-    self.pragmas = self.datastream.next()
+    self.pragmas = next(self.datastream)
     self.genomeInfo['taxonid'] = self.getOpt('taxonid')
     self.genomeInfo['name'] = self.getOpt('genome')
     self.genomeInfo['timestamp'] = self.getOpt('timestamp')
@@ -69,7 +69,7 @@ class Gff3Importer:
     chrs = []
     copt = self.getOpt('chromosomes')
     if copt:
-      if type(copt) is types.StringType:
+      if type(copt) is str:
         # parse the command line arg
         lst = map(lambda x: x.split(':'), copt.split(','))
         for item in lst:
@@ -165,8 +165,8 @@ class Gff3Importer:
     else:
       gStart = min(map(lambda f: f[3], grp))
       gEnd = max(map(lambda f: f[4], grp))
-      startBlk = gStart / self.opts.chunkSize
-      endBlk = gEnd / self.opts.chunkSize
+      startBlk = gStart // self.opts.chunkSize
+      endBlk = gEnd // self.opts.chunkSize
       for blk in range(startBlk, endBlk+1):
         self.writeGrpToBlk(grp, track, chr, blk)
 
@@ -204,7 +204,7 @@ class Gff3Importer:
         self.writeGene(f)
       elif fid in pid2kids:
         # mid level feature
-        exons = filter(lambda x: x[2] == 'exon', pid2kids[fid])
+        exons = list(filter(lambda x: x[2] == 'exon', pid2kids[fid]))
         exons.sort(key=lambda e: e[3])
         eexons = f[8].setdefault('exons',[])
         for e in exons:
@@ -212,7 +212,7 @@ class Gff3Importer:
           length = e[4] - e[3] + 1
           eexons.append('%d_%d' % (offset,length))
         #
-        cdss = filter(lambda x: x[2] == 'CDS', pid2kids[fid])
+        cdss = list(filter(lambda x: x[2] == 'CDS', pid2kids[fid]))
         if cdss:
           cdss.sort(key=lambda x: x[3])
           cid = cdss[0][8]['ID']

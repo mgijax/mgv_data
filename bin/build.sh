@@ -4,8 +4,6 @@
 #
 # Example of a full build:
 # bash build.sh \
-#   -H ftp://ftp.ensembl.org/pub/release-95/gff3/homo_sapiens/Homo_sapiens.GRCh38.95.chr.gff3.gz\
-#   -R ftp://ftp.ensembl.org/pub/release-95/gff3/rattus_norvegicus/Rattus_norvegicus.Rnor_6.0.95.chr.gff3.gz \
 #   -M http://www.mousemine.org/mousemine/service \
 #   -o ./output \
 #   -d ./downloads
@@ -47,30 +45,19 @@ function checkExit {
 # ---------------------
 function doMouse {
   logit "Mouse strains url=${mouseurl}"
-  # Export GFF3 files from MouseMine for each of the sequenced strains
-  python getGenomeFromMouseMine.py -d ${downloadsdir} -u "${mouseurl}"
-  checkExit "Get genome from MouseMine"
-
-  # Import genomes - chunk the files.
-  for  i in $( ls ${downloadsdir} ); do
-    python importGenome.py -d ${outputdir} -k ${chunksize} -c "##sequence-region" < ${downloadsdir}/$i
-    checkExit "Import genome $i"
+  # for each available genome in MouseMine
+  for  gname in $( python getGenomeFromMouseMine.py ); do
+    gfname=`echo "${gname}" | tr '[:upper:]' '[:lower:]' | tr -d ' /'`
+    gfpath="${downloadsdir}/${gfname}.gff3"
+    # Export GFF3 file for this genome
+    python getGenomeFromMouseMine.py -g "${gname}" -d - -u "${mouseurl}" > "${gfpath}"
+    checkExit "Get genome ${gname} from MouseMine"
+    #
+    python importGenome.py -d ${outputdir} -k ${chunksize} -c "##sequence-region" < ${gfpath}
+    checkExit "Import genome ${gname}"
   done
 }
 
-# ---------------------
-function doHuman {
-  logit "Human url=${humanurl}"
-  curl ${humanurl} | gunzip | python prepEnsembl.py -g human | python importGenome.py -c "##sequence-region" -x 9606 -g "H.sapiens" -k ${chunksize} -d ${outputdir}
-  checkExit
-}
-
-# ---------------------
-function doRat {
-  logit "Rat url=${raturl}"
-  curl ${raturl} | gunzip | python prepEnsembl.py -g rat | python importGenome.py -c "##sequence-region" -x 10116 -g "R.norvegicus" -k ${chunksize} -d ${outputdir}
-  checkExit
-}
 # ---------------------
 function usage {
   echo "Usage: bash ${scriptname} [-M MouseMineURL][-H HumanGff3FileUrl][-R RatGff3FileUrl][-d downloadsDir][-o outputDir][-k chunkSize]"
@@ -109,14 +96,6 @@ do
         shift
         mouseurl="$1"
         ;;
-    -H)
-        shift
-        humanurl="$1"
-        ;;
-    -R)
-        shift
-        raturl="$1"
-        ;;
     *)
         echo "Unrecognized option:" $1
         usage
@@ -131,16 +110,6 @@ checkExit "Create downloads dir: ${downloadsdir}"
 #
 mkdir -p ${outputdir}
 checkExit "Create output dir ${outputdir}"
-
-#
-if [[ ${humanurl} ]] ; then
-  doHuman
-fi
-
-#
-if [[ ${raturl} ]] ; then
-  doRat
-fi
 
 #
 if [[ ${mouseurl} ]] ; then

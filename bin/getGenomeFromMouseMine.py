@@ -6,7 +6,8 @@
 #
 import types
 import sys
-import urllib
+import urllib.request
+import urllib.parse
 import os.path
 import json
 import time
@@ -21,7 +22,7 @@ TIMESTAMP=time.asctime(time.localtime(time.time()))
 
 # Parse command line options.
 def getOpts () :
-  parser = argparse.ArgumentParser(description='Dumps files for MGV from MouseMine.')
+  parser = argparse.ArgumentParser(description='Dumps files for MGV from MouseMine. If called without arguments, prints the list of available genomes and exits.')
   parser.add_argument('-g', '--genome-name',
     dest='genomes', 
     action='append',
@@ -50,9 +51,10 @@ def getOpts () :
 # Yields each line as a list of tokens.
 def doMouseMineQuery(wsurl, q):
     fmt = 'tab'
-    url = '%s/query/results?format=%s&query=%s' % (wsurl,fmt,urllib.quote_plus(q))
-    fd = urllib.urlopen(url)
+    url = '%s/query/results?format=%s&query=%s' % (wsurl,fmt,urllib.parse.quote_plus(q))
+    fd = urllib.request.urlopen(url)
     for line in fd:
+        line = line.decode('utf-8')
         toks = line[:-1].split('\t')
         yield toks
     fd.close()
@@ -354,9 +356,9 @@ class GenomeDumper :
         self.log('%d exons ...' % (ie+1), '')
         # Output
         self.log('')
-        genes = gid2g.values()
+        genes = list(gid2g.values())
         # sort genes by start coord.
-        genes.sort(lambda a,b: a[3] - b[3])
+        genes.sort(key = lambda x: x[3])
         for g in genes:
           transcripts = g[8].pop('transcripts').values()
           self.ofd.write(gff3lite.formatLine(g))
@@ -403,14 +405,18 @@ if __name__ == "__main__":
     # determine the list of genomes
     opts = getOpts()
     allGenomes = getAvailableGenomes(opts.url)
-    if len(opts.genomes) == 0:
+    if len(sys.argv) == 1:
+      for g in allGenomes:
+        print(g[0])
+      sys.exit(0)
+    elif len(opts.genomes) == 0:
         genomes = list(allGenomes)
         if opts.sample:
             genomes = opts.genomes[0:2]
     else:
         genomes = []
         for gn in opts.genomes:
-            gngs = filter(lambda g: gn == g[0], allGenomes)
+            gngs = list(filter(lambda g: gn == g[0], allGenomes))
             if len(gngs) == 0:
                 raise RuntimeError('Genome %s not found.' % gn)
             genomes += gngs
