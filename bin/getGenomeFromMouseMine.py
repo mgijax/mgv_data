@@ -420,7 +420,7 @@ if __name__ == "__main__":
             if len(gngs) == 0:
                 raise RuntimeError('Genome %s not found.' % gn)
             genomes += gngs
-    # for eeach genome, dump it
+    # for each genome, dump it
     for g in genomes:
         opts.gname = g[0]
         opts.taxonid = g[1]

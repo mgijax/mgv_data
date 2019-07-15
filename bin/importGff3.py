@@ -2,6 +2,12 @@
 #
 # importGff3.py
 #
+# Imports a GFF3 genome annotation file (a la Ensembl) into form needed by MGV.
+# (1) Filters out certain feature types (eg, biological_region and chromosome)
+# (2) Chunks data for efficiency. All top level features go in one file,
+# Transcripts and exons go in chunks of specified size.
+# (3) Updates genome info.
+#
 # usage:
 #    python importGff3.py < MyGenomeAnnotations.gff3
 #

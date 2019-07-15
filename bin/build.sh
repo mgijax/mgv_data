@@ -53,7 +53,7 @@ function doMouse {
     python getGenomeFromMouseMine.py -g "${gname}" -d - -u "${mouseurl}" > "${gfpath}"
     checkExit "Get genome ${gname} from MouseMine"
     #
-    python importGenome.py -d ${outputdir} -k ${chunksize} -c "##sequence-region" < ${gfpath}
+    python importGff3.py -d ${outputdir} -k ${chunksize} -c "##sequence-region" < ${gfpath}
     checkExit "Import genome ${gname}"
   done
 }
@@ -69,9 +69,7 @@ scriptname="$0"
 downloadsdir="./downloads"
 outputdir="./output"
 chunksize="4000000"
-humanurl=''
-raturl=''
-mouseurl=''
+mouseurl=""
 
 until [ -z "$1" ]  # Until all parameters used up . . .
 do
