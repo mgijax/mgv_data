@@ -112,13 +112,10 @@ class Gff3Importer:
         'url' : 'http://www.mousemine.org/mousemine/service'
       }
     }]
-    self.outputDir = os.path.join(self.opts.outputDir, self.sanitizeName(self.genomeInfo['name']))
+    self.outputDir = os.path.join(self.opts.outputDir, self.opts.genomePath)
     
   def log(self, s):
     sys.stderr.write(s)
-
-  def sanitizeName (self, n):
-    return n.replace('/','').lower()
 
   def ensureDirectory (self, d):
     if not os.path.exists(d):
@@ -252,8 +249,27 @@ class Gff3Importer:
     #
     self.writeGenomeInfo()
 #
-def getArgs () :
+def sanitizeName (n):
+  return n.replace('/','').lower()
+
+#
+# Returns options object from command line. Has these fields:
+#       exclude - list of SO terms to exclude
+#       genomePath - name of genome in paths at Ensembl
+#       genome - name/label of genome (as shown to user)
+#       taxonid - NCBI taxon id
+#       timestamp - timestamp
+#       chromosomes - list of chromosomes and lengths, in preferred order
+#       outputDir - when the output gets written
+#       chunkSize - for chunking transcripts and exons
+#       sample - True/False. If true, only generate a sample sized output.
+def getArgs (cmdLineTokens=None) :
+  if not cmdLineTokens: cmdlineTokens = sys.argv
   parser = argparse.ArgumentParser(description='Import genome annotations from a GFF3 file.')
+  parser.add_argument('-p','--genomePath',
+    metavar='NAME',
+    dest='genomePath',
+    help='Pathname to use with the genome. By default, this is a sanitized version of the genomeName, but you can override that.')
   parser.add_argument('-g','--genomeName',
     metavar='NAME',
     default='##genome-name',
@@ -289,7 +305,10 @@ def getArgs () :
     dest='sample',
     default=False,
     help='Sample output.')
-  return parser.parse_args()
+  args = parser.parse_args(cmdLineTokens)
+  if not args.genomePath:
+    args.genomePath = sanitizeName(args.genome)
+  return args
 #
 if __name__ == '__main__':
   args = getArgs()
