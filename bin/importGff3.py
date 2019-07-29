@@ -2,6 +2,12 @@
 #
 # importGff3.py
 #
+# Imports a GFF3 genome annotation file (a la Ensembl) into form needed by MGV.
+# (1) Filters out certain feature types (eg, biological_region and chromosome)
+# (2) Chunks data for efficiency. All top level features go in one file,
+# Transcripts and exons go in chunks of specified size.
+# (3) Updates genome info.
+#
 # usage:
 #    python importGff3.py < MyGenomeAnnotations.gff3
 #
@@ -61,7 +67,7 @@ class Gff3Importer:
 
   def processHeader (self) :
 
-    self.pragmas = self.datastream.next()
+    self.pragmas = next(self.datastream)
     self.genomeInfo['taxonid'] = self.getOpt('taxonid')
     self.genomeInfo['name'] = self.getOpt('genome')
     self.genomeInfo['timestamp'] = self.getOpt('timestamp')
@@ -69,7 +75,7 @@ class Gff3Importer:
     chrs = []
     copt = self.getOpt('chromosomes')
     if copt:
-      if type(copt) is types.StringType:
+      if type(copt) is str:
         # parse the command line arg
         lst = map(lambda x: x.split(':'), copt.split(','))
         for item in lst:
@@ -106,13 +112,10 @@ class Gff3Importer:
         'url' : 'http://www.mousemine.org/mousemine/service'
       }
     }]
-    self.outputDir = os.path.join(self.opts.outputDir, self.sanitizeName(self.genomeInfo['name']))
+    self.outputDir = os.path.join(self.opts.outputDir, self.opts.genomePath)
     
   def log(self, s):
     sys.stderr.write(s)
-
-  def sanitizeName (self, n):
-    return n.replace('/','').lower()
 
   def ensureDirectory (self, d):
     if not os.path.exists(d):
@@ -165,8 +168,8 @@ class Gff3Importer:
     else:
       gStart = min(map(lambda f: f[3], grp))
       gEnd = max(map(lambda f: f[4], grp))
-      startBlk = gStart / self.opts.chunkSize
-      endBlk = gEnd / self.opts.chunkSize
+      startBlk = gStart // self.opts.chunkSize
+      endBlk = gEnd // self.opts.chunkSize
       for blk in range(startBlk, endBlk+1):
         self.writeGrpToBlk(grp, track, chr, blk)
 
@@ -209,7 +212,7 @@ class Gff3Importer:
         # This requires a lot less space (~time) to transfor than representing each exon as a separate
         # feature with full coordinates. NOTE that we lose exon IDs (and potentially other attributes) 
         # by doing this. Maybe worth it, maybe not?
-        exons = filter(lambda x: x[2] == 'exon', pid2kids[fid])
+        exons = list(filter(lambda x: x[2] == 'exon', pid2kids[fid]))
         exons.sort(key=lambda e: e[3])
         eexons = f[8].setdefault('exons',[])
         for e in exons:
@@ -217,7 +220,7 @@ class Gff3Importer:
           length = e[4] - e[3] + 1
           eexons.append('%d_%d' % (offset,length))
         #
-        cdss = filter(lambda x: x[2] == 'CDS', pid2kids[fid])
+        cdss = list(filter(lambda x: x[2] == 'CDS', pid2kids[fid]))
         if cdss:
           cdss.sort(key=lambda x: x[3])
           cid = cdss[0][8]['ID']
@@ -251,8 +254,27 @@ class Gff3Importer:
     #
     self.writeGenomeInfo()
 #
-def getArgs () :
+def sanitizeName (n):
+  return n.replace('/','').lower()
+
+#
+# Returns options object from command line. Has these fields:
+#       exclude - list of SO terms to exclude
+#       genomePath - name of genome in paths at Ensembl
+#       genome - name/label of genome (as shown to user)
+#       taxonid - NCBI taxon id
+#       timestamp - timestamp
+#       chromosomes - list of chromosomes and lengths, in preferred order
+#       outputDir - when the output gets written
+#       chunkSize - for chunking transcripts and exons
+#       sample - True/False. If true, only generate a sample sized output.
+def getArgs (cmdLineTokens=None) :
+  if not cmdLineTokens: cmdlineTokens = sys.argv
   parser = argparse.ArgumentParser(description='Import genome annotations from a GFF3 file.')
+  parser.add_argument('-p','--genomePath',
+    metavar='NAME',
+    dest='genomePath',
+    help='Pathname to use with the genome. By default, this is a sanitized version of the genomeName, but you can override that.')
   parser.add_argument('-g','--genomeName',
     metavar='NAME',
     default='##genome-name',
@@ -288,7 +310,10 @@ def getArgs () :
     dest='sample',
     default=False,
     help='Sample output.')
-  return parser.parse_args()
+  args = parser.parse_args(cmdLineTokens)
+  if not args.genomePath:
+    args.genomePath = sanitizeName(args.genome)
+  return args
 #
 if __name__ == '__main__':
   args = getArgs()

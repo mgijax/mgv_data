@@ -18,7 +18,7 @@
 #
 import sys
 import types
-import urllib
+import urllib.parse as ulib
 import json
 import re
 
@@ -41,14 +41,14 @@ class Gff3Parser :
     self.convertDots = convertDots
 
   def open(self):
-    if type(self.source) is types.StringType:
+    if type(self.source) is str:
       self.sfd = open(source, 'r')
     else:
       self.sfd = self.source
     self.currLine = None
 
   def close(self):
-    if type(self.source) is types.StringType:
+    if type(self.source) is str:
       sfd.close()
 
   def iterate (self):
@@ -73,7 +73,7 @@ class Gff3Parser :
         yield parsePragmas(header)
         header = None
       #
-      record = map(lambda a: self.convertDots if a == '.' else a, parseLine(line))
+      record = list(map(lambda a: self.convertDots if a == '.' else a, parseLine(line)))
       if self.returnGroups:
         if record[0] != currSeqid:
           if group: yield group
@@ -101,22 +101,22 @@ def parseColumn9 (text) :
     n = bits[0].strip()
     v = bits[1].strip()
     if n in MULTIVALUED:
-      c9[n] = map(urllib.unquote, v.split(COMMA))
+      c9[n] = list(map(ulib.unquote, v.split(COMMA)))
     else:
-      c9[n] = urllib.unquote(v)
+      c9[n] = ulib.unquote(v)
   return c9
 
 #
 def formatColumn9(c9):
   parts = []
   for (n,v) in c9.items():
-    nn = urllib.quote(n)
-    if type(v) is types.StringType:
-      vv = urllib.quote(v)
-    elif type(v) is types.ListType:
-      vv = COMMA.join(map(urllib.quote, v))
+    nn = ulib.quote(n)
+    if type(v) is str:
+      vv = ulib.quote(v)
+    elif type(v) is list:
+      vv = COMMA.join(map(ulib.quote, v))
     else:
-      vv = urllib.quote(str(v))
+      vv = ulib.quote(str(v))
     parts.append("%s=%s" % (nn, vv))
   return SEMI.join(parts)
     
@@ -142,7 +142,7 @@ def parsePragmas(lines):
       n = m.group(1)
       v = m.group(2)
       if n in ps:
-        if type(ps[n]) is types.StringType:
+        if type(ps[n]) is str:
           ps[n] = [ps[n], v]
         else:
           ps[n].append(v)
@@ -158,4 +158,4 @@ def formatLine (row):
 
 if __name__ == "__main__":
   for r in Gff3Parser(sys.stdin,returnGroups=True, returnHeader=True).iterate():
-    print r
+    print(r)
