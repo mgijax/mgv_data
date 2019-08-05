@@ -7,6 +7,9 @@
 #
 # There are two ways to specify a sequence: as a slice of a chromosome, and as the sequence
 # of a database object (like a CDS).
+# To specify a slice, provide a chromosome, a start coordinate (1-based) and a length. 
+# To specify multiple slices provide a list of start coordinates and a corresponding list of lengths;
+# the individual slices are concatenated to form a single sequence.
 #
 # -----------------------------------------
 import sys
@@ -18,6 +21,9 @@ import string
 import cgi
 import cgitb
 #cgitb.enable()
+
+# -----------------------------------------
+DATA_DIR="./output"
 
 # -----------------------------------------
 VALID_PREFIXES = [
@@ -105,7 +111,7 @@ def getFileSequence (desc) :
   # compose name of the file containing the chromosome sequence
   gname = desc["genome"]
   gfname = gname.replace("/","").lower()
-  path = "./output/%s/sequences/%s" % (gfname, desc["chromosome"])
+  path = "%s/%s/sequences/%s" % (DATA_DIR, gfname, desc["chromosome"])
   fd = os.open(path, os.O_RDONLY)
   #
   starts = desc["start"]
@@ -119,7 +125,7 @@ def getFileSequence (desc) :
   seqs = []
   for i,s in enumerate(starts):
     l = lengths[i]
-    seqs.append(slice(fd, s, l))
+    seqs.append(slice(fd, s-1, l))
   seq = ''.join(seqs).lower()
   #
   return seq
@@ -200,7 +206,7 @@ TESTDATA = [{
 "header": ">test.0",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": 123456789,
+"start": 123456790,
 "length": 100,
 "reverseComplement": False,
 "translate": False,
@@ -210,7 +216,7 @@ TESTDATA = [{
 "header": ">test.0 line length = 40",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": 123456789,
+"start": 123456790,
 "length": 100,
 "reverseComplement": False,
 "translate": False,
@@ -221,7 +227,7 @@ TESTDATA = [{
 "header": ">test.0 rc",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": 123456789,
+"start": 123456790,
 "length": 100,
 "reverseComplement": True,
 "translate": False,
@@ -231,7 +237,7 @@ TESTDATA = [{
 "header": ">test.0 xl",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": 123456789,
+"start": 123456790,
 "length": 100,
 "reverseComplement": False,
 "translate": True,
@@ -241,7 +247,7 @@ TESTDATA = [{
 "header": ">test.0 rc xl",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": 123456789,
+"start": 123456790,
 "length": 100,
 "reverseComplement": True,
 "translate": True,
@@ -251,7 +257,7 @@ TESTDATA = [{
 "header": ">test.1 pt1",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": [123456789],
+"start": [123456790],
 "length": [100],
 "reverseComplement": False,
 "translate": False,
@@ -261,7 +267,7 @@ TESTDATA = [{
 "header": ">test.1 pt2",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": 123458100,
+"start": 123458101,
 "length": 102,
 "reverseComplement": False,
 "translate": False,
@@ -271,7 +277,7 @@ TESTDATA = [{
 "header": ">test.1 pt3",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": [123459221],
+"start": [123459222],
 "length": [88],
 "reverseComplement": False,
 "translate": False,
@@ -281,7 +287,7 @@ TESTDATA = [{
 "header": ">test.1 concatenated",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": [123456789, 123458100, 123459221],
+"start": [123456790, 123458101, 123459222],
 "length": [100, 102, 88],
 "reverseComplement": False,
 "translate": False,
@@ -300,7 +306,7 @@ TESTDATA = [{
 "translate": False,
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": 10038216,
+"start": 10038217,
 "length": 128,
 "reverseComplement": False,
 "translate": False,
@@ -312,7 +318,7 @@ TESTDATA = [{
 "translate": False,
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": [10039822,10045075,10047423,10058719,10059823],
+"start": [10039823,10045076,10047424,10058720,10059824],
 "length": [57,109,103,104,168],
 "reverseComplement": False,
 "translate": False,
@@ -329,7 +335,7 @@ TESTDATA = [{
 "header": ">ENSMUSE00001282101 1:10034008-10034136(-) from File",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": 10034007,
+"start": 10034008,
 "length": 129,
 "reverseComplement": True,
 "translate": False,
@@ -346,7 +352,7 @@ TESTDATA = [{
 "header": ">ENSMUST00000186528 from file",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": [10027197,10030598,10032338,10033257,10034007,10034928,10037661],
+"start": [10027198,10030599,10032339,10033258,10034008,10034929,10037662],
 "length": [54,112,86,66,129,235,280],
 "reverseComplement": True,
 "translate": False,
@@ -364,7 +370,7 @@ TESTDATA = [{
 "header": ">ENSMUSP00000000834 from file",
 "genome": "C57BL/6J",
 "chromosome": "1",
-"start": [161781575,161782947,161787104,161787943],
+"start": [161781576,161782948,161787105,161787944],
 "length": [395,57,46,342],
 "reverseComplement": True,
 "translate": True,

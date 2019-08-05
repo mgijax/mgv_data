@@ -1,11 +1,12 @@
 #!/bin/bash
 #
-# getGenomeFromEnsembl.sh 
+# getGenome.sh 
 #
-# ./getGenomeFromEnsembl.sh -g mus_musculus_aj -n A/J -r 97 -d ./downloads -o ./output -k 4000000
+# ./getGenome.sh -g mus_musculus_aj -n A/J -r 97 -d ./downloads -o ./output -k 4000000
 #
 # Download genome data (gene model annotations and genome assemblies) from Ensembl
-# and import into MGV data files.
+# and import into MGV data files. 
+# Makes an exception for getting the gene models for the mouse B6 strain, which it gets from MGI.
 # 
 # Actions = download, import, or *
 # Parts = models, assembly, or *
@@ -14,6 +15,7 @@
 source utils.sh
 
 ENSEMBL_BASE="rsync://ftp.ensembl.org/ensembl/pub"
+MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 ORGANISM=""
 NAME=""
 TAXONID=""
@@ -31,7 +33,7 @@ PHASE="" # download, import. If not specified, run all phases
 
 # ---------------------
 usage () {
-  echo "Usage: bash ${SCRIPT} [-g organism-path][-n organism-name][-r release][-d downloads-dir][-o output-dir][-D]"
+  echo "Usage: bash ${SCRIPT} [-g organism-path][-n organism-name][-r release][-d downloads-dir][-o output-dir][-D][-t PART][-p PHASE]"
   exit -1
 }
 
@@ -40,7 +42,11 @@ downloadModels () {
   #
   logit "Downloading ${ORGANISM} gene models."
   mkdir -p ${G_DDIR}
-  rsync -av --progress ${DRY_RUN} "$GFF_URL" "${GFF_GZ_FILE}"
+  if [[ ${ORGANISM} == "mus_musculus" ]] ; then
+    curl "$GFF_URL" > "${GFF_GZ_FILE}"
+  else
+    rsync -av --progress ${DRY_RUN} "$GFF_URL" "${GFF_GZ_FILE}"
+  fi
   checkExit "Failed downloading ${GFF_URL} to ${GFF_GZ_FILE}"
 }
 
@@ -59,7 +65,7 @@ importAssembly () {
   mkdir -p "${G_ODIR}"
   mkdir -p "${G_ODIR}/sequences"
   if [[ ${DRY_RUN} == "" ]] ; then
-    gunzip -c "${FASTA_GZ_FILE}" | python splitFasta.py -c "${CHR_REGEX}" -o ${G_ODIR}/sequences
+    gunzip -c "${FASTA_GZ_FILE}" | python importFasta.py -c "${CHR_REGEX}" -o ${G_ODIR}/sequences
   fi
 }
 
@@ -69,7 +75,7 @@ importModels () {
   mkdir -p "${G_ODIR}"
   if [[ ${DRY_RUN} == "" ]] ; then
     gunzip -c "${GFF_GZ_FILE}" | \
-    python prepEnsemblGff.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" | \
+    python prepGff3.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" ${MODULES} | \
     python importGff3.py -p ${ORGANISM} -g ${NAME} -x ${TAXONID} -k ${K} -d ${ODIR}
   fi
 }
@@ -148,7 +154,6 @@ done
 G_DDIR="${DDIR}"
 F_DDIR="${DDIR}"
 G_ODIR="${ODIR}/${ORGANISM}"
-GFF_URL="${ENSEMBL_BASE}/release-${RELEASE}/gff3/${ORGANISM}/*.${RELEASE}.gff3.gz"
 GFF_GZ_FILE="${G_DDIR}/${ORGANISM}.${RELEASE}.gff3.gz"
 FASTA_URL="${ENSEMBL_BASE}/release-${RELEASE}/fasta/${ORGANISM}/dna/*.dna.toplevel.fa.gz"
 FASTA_GZ_FILE="${F_DDIR}/${ORGANISM}.${RELEASE}.fa.gz"
@@ -158,6 +163,14 @@ if [[ !(${ORGANISM} && ${RELEASE}) ]] ; then
 fi
 if [[ ! ${NAME} ]] ; then
   NAME="${ORGANISM}"
+fi
+#
+if [[ ${ORGANISM} == "mus_musculus" ]] ; then
+  GFF_URL="${MGI_URL}"
+  MODULES="-m pg_MGI"
+else
+  GFF_URL="${ENSEMBL_BASE}/release-${RELEASE}/gff3/${ORGANISM}/*.${RELEASE}.gff3.gz"
+  MODULES="-m pg_ensembl,pg_tagEnsemblWithMgi"
 fi
 #
 if [[ ${DATATYPE} == "" || ${DATATYPE} == "models" ]] ; then
