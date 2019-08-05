@@ -2,7 +2,6 @@
 
 source utils.sh
 
-MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 GENOMES="genomes.tsv"
 RELEASE=97
 
