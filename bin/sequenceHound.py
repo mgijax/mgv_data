@@ -30,74 +30,12 @@ import cgitb
 DATA_DIR="./output"
 
 # -----------------------------------------
-VALID_PREFIXES = [
-  'http://',
-  'https://'
-]
-VALID_WSROOTS = [
-  'www.mousemine.org/mousemine/service/',
-  'www.humanmine.org/humanmine/service/'
-]
-VALID_ENDPOINTS = [
-  'query/results/fasta?',
-  'sequence?'
-]
-
-# -----------------------------------------
 def chunkString (s, n) :
   return [s[i:i+n] for i in range(0, len(s), n)]
 
 # -----------------------------------------
 def defaultHeader (desc) :
-  desc['rc'] = 'reverse complement ' if desc['reverseComplement'] else ''
-  desc['tr'] = 'translated ' if desc['translate'] else ''
-  if 'chr' in desc:
-    return '>%(genome)s::%(chr)s:%(start)d..%(end)d (%(rc)s%(tr)s%(type)s)' % desc
-  else:
-    return '>%(genome)s::%(ID)s (%(rc)s%(tr)s%(type)s)' % desc
-
-# -----------------------------------------
-def splitPrefix (s, possibles) :
-  for p in possibles:
-    if s.startswith(p):
-      return (p, s[len(p):])
-  return (None, s)
-
-# -----------------------------------------
-def validateUrl (url) :
-  protocol, rest = splitPrefix(url, VALID_PREFIXES)
-  if not protocol: return False
-  #
-  webservice, rest = splitPrefix(rest, VALID_WSROOTS)
-  if not webservice: return False
-  #
-  endpoint, rest = splitPrefix(rest, VALID_ENDPOINTS)
-  if not endpoint: return False
-  #
-  return True
-
-# -----------------------------------------
-# A mine sequence descriptor has these fields:
-#   url (required) the fully formed url to a mine service endpoint
-#   reverseComplement (optional) if truthy, reverse complements the returned sequence
-#   translate (optional) if truthy, translates the sequence (must be a coding sequence)
-#   header (optional) if provided, used as the header string for the sequence.
-#        Otherise header is generated automatically.
-def getMineSequence (desc) :
-  if not validateUrl(desc['url']):
-    return ''
-  #
-  fd = urlopen(desc['url'])
-  data = fd.read().decode('utf-8')
-  fd.close()
-  #
-  if data.startswith(">") :
-    seq = ''.join(data.split('\n', 1)[1].split())
-  elif data.startswith("{") :
-    obj = json.loads(data)
-    seq = obj['features'][0]['seq']
-  #
-  return seq
+  return ">default"
 
 # -----------------------------------------
 # Returns a sequence of characters from an open file
@@ -114,8 +52,9 @@ def slice (fd, start, length):
 def getFileSequence (desc) :
   # compose name of the file containing the chromosome sequence
   gname = desc["genome"]
-  gfname = gname.replace("/","").lower()
-  path = "%s/%s/sequences/%s" % (DATA_DIR, gfname, desc["chromosome"])
+  gurl = desc["genomeUrl"]
+  gfname = gurl.replace("/"," ").split()[-1]
+  path = "./%s/sequences/%s" % (gfname, desc["chromosome"])
   fd = os.open(path, os.O_RDONLY)
   #
   starts = desc["start"]
@@ -136,10 +75,7 @@ def getFileSequence (desc) :
 
 # -----------------------------------------
 def getSequence(desc):
-  if "url" in desc:
-     seq = getMineSequence(desc)
-  else:
-     seq = getFileSequence(desc)
+  seq = getFileSequence(desc)
   doRC = desc.get('reverseComplement', True)
   if desc.get('reverseComplement', False):
     seq = reverseComplement(seq)
@@ -191,14 +127,14 @@ def getCmdLineOptions () :
 
 # -----------------------------------------
 def main () :
-  doCGI = sys.argv[0].endswith('.cgi')
+  doCGI = len(sys.argv) == 2 and sys.argv[1] == "--cgi"
   if doCGI:
       params = getParameters()
   else:
       params = getCmdLineOptions()
   print ('Content-Type: text/x-fasta')
   if "filename" in params:
-      print ('Content-Disposition: attachment; filename = "%s"' % params["filename"])
+     print ('Content-Disposition: attachment; filename = "%s"' % params["filename"])
   print ("")
   doSequences(params.get("descriptors", []))
 
