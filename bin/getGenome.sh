@@ -20,6 +20,8 @@
 
 source utils.sh
 
+PYTHON="python2.7"
+
 ENSEMBL_BASE="rsync://ftp.ensembl.org/ensembl/pub"
 MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 MGI_MODELS="false"
@@ -63,10 +65,11 @@ importModels () {
   mkdir -p "${G_ODIR}"
   if [[ ${DRY_RUN} == "" ]] ; then
     gunzip -c "${GFF_GZ_FILE}" | \
-    python prepGff3.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" ${MODULES} | \
-    python importGff3.py -p ${ORGANISM} -g ${NAME} -x ${TAXONID} -k ${K} -d ${ODIR}
+    ${PYTHON} prepGff3.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" ${MODULES} | \
+    ${PYTHON} importGff3.py -p ${ORGANISM} -g ${NAME} -x ${TAXONID} -k ${K} -d ${ODIR}
   fi
 }
+
 
 # ---------------------
 downloadAssembly () {
@@ -83,7 +86,7 @@ importAssembly () {
   mkdir -p "${G_ODIR}"
   mkdir -p "${G_ODIR}/sequences"
   if [[ ${DRY_RUN} == "" ]] ; then
-    gunzip -c "${FASTA_GZ_FILE}" | python importFasta.py -c "${CHR_REGEX}" -o ${G_ODIR}/sequences
+    gunzip -c "${FASTA_GZ_FILE}" | ${PYTHON} importFasta.py -c "${CHR_REGEX}" -o ${G_ODIR}/sequences
   fi
 }
 

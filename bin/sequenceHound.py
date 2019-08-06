@@ -1,4 +1,5 @@
-#!/anaconda3/bin/python
+#
+# sequenceHound.py
 #
 # CGI for retrieving sequences in fasta format from multiple InterMine source and returniing
 # the result in a single response. 
@@ -196,9 +197,10 @@ def main () :
   else:
       params = getCmdLineOptions()
   print ('Content-Type: text/x-fasta')
-  print ('Content-Disposition: attachment; filename = "%s"' % params["filename"])
-  print ()
-  doSequences(params["descriptors"])
+  if "filename" in params:
+      print ('Content-Disposition: attachment; filename = "%s"' % params["filename"])
+  print ("")
+  doSequences(params.get("descriptors", []))
 
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------
@@ -207,7 +209,7 @@ def main () :
 TESTDATA = [{
 
 "header": ">test.0",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -217,7 +219,7 @@ TESTDATA = [{
 }, {
 
 "header": ">test.0 line length = 40",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -228,7 +230,7 @@ TESTDATA = [{
 }, {
 
 "header": ">test.0 rc",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -238,7 +240,7 @@ TESTDATA = [{
 }, {
 
 "header": ">test.0 xl",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -248,7 +250,7 @@ TESTDATA = [{
 }, {
 
 "header": ">test.0 rc xl",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -258,7 +260,7 @@ TESTDATA = [{
 }, {
 
 "header": ">test.1 pt1",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": [123456790],
 "length": [100],
@@ -268,7 +270,7 @@ TESTDATA = [{
 }, {
 
 "header": ">test.1 pt2",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": 123458101,
 "length": 102,
@@ -278,7 +280,7 @@ TESTDATA = [{
 }, {
 
 "header": ">test.1 pt3",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": [123459222],
 "length": [88],
@@ -288,7 +290,7 @@ TESTDATA = [{
 }, {
 
 "header": ">test.1 concatenated",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": [123456790, 123458101, 123459222],
 "length": [100, 102, 88],
@@ -307,7 +309,7 @@ TESTDATA = [{
 "header": ">ENSMUSE00000702887 1:10038217-10038344 from File",
 "reverseComplement": False,
 "translate": False,
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": 10038217,
 "length": 128,
@@ -319,7 +321,7 @@ TESTDATA = [{
 "header": ">ENSMUST00000134716 from file",
 "reverseComplement": False,
 "translate": False,
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": [10039823,10045076,10047424,10058720,10059824],
 "length": [57,109,103,104,168],
@@ -336,7 +338,7 @@ TESTDATA = [{
 }, {
 
 "header": ">ENSMUSE00001282101 1:10034008-10034136(-) from File",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": 10034008,
 "length": 129,
@@ -353,7 +355,7 @@ TESTDATA = [{
 }, {
 
 "header": ">ENSMUST00000186528 from file",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": [10027198,10030599,10032339,10033258,10034008,10034929,10037662],
 "length": [54,112,86,66,129,235,280],
@@ -371,7 +373,7 @@ TESTDATA = [{
 }, {
 
 "header": ">ENSMUSP00000000834 from file",
-"genome": "C57BL/6J",
+"genome": "mus_musculus",
 "chromosome": "1",
 "start": [161781576,161782948,161787105,161787944],
 "length": [395,57,46,342],

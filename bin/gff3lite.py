@@ -18,7 +18,10 @@
 #
 import sys
 import types
-import urllib.parse as ulib
+try:
+    import urllib.parse as ulib
+except:
+    import urllib as ulib
 import json
 import re
 
