@@ -14,7 +14,7 @@ while read -u 10 p; do
   if [[ ${spath} != "#"* ]] ; then
     sname="${array[1]}" 
     staxon="${array[2]}" 
-    ./getGenome.sh -r ${RELEASE} -g ${spath} -n ${sname} -x ${staxon} $*
+    ./getGenome.sh -r ${RELEASE} -g ${spath} -n ${sname} -x ${staxon} --mgi-models $*
     checkExit
   fi
 done 10<${GENOMES}

@@ -2,12 +2,18 @@
 #
 # getGenome.sh 
 #
-# ./getGenome.sh -g mus_musculus_aj -n A/J -r 97 -d ./downloads -o ./output -k 4000000
+# Downloads genome data (gene model annotations and genome assemblies) from Ensembl
+# for a specified Ensembl release and organism. Imports into MGV data files. 
 #
-# Download genome data (gene model annotations and genome assemblies) from Ensembl
-# and import into MGV data files. 
-# Makes an exception for getting the gene models for the mouse B6 strain, which it gets from MGI.
+# Quirk: Want to make an exception in getting the gene model annotations for C57BL/6J
+# (== "mus_musculus" at Ensembl). In that case, want to use the ones from MGI.
+# You have to explicitly pass the --mgi-models command line option for this to happen.
 # 
+# Example:
+#
+# ./getGenome.sh -g mus_musculus_aj -n A/J -r 97 -d ./downloads -o ./output
+# ./getGenome.sh -g mus_musculus -n C57BL/6J --mgi-models -r 97 -d ./downloads -o ./output
+#
 # Actions = download, import, or *
 # Parts = models, assembly, or *
 # 
@@ -16,6 +22,7 @@ source utils.sh
 
 ENSEMBL_BASE="rsync://ftp.ensembl.org/ensembl/pub"
 MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
+MGI_MODELS="false"
 ORGANISM=""
 NAME=""
 TAXONID=""
@@ -42,12 +49,23 @@ downloadModels () {
   #
   logit "Downloading ${ORGANISM} gene models."
   mkdir -p ${G_DDIR}
-  if [[ ${ORGANISM} == "mus_musculus" ]] ; then
+  if [[ ${DOWNLOADER} == "curl" ]] ; then
     curl "$GFF_URL" > "${GFF_GZ_FILE}"
   else
     rsync -av --progress ${DRY_RUN} "$GFF_URL" "${GFF_GZ_FILE}"
   fi
   checkExit "Failed downloading ${GFF_URL} to ${GFF_GZ_FILE}"
+}
+
+# ---------------------
+importModels () {
+  logit "Importing ${ORGANISM} gene models."
+  mkdir -p "${G_ODIR}"
+  if [[ ${DRY_RUN} == "" ]] ; then
+    gunzip -c "${GFF_GZ_FILE}" | \
+    python prepGff3.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" ${MODULES} | \
+    python importGff3.py -p ${ORGANISM} -g ${NAME} -x ${TAXONID} -k ${K} -d ${ODIR}
+  fi
 }
 
 # ---------------------
@@ -66,17 +84,6 @@ importAssembly () {
   mkdir -p "${G_ODIR}/sequences"
   if [[ ${DRY_RUN} == "" ]] ; then
     gunzip -c "${FASTA_GZ_FILE}" | python importFasta.py -c "${CHR_REGEX}" -o ${G_ODIR}/sequences
-  fi
-}
-
-# ---------------------
-importModels () {
-  logit "Importing ${ORGANISM} gene models."
-  mkdir -p "${G_ODIR}"
-  if [[ ${DRY_RUN} == "" ]] ; then
-    gunzip -c "${GFF_GZ_FILE}" | \
-    python prepGff3.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" ${MODULES} | \
-    python importGff3.py -p ${ORGANISM} -g ${NAME} -x ${TAXONID} -k ${K} -d ${ODIR}
   fi
 }
 
@@ -143,6 +150,10 @@ do
         # flag to specify that we're doing a dry run
         DRY_RUN="--dry-run"
         ;;
+    --mgi-models)
+        # If set, use MGI's gene models for C57Bl/6J (which include both Ensembl and NCBI models)
+        MGI_MODELS="true"
+        ;;
     *)
         # anything else is an error
         echo "Unrecognized option:" $1
@@ -165,12 +176,14 @@ if [[ ! ${NAME} ]] ; then
   NAME="${ORGANISM}"
 fi
 #
-if [[ ${ORGANISM} == "mus_musculus" ]] ; then
+if [[ ${ORGANISM} == "mus_musculus" && ${MGI_MODELS} == "true" ]] ; then
   GFF_URL="${MGI_URL}"
   MODULES="-m pg_MGI"
+  DOWNLOADER="curl"
 else
   GFF_URL="${ENSEMBL_BASE}/release-${RELEASE}/gff3/${ORGANISM}/*.${RELEASE}.gff3.gz"
   MODULES="-m pg_ensembl,pg_tagEnsemblWithMgi"
+  DOWNLOADER="rsync"
 fi
 #
 if [[ ${DATATYPE} == "" || ${DATATYPE} == "models" ]] ; then
