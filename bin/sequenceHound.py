@@ -15,7 +15,10 @@
 import sys
 import os
 import argparse
-import urllib.request
+try:
+  from urllib.request import urlopen
+except:
+  from urllib import urlopen
 import json
 import string
 import cgi
@@ -83,7 +86,7 @@ def getMineSequence (desc) :
   if not validateUrl(desc['url']):
     return ''
   #
-  fd = urllib.request.urlopen(desc['url'])
+  fd = urlopen(desc['url'])
   data = fd.read().decode('utf-8')
   fd.close()
   #
@@ -506,7 +509,12 @@ genetic_code_t = map(lambda c: c.strip().split(), genetic_code_s.strip().split('
 # create map from codon to residue
 genetic_code = dict([ (r[0],r[1]) for r in genetic_code_t ])
 # create character mapping table for doing complements
-compTable = ''.maketrans('actgACTG', 'tgacTGAC')
+try:
+  compTable = ''.maketrans('actgACTG', 'tgacTGAC')
+except:
+  import string
+  compTable = string.maketrans('actgACTG', 'tgacTGAC')
+
 
 def translate (cds) :
   cds = cds.upper().replace('T', 'U')
