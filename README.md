@@ -1,5 +1,5 @@
 
-# mgv-data
+# mgv-data 
 
 Scripts for building the server-side data directories to serve the Multiple Genome Viewer (MGV).
 
@@ -10,11 +10,11 @@ Most of the data comes from Ensembl, although specific pieces and certain transf
 The scripts are designed to be reconfigurable with little effort for building
 from other genomes available at Ensembl.
 
-##MGI-specific bits
+## MGI-specific bits
 
-##Files
+## Files
 
-###./bin:
+### ./bin:
 * build.sh Top level build script
 * genomes.tsv List of genomes the drives a build. Read by build.sh. Table has 3 columns: genomePath, genomeName,
 and taxonId. genomePath is the name of the organism as it appears in paths at Ensembl, e.g., "mus_musculus_aj".
@@ -24,10 +24,10 @@ genomeName is a label to use for the genome, e.g., "A/J". TaxonId is the NCBI ta
 in the right directory structure.
 * importFasta.py Imports a genome assembly (Fasta) file for one genome, and writes it into the format requires for MGV.
 
-###./downloads
+### ./downloads
 Where compressed GFF3 and Fasta files go when downloaded from Ensembl/MGI.
 
-###./output
+### ./output
 
 Gene models are stored as modified GFF3 as follows:
 * all genes (top level features) for the genome are in a single file
