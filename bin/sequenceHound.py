@@ -28,6 +28,7 @@ import cgitb
 
 # -----------------------------------------
 DATA_DIR="./output"
+DEFAULT_LINE_LEN = 60
 
 # -----------------------------------------
 def chunkString (s, n) :
@@ -51,10 +52,12 @@ def slice (fd, start, length):
 # 
 def getFileSequence (desc) :
   # compose name of the file containing the chromosome sequence
-  gname = desc["genome"]
+  # The directory is the last component of the url:
   gurl = desc["genomeUrl"]
-  gfname = gurl.replace("/"," ").split()[-1]
-  path = "./%s/sequences/%s" % (gfname, desc["chromosome"])
+  gdir = gurl.replace("/"," ").split()[-1]
+  # ASSUMES the cwd is the rootdata directory!
+  path = "./%s/sequences/%s" % (gdir, desc["chromosome"])
+  # 
   fd = os.open(path, os.O_RDONLY)
   #
   starts = desc["start"]
@@ -76,12 +79,11 @@ def getFileSequence (desc) :
 # -----------------------------------------
 def getSequence(desc):
   seq = getFileSequence(desc)
-  doRC = desc.get('reverseComplement', True)
   if desc.get('reverseComplement', False):
     seq = reverseComplement(seq)
   if desc.get('translate', False):
     seq = translate(seq)
-  seq = '\n'.join(chunkString(seq, desc.get('lineLength', 60)))
+  seq = '\n'.join(chunkString(seq, desc.get('lineLength', DEFAULT_LINE_LEN)))
   hdr = desc.get('header', None)
   if hdr is None:
       hdr = defaultHeader(desc)
@@ -99,11 +101,12 @@ def doSequences (descs) :
 def getParameters () :
   form = cgi.FieldStorage()
   params = {
-    "descriptors" : None,
-    "filename": "mgv.download.fa"
+    "descriptors" : None
   }
   if "descriptors" in form:
       params["descriptors"] = json.loads(form["descriptors"].value)
+  else:
+      params["descriptors"] = TESTDATA
   if "filename" in form:
       params["filename"] = form["filename"].value
   return params
@@ -146,6 +149,7 @@ TESTDATA = [{
 
 "header": ">test.0",
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -156,6 +160,7 @@ TESTDATA = [{
 
 "header": ">test.0 line length = 40",
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -167,6 +172,7 @@ TESTDATA = [{
 
 "header": ">test.0 rc",
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -177,6 +183,7 @@ TESTDATA = [{
 
 "header": ">test.0 xl",
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -187,6 +194,7 @@ TESTDATA = [{
 
 "header": ">test.0 rc xl",
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -197,6 +205,7 @@ TESTDATA = [{
 
 "header": ">test.1 pt1",
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": [123456790],
 "length": [100],
@@ -207,6 +216,7 @@ TESTDATA = [{
 
 "header": ">test.1 pt2",
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": 123458101,
 "length": 102,
@@ -217,6 +227,7 @@ TESTDATA = [{
 
 "header": ">test.1 pt3",
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": [123459222],
 "length": [88],
@@ -227,6 +238,7 @@ TESTDATA = [{
 
 "header": ">test.1 concatenated",
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": [123456790, 123458101, 123459222],
 "length": [100, 102, 88],
@@ -235,17 +247,11 @@ TESTDATA = [{
 
 }, {
 
-"header": ">ENSMUSE00000702887 from MouseMine",
-"reverseComplement": False,
-"translate": False,
-"url": "http://www.mousemine.org/mousemine/service/query/results/fasta?query=%3Cquery%20model%3D%22genomic%22%20view%3D%22Exon.primaryIdentifier%22%3E%3Cconstraint%20path%3D%22Exon.primaryIdentifier%22%20op%3D%22ONE%20OF%22%3E%3Cvalue%3EENSMUSE00000702887%3C%2Fvalue%3E%3C%2Fconstraint%3E%3C%2Fquery%3E&view=Exon.gene.canonical.primaryIdentifier"
-
-}, {
-
 "header": ">ENSMUSE00000702887 1:10038217-10038344 from File",
 "reverseComplement": False,
 "translate": False,
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": 10038217,
 "length": 128,
@@ -258,23 +264,18 @@ TESTDATA = [{
 "reverseComplement": False,
 "translate": False,
 "genome": "mus_musculus",
+"genomeUrl" : "mus_musculus",
 "chromosome": "1",
 "start": [10039823,10045076,10047424,10058720,10059824],
 "length": [57,109,103,104,168],
 "reverseComplement": False,
 "translate": False,
 
-}, { 
-
-"header": ">ENSMUST00000134716 from MouseMine",
-"reverseComplement": False,
-"translate": False,
-"url": "http://www.mousemine.org/mousemine/service/query/results/fasta?query=%3Cquery%20model%3D%22genomic%22%20view%3D%22Transcript.primaryIdentifier%22%3E%3Cconstraint%20path%3D%22Transcript.primaryIdentifier%22%20op%3D%22ONE%20OF%22%3E%3Cvalue%3EENSMUST00000134716%3C%2Fvalue%3E%3C%2Fconstraint%3E%3C%2Fquery%3E&view=Transcript.gene.canonical.primaryIdentifier"
-
 }, {
 
 "header": ">ENSMUSE00001282101 1:10034008-10034136(-) from File",
 "genome": "mus_musculus",
+"genomeUrl": "mus_musculus",
 "chromosome": "1",
 "start": 10034008,
 "length": 129,
@@ -283,45 +284,26 @@ TESTDATA = [{
 
 }, {
 
-"header": ">ENSMUSE00001282101 from MouseMine",
-"reverseComplement": False,
-"translate": False,
-"url": "http://www.mousemine.org/mousemine/service/query/results/fasta?query=%3Cquery%20model%3D%22genomic%22%20view%3D%22Exon.primaryIdentifier%22%3E%3Cconstraint%20path%3D%22Exon.primaryIdentifier%22%20op%3D%22ONE%20OF%22%3E%3Cvalue%3EENSMUSE00001282101%3C%2Fvalue%3E%3C%2Fconstraint%3E%3C%2Fquery%3E&view=Exon.gene.canonical.primaryIdentifier"
-
-}, {
-
 "header": ">ENSMUST00000186528 from file",
 "genome": "mus_musculus",
+"genomeUrl": "mus_musculus",
 "chromosome": "1",
 "start": [10027198,10030599,10032339,10033258,10034008,10034929,10037662],
 "length": [54,112,86,66,129,235,280],
 "reverseComplement": True,
 "translate": False,
-"lineLength": 60
-
-}, {
-
-"header": ">ENSMUST00000186528 from MouseMine",
-"reverseComplement": False,
-"translate": False,
-"url": "http://www.mousemine.org/mousemine/service/query/results/fasta?query=%3Cquery%20model%3D%22genomic%22%20view%3D%22Transcript.primaryIdentifier%22%3E%3Cconstraint%20path%3D%22Transcript.primaryIdentifier%22%20op%3D%22ONE%20OF%22%3E%3Cvalue%3EENSMUST00000186528%3C%2Fvalue%3E%3C%2Fconstraint%3E%3C%2Fquery%3E&view=Transcript.gene.canonical.primaryIdentifier"
+"lineLength": 40
 
 }, {
 
 "header": ">ENSMUSP00000000834 from file",
 "genome": "mus_musculus",
+"genomeUrl": "mus_musculus",
 "chromosome": "1",
 "start": [161781576,161782948,161787105,161787944],
 "length": [395,57,46,342],
 "reverseComplement": True,
 "translate": True,
-
-}, {
-
-"header": ">ENSMUSP00000000834 from MouseMine",
-"reverseComplement": False,
-"translate": True,
-"url": "http://www.mousemine.org/mousemine/service/query/results/fasta?query=%3Cquery%20model%3D%22genomic%22%20view%3D%22CDS.primaryIdentifier%22%3E%3Cconstraint%20path%3D%22CDS.primaryIdentifier%22%20op%3D%22ONE%20OF%22%3E%3Cvalue%3EENSMUSP00000000834%3C%2Fvalue%3E%3C%2Fconstraint%3E%3C%2Fquery%3E&view=CDS.gene.canonical.primaryIdentifier"
 
 }]
 

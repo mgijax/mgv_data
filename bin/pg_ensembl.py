@@ -4,6 +4,6 @@
 #
 def feature (f) :
   attrs = f[8]
-  if attrs.get('biotype', None) == 'protein_coding':
+  if f[2] == "gene" and attrs.get('biotype', None) == 'protein_coding':
     f[2] = 'protein_coding_gene'
   return f
