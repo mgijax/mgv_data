@@ -141,9 +141,6 @@ def getOptions () :
 # -----------------------------------------
 def main () :
   params = getOptions()
-  print (params)
-  sys.exit(0)
-
   print ('Content-Type: text/x-fasta')
   if "filename" in params:
      print ('Content-Disposition: attachment; filename = "%s"' % params["filename"])
