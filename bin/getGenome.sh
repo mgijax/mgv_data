@@ -14,34 +14,8 @@
 # ./getGenome.sh -g mus_musculus_aj -n A/J -r 97 -d ./downloads -o ./output
 # ./getGenome.sh -g mus_musculus -n C57BL/6J --mgi-models -r 97 -d ./downloads -o ./output
 #
-# Actions = download, import, or *
-# Parts = models, assembly, or *
 # 
-
 source utils.sh
-
-PYTHON="python2.7"
-
-# downloads directory
-DDIR=""
-# output directory
-ODIR=""
-
-ENSEMBL_BASE="rsync://ftp.ensembl.org/ensembl/pub"
-MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
-MGI_MODELS="false"
-ORGANISM=""
-NAME=""
-TAXONID=""
-RELEASE=""
-DRY_RUN=""
-K="4000000"
-CHR_REGEX="..?"  # matches chromosomes of one or 2 characters
-EXCLUDE_TYPES="biological_region,chromosome,scaffold"
-
-DATATYPE="" # models, assembly. If not specified, run all parts
-PHASE="" # download, import. If not specified, run all phases
-
 
 # ---------------------
 usage () {
@@ -51,29 +25,21 @@ usage () {
 
 # ---------------------
 downloadModels () {
-  if [[ ${DDIR} == "" ]] ; then
-    die "Please specify downloads directory (-d DIR)."
-  fi
   #
-  logit "Downloading ${ORGANISM} gene models."
+  logit "Downloading ${ORGANISM} gene models to ${GFF_GZ_FILE}."
   mkdir -p ${DDIR}
   if [[ ${DOWNLOADER} == "curl" ]] ; then
     curl "$GFF_URL" > "${GFF_GZ_FILE}"
+    checkExit
   else
     rsync -av --progress ${DRY_RUN} "$GFF_URL" "${GFF_GZ_FILE}"
+    checkExit
   fi
-  checkExit "Failed downloading ${GFF_URL} to ${GFF_GZ_FILE}"
 }
 
 # ---------------------
 importModels () {
-  if [[ ${DDIR} == "" ]] ; then
-    die "Please specify downloads directory (-d DIR)."
-  fi
-  if [[ ${ODIR} == "" ]] ; then
-    die "Please specify output directory (-o DIR)."
-  fi
-  logit "Importing ${ORGANISM} gene models."
+  logit "Importing ${ORGANISM} gene models to ${ODIR}."
   mkdir -p "${G_ODIR}"
   if [[ ${DRY_RUN} == "" ]] ; then
     gunzip -c "${GFF_GZ_FILE}" | \
@@ -84,11 +50,8 @@ importModels () {
 
 # ---------------------
 downloadAssembly () {
-  if [[ ${DDIR} == "" ]] ; then
-    die "Please specify downloads directory (-d DIR)."
-  fi
   #
-  logit "Downloading ${ORGANISM} genome assembly."
+  logit "Downloading ${ORGANISM} genome assembly to ${FASTA_GZ_FILE}."
   mkdir -p ${DDIR}
   rsync -av --progress ${DRY_RUN} "$FASTA_URL" "${FASTA_GZ_FILE}"
   checkExit "Failed downloading ${FASTA_URL} to ${FASTA_GZ_FILE}"
@@ -96,18 +59,27 @@ downloadAssembly () {
 
 # ---------------------
 importAssembly () {
-  if [[ ${DDIR} == "" ]] ; then
-    die "Please specify downloads directory (-d DIR)."
-  fi
-  if [[ ${ODIR} == "" ]] ; then
-    die "Please specify output directory (-o DIR)."
-  fi
-  logit "Importing ${ORGANISM} genome assembly."
+  logit "Importing ${ORGANISM} genome assembly to ${G_ODIR}/sequences."
   mkdir -p "${G_ODIR}"
   mkdir -p "${G_ODIR}/sequences"
   if [[ ${DRY_RUN} == "" ]] ; then
     gunzip -c "${FASTA_GZ_FILE}" | ${PYTHON} importFasta.py -c "${CHR_REGEX}" -o ${G_ODIR}/sequences
   fi
+}
+
+# ---------------------
+deploy () {
+  logit "Deploying ${ORGANISM} data to ${G_WDIR}"
+  if [[ ${G_ODIR} != ${G_WDIR} ]] ; then
+    rsync -av ${G_ODIR} ${G_WDIR}
+    checkExit
+  fi
+  rsync -av ./fetch.cgi ${WDIR}
+  checkExit
+  rsync -av ./fetch.py ${WDIR}
+  checkExit
+  chmod ogu+x ${WDIR}/fetch.cgi
+  checkExit
 }
 
 # ---------------------
@@ -128,6 +100,11 @@ do
         # set the output directory
         shift
         ODIR="$1"
+        ;;
+    -w)
+        # set the web deployment directory
+        shift
+        WDIR="$1"
         ;;
     -g)
         # set the organism path name, eg mus_musculus_dba2j
@@ -160,12 +137,12 @@ do
         EXCLUDE_TYPES="$1"
         ;;
     --chr-regex)
-        # which SO types to exclude from GFF3 file
+        # which chromsomes to process.
         shift
         CHR_REGEX="$1"
         ;;
     -p)
-        # which phase to run (download, import)
+        # which phase to run (download, import, deploy)
         shift
         PHASE="$1"
         ;;
@@ -186,10 +163,20 @@ do
 done
 #
 G_ODIR="${ODIR}/${ORGANISM}"
+G_WDIR="${WDIR}/${ORGANISM}"
 GFF_GZ_FILE="${DDIR}/${ORGANISM}.${RELEASE}.gff3.gz"
 FASTA_URL="${ENSEMBL_BASE}/release-${RELEASE}/fasta/${ORGANISM}/dna/*.dna.toplevel.fa.gz"
 FASTA_GZ_FILE="${DDIR}/${ORGANISM}.${RELEASE}.fa.gz"
 #
+if [[ ${DDIR} == "" ]] ; then
+    die "Please specify downloads directory either in config.sh (DDIR) or on command line (-d DIR)."
+fi
+if [[ ${ODIR} == "" ]] ; then
+    die "Please specify output directory either in config.sh (ODIR) or on command line (-o DIR)."
+fi
+if [[ ${WDIR} == "" ]] ; then
+    die "Please specify web deployment directory either in config.sh (WDIR) or on command line (-w DIR)."
+fi
 if [[ !(${ORGANISM} && ${RELEASE}) ]] ; then
   die "Please specify both organism and release."
 fi
@@ -224,4 +211,8 @@ if [[ ${DATATYPE} == "" || ${DATATYPE} == "assembly" ]] ; then
   if [[ ${PHASE} == "" || ${PHASE} == "import" ]] ; then
     importAssembly
   fi
+fi
+#
+if [[ ${PHASE} == "" || ${PHASE} == "deploy" ]] ; then
+    deploy
 fi

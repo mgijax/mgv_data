@@ -100,23 +100,24 @@ def doSequences (descs) :
     sys.stdout.write('\n')
 
 # -----------------------------------------
-def getFormParameters () :
+def getFormParameters (opts) :
   form = cgi.FieldStorage()
-  params = {
-    "descriptors" : None
-  }
   if "descriptors" in form:
-      params["descriptors"] = json.loads(form["descriptors"].value)
-  else:
-      params["descriptors"] = TESTDATA
+      opts.descriptors = json.loads(form["descriptors"].value)
   if "filename" in form:
-      params["filename"] = form["filename"].value
-  return params
+      opts.filename = form["filename"].value
+  return opts
 
 # -----------------------------------------
 def getOptions () :
   parser = argparse.ArgumentParser(description="Get sequence slices from genome assembly sequences.")
   #
+  parser.add_argument(
+    "--descriptors",
+    dest="descriptors",
+    action="append",
+    help="Descriptors.")
+
   parser.add_argument(
     "--dir",
     dest="dataDirectory",
@@ -131,21 +132,22 @@ def getOptions () :
     help="Run as a CGI script.")
 
   opts = parser.parse_args()
-  params = {}
   if opts.doCGI:
-    params = getFormParameters()
-  if not "descriptors" in params:
-    params["descriptors"] = TESTDATA
-  return params
+    opts = getFormParameters(opts)
+  if not opts.descriptors:
+    opts.descriptors = TESTDATA
+  return opts
 
 # -----------------------------------------
 def main () :
-  params = getOptions()
+  opts = getOptions()
+  global DATA_DIR
+  DATA_DIR = opts.dataDirectory
   print ('Content-Type: text/x-fasta')
-  if "filename" in params:
-     print ('Content-Disposition: attachment; filename = "%s"' % params["filename"])
+  if "filename" in opts:
+     print ('Content-Disposition: attachment; filename = "%s"' % opts.filename)
   print ("")
-  doSequences(params.get("descriptors", []))
+  doSequences(opts.descriptors)
 
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------

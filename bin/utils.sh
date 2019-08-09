@@ -1,3 +1,5 @@
+source config.sh
+
 #
 # ---------------------
 # Echos its arguments to the log file. Prepends a datetime stamp.

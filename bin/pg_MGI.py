@@ -1,9 +1,11 @@
 #
-# prepMgiGff.py
+# pg_MGI.py
 #
-# Munges the MGI gff3 file for MGV. For genes and pseudogenes (top level features):
+# Munges a record from the MGI gff3 file for MGV.
+# For genes and pseudogenes (top level features):
 # 1. Moves the so_term_name attribute into column 3
 # 2. Moves the curie attribute to the cID attribute.
+# All other features are unaffected.
 #
 
 def feature(f):

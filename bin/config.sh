@@ -6,11 +6,13 @@ GENOMES_FILE="genomes.tsv"
 DDIR="./downloads"
 # output directory
 ODIR="./output"
-# web directory
+# web directory (can be the same as the output directory)
 WDIR="./output"
 
+# 
 ENSEMBL_BASE="rsync://ftp.ensembl.org/ensembl/pub"
 
+# By default, does not
 MGI_MODELS="false"
 MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 
