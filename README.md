@@ -10,13 +10,19 @@ Most of the data comes from Ensembl, except for C57BL/6J gene models and MGI can
 which come from MGI. To build and deploy this data set:
 1. Install the repo: git clone git@github.com:JoelRichardson/mgv-data.git
 2. Run the build: 
+```bash
 cd mgv-data/bin
 ./build.sh -d path/to/downloads/area -o path/to/output/area
+```
 3. Deploy to a web accessible directory
+```bash
 ./deploy path/to/output/area path/to/deployment/area
+```
 To save space, you can deploy from the same directory you built in (or, more precisely, you can build in the
 same place you're going to deploy from...):
+```bash
 ./deploy path/to/output/area
+```
 
 ## Building with other Ensembl organisms
 Customizing the build should be relatively straightforward as long as the data come from Ensembl.
