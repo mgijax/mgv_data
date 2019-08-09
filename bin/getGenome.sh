@@ -22,6 +22,11 @@ source utils.sh
 
 PYTHON="python2.7"
 
+# downloads directory
+DDIR=""
+# output directory
+ODIR=""
+
 ENSEMBL_BASE="rsync://ftp.ensembl.org/ensembl/pub"
 MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 MGI_MODELS="false"
@@ -29,8 +34,6 @@ ORGANISM=""
 NAME=""
 TAXONID=""
 RELEASE=""
-DDIR="./downloads"
-ODIR="./output"
 DRY_RUN=""
 K="4000000"
 CHR_REGEX="..?"  # matches chromosomes of one or 2 characters
@@ -48,9 +51,12 @@ usage () {
 
 # ---------------------
 downloadModels () {
+  if [[ ${DDIR} == "" ]] ; then
+    die "Please specify downloads directory (-d DIR)."
+  fi
   #
   logit "Downloading ${ORGANISM} gene models."
-  mkdir -p ${G_DDIR}
+  mkdir -p ${DDIR}
   if [[ ${DOWNLOADER} == "curl" ]] ; then
     curl "$GFF_URL" > "${GFF_GZ_FILE}"
   else
@@ -61,6 +67,12 @@ downloadModels () {
 
 # ---------------------
 importModels () {
+  if [[ ${DDIR} == "" ]] ; then
+    die "Please specify downloads directory (-d DIR)."
+  fi
+  if [[ ${ODIR} == "" ]] ; then
+    die "Please specify output directory (-o DIR)."
+  fi
   logit "Importing ${ORGANISM} gene models."
   mkdir -p "${G_ODIR}"
   if [[ ${DRY_RUN} == "" ]] ; then
@@ -70,18 +82,26 @@ importModels () {
   fi
 }
 
-
 # ---------------------
 downloadAssembly () {
+  if [[ ${DDIR} == "" ]] ; then
+    die "Please specify downloads directory (-d DIR)."
+  fi
   #
   logit "Downloading ${ORGANISM} genome assembly."
-  mkdir -p ${F_DDIR}
+  mkdir -p ${DDIR}
   rsync -av --progress ${DRY_RUN} "$FASTA_URL" "${FASTA_GZ_FILE}"
   checkExit "Failed downloading ${FASTA_URL} to ${FASTA_GZ_FILE}"
 }
 
 # ---------------------
 importAssembly () {
+  if [[ ${DDIR} == "" ]] ; then
+    die "Please specify downloads directory (-d DIR)."
+  fi
+  if [[ ${ODIR} == "" ]] ; then
+    die "Please specify output directory (-o DIR)."
+  fi
   logit "Importing ${ORGANISM} genome assembly."
   mkdir -p "${G_ODIR}"
   mkdir -p "${G_ODIR}/sequences"
@@ -165,12 +185,10 @@ do
     shift
 done
 #
-G_DDIR="${DDIR}"
-F_DDIR="${DDIR}"
 G_ODIR="${ODIR}/${ORGANISM}"
-GFF_GZ_FILE="${G_DDIR}/${ORGANISM}.${RELEASE}.gff3.gz"
+GFF_GZ_FILE="${DDIR}/${ORGANISM}.${RELEASE}.gff3.gz"
 FASTA_URL="${ENSEMBL_BASE}/release-${RELEASE}/fasta/${ORGANISM}/dna/*.dna.toplevel.fa.gz"
-FASTA_GZ_FILE="${F_DDIR}/${ORGANISM}.${RELEASE}.fa.gz"
+FASTA_GZ_FILE="${DDIR}/${ORGANISM}.${RELEASE}.fa.gz"
 #
 if [[ !(${ORGANISM} && ${RELEASE}) ]] ; then
   die "Please specify both organism and release."
@@ -188,6 +206,7 @@ else
   MODULES="-m pg_ensembl,pg_tagEnsemblWithMgi"
   DOWNLOADER="rsync"
 fi
+
 #
 if [[ ${DATATYPE} == "" || ${DATATYPE} == "models" ]] ; then
   if [[ ${PHASE} == "" || ${PHASE} == "download" ]] ; then

@@ -5,9 +5,6 @@ source utils.sh
 GENOMES="genomes.tsv"
 RELEASE=97
 
-DDIR="./downloads"
-ODIR="./output"
-
 while read -u 10 p; do
   IFS='   ' read -r -a array <<< "${p}"
   spath="${array[0]}" 

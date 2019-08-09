@@ -1,16 +1,18 @@
 #
-# sequenceHound.py
+# fetch.py
 #
-# CGI for retrieving sequences in fasta format from multiple InterMine source and returniing
-# the result in a single response. 
+# CGI for retrieving an arbitrary set of sequences from the available genomes.
+#
 # Input is a list of descriptors, one per sequence.
-# Response is a Fasta file.
+# Each descriptor specifies a genome, a chromosome, and one or more start/length pairs.
 #
-# There are two ways to specify a sequence: as a slice of a chromosome, and as the sequence
-# of a database object (like a CDS).
-# To specify a slice, provide a chromosome, a start coordinate (1-based) and a length. 
-# To specify multiple slices provide a list of start coordinates and a corresponding list of lengths;
-# the individual slices are concatenated to form a single sequence.
+# When multiple start/length pairs are specified, the pieces are concatenated.
+# A descriptor may specify that the sequence should be reverse complemented.
+# A descriptor may specify that the sequence should be translated.
+# (The order of things is: get the pieces, concatenate, reverse complement, translate.)
+# A descriptor specifies the header to be returned with the sequence.
+#
+# Response is a Fasta file.
 #
 # -----------------------------------------
 import sys
@@ -27,8 +29,8 @@ import cgitb
 #cgitb.enable()
 
 # -----------------------------------------
-DATA_DIR="./output"
 DEFAULT_LINE_LEN = 60
+DATA_DIR="."
 
 # -----------------------------------------
 def chunkString (s, n) :
@@ -50,13 +52,13 @@ def slice (fd, start, length):
 
 # -----------------------------------------
 # 
-def getFileSequence (desc) :
+def getSequenceFromFile (desc) :
   # compose name of the file containing the chromosome sequence
   # The directory is the last component of the url:
   gurl = desc["genomeUrl"]
   gdir = gurl.replace("/"," ").split()[-1]
   # ASSUMES the cwd is the rootdata directory!
-  path = "./%s/sequences/%s" % (gdir, desc["chromosome"])
+  path = "%s/%s/sequences/%s" % (DATA_DIR, gdir, desc["chromosome"])
   # 
   fd = os.open(path, os.O_RDONLY)
   #
@@ -78,7 +80,7 @@ def getFileSequence (desc) :
 
 # -----------------------------------------
 def getSequence(desc):
-  seq = getFileSequence(desc)
+  seq = getSequenceFromFile(desc)
   if desc.get('reverseComplement', False):
     seq = reverseComplement(seq)
   if desc.get('translate', False):
@@ -98,7 +100,7 @@ def doSequences (descs) :
     sys.stdout.write('\n')
 
 # -----------------------------------------
-def getParameters () :
+def getFormParameters () :
   form = cgi.FieldStorage()
   params = {
     "descriptors" : None
@@ -112,29 +114,36 @@ def getParameters () :
   return params
 
 # -----------------------------------------
-def getCmdLineOptions () :
+def getOptions () :
   parser = argparse.ArgumentParser(description="Get sequence slices from genome assembly sequences.")
   #
   parser.add_argument(
-    "-T",
-    dest="doTests",
-    default=False,
+    "--dir",
+    dest="dataDirectory",
+    default=".",
+    help="Path to data directory.")
+
+  parser.add_argument(
+    "--cgi",
+    dest="doCGI",
     action="store_true",
-    help="Run with test inputs.")
-  clopts = parser.parse_args()
+    default=False,
+    help="Run as a CGI script.")
+
+  opts = parser.parse_args()
   params = {}
-  if clopts.doTests:
+  if opts.doCGI:
+    params = getFormParameters()
+  if not "descriptors" in params:
     params["descriptors"] = TESTDATA
-    params["filename"] = "testResults.fa"
   return params
 
 # -----------------------------------------
 def main () :
-  doCGI = len(sys.argv) == 2 and sys.argv[1] == "--cgi"
-  if doCGI:
-      params = getParameters()
-  else:
-      params = getCmdLineOptions()
+  params = getOptions()
+  print (params)
+  sys.exit(0)
+
   print ('Content-Type: text/x-fasta')
   if "filename" in params:
      print ('Content-Disposition: attachment; filename = "%s"' % params["filename"])

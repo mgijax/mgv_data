@@ -1,0 +1,4 @@
+*.pyc
+bin/downloads/*
+bin/output/*
+*.gz
