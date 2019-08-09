@@ -8,7 +8,11 @@ This repo comes preconfigured to build the data set being served by MGV at MGI.
 This consists of the genome assemblies and gene model annotations for 19 inbred strains of mice.
 Most of the data comes from Ensembl, except for C57BL/6J gene models and MGI canonical ids and nomenclature,
 which come from MGI. To build and deploy this data set:
-1. Install the repo: git clone git@github.com:JoelRichardson/mgv-data.git
+1. Install the repo: 
+```bash
+git clone git@github.com:JoelRichardson/mgv-data.git
+```
+1. Edit config.sh for your environment. You'll probably want to set data directories
 2. Run the build: 
 ```bash
 cd mgv-data/bin
