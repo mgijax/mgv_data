@@ -1,7 +1,36 @@
 
 # mgv-data 
 
-Scripts for building the server-side data to serve the Multiple Genome Viewer (MGV).
+Scripts for building the server-side data for the Multiple Genome Viewer (MGV).
+
+## To build the mouse data set
+This repo comes preconfigured to build the data set being served by MGV at MGI.
+This consists of the genome assemblies and gene model annotations for 19 inbred strains of mice.
+Most of the data comes from Ensembl, except for C57BL/6J gene models and MGI canonical ids and nomenclature,
+which come from MGI. To build and deploy this data set:
+1. Install the repo: git clone git@github.com:JoelRichardson/mgv-data.git
+2. Run the build: 
+cd mgv-data/bin
+./build.sh -d path/to/downloads/area -o path/to/output/area
+3. Deploy to a web accessible directory
+./deploy path/to/output/area path/to/deployment/area
+To save space, you can deploy from the same directory you built in (or, more precisely, you can build in the
+same place you're going to deploy from...):
+./deploy path/to/output/area
+
+## Building with other Ensembl organisms
+Customizing the build should be relatively straightforward as long as the data come from Ensembl.
+
+1. Edit genomes.tsv. This file drives the build process. Each line has 4 fields:
+ - Ensembl build number
+ - Taxon id
+ - Organism name as used in paths at Ensembl (eg, mus_musculus_aj)
+ - Organism name as printed for users (eg, A/J)
+2. 
+
+## Building with non-Ensembl data
+
+## 
 
 The data backend for MGV is organized by genome, and comprises gene models and genome assemblies.
 The default top-level script (build.sh) builds a data set for MGV comprising the 19 sequenced and 
