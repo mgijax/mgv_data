@@ -5,21 +5,11 @@
 # Downloads genome data (gene model annotations and genome assemblies) from Ensembl
 # for a specified Ensembl release and organism. Imports into MGV data files. 
 #
-# Quirk: Want to make an exception in getting the gene model annotations for C57BL/6J
-# (== "mus_musculus" at Ensembl). In that case, want to use the ones from MGI.
-# You have to explicitly pass the --mgi-models command line option for this to happen.
-# 
-# Example:
-#
-# ./getGenome.sh -g mus_musculus_aj -n A/J -r 97 -d ./downloads -o ./output
-# ./getGenome.sh -g mus_musculus -n C57BL/6J --mgi-models -r 97 -d ./downloads -o ./output
-#
-# 
 source utils.sh
 
 # ---------------------
 usage () {
-  echo "Usage: bash ${SCRIPT} [-g organism-path][-n organism-name][-r release][-d downloads-dir][-o output-dir][-D][-t PART][-p PHASE]"
+  echo "Usage: bash ${SCRIPT} [-g organism-path][-n organism-name][-r release][-t PART][-p PHASE]"
   exit -1
 }
 
@@ -28,13 +18,8 @@ downloadModels () {
   #
   logit "Downloading ${ORGANISM} gene models to ${GFF_GZ_FILE}."
   mkdir -p ${DDIR}
-  if [[ ${DOWNLOADER} == "curl" ]] ; then
-    curl "$GFF_URL" > "${GFF_GZ_FILE}"
-    checkExit
-  else
-    rsync -av --progress ${DRY_RUN} "$GFF_URL" "${GFF_GZ_FILE}"
-    checkExit
-  fi
+  rsync -av --progress ${DRY_RUN} "$GFF_URL" "${GFF_GZ_FILE}"
+  checkExit
 }
 
 # ---------------------
@@ -68,22 +53,8 @@ importAssembly () {
 }
 
 # ---------------------
-deploy () {
-  logit "Deploying ${ORGANISM} data to ${G_WDIR}"
-  if [[ ${G_ODIR} != ${G_WDIR} ]] ; then
-    rsync -av ${G_ODIR} ${G_WDIR}
-    checkExit
-  fi
-  rsync -av ./fetch.cgi ${WDIR}
-  checkExit
-  rsync -av ./fetch.py ${WDIR}
-  checkExit
-  chmod ogu+x ${WDIR}/fetch.cgi
-  checkExit
-}
-
-# ---------------------
 SCRIPT="$0"
+MODULES=""
 until [ -z "$1" ]  # Until all parameters used up . . .
 do
     case "$1" in
@@ -91,20 +62,10 @@ do
         # print help and exit
         usage
         ;;
-    -d)
-        # set the downloads directory
+    -m)
+        # set the organism path name, eg mus_musculus_dba2j
         shift
-        DDIR="$1"
-        ;;
-    -o)
-        # set the output directory
-        shift
-        ODIR="$1"
-        ;;
-    -w)
-        # set the web deployment directory
-        shift
-        WDIR="$1"
+        MODULES="-m $1"
         ;;
     -g)
         # set the organism path name, eg mus_musculus_dba2j
@@ -142,17 +103,13 @@ do
         CHR_REGEX="$1"
         ;;
     -p)
-        # which phase to run (download, import, deploy)
+        # which phase to run (download, import)
         shift
         PHASE="$1"
         ;;
     -D)
         # flag to specify that we're doing a dry run
         DRY_RUN="--dry-run"
-        ;;
-    --mgi-models)
-        # If set, use MGI's gene models for C57Bl/6J (which include both Ensembl and NCBI models)
-        MGI_MODELS="true"
         ;;
     *)
         # anything else is an error
@@ -169,13 +126,10 @@ FASTA_URL="${ENSEMBL_BASE}/release-${RELEASE}/fasta/${ORGANISM}/dna/*.dna.toplev
 FASTA_GZ_FILE="${DDIR}/${ORGANISM}.${RELEASE}.fa.gz"
 #
 if [[ ${DDIR} == "" ]] ; then
-    die "Please specify downloads directory either in config.sh (DDIR) or on command line (-d DIR)."
+    die "Please specify downloads directory in config.sh (DDIR)."
 fi
 if [[ ${ODIR} == "" ]] ; then
-    die "Please specify output directory either in config.sh (ODIR) or on command line (-o DIR)."
-fi
-if [[ ${WDIR} == "" ]] ; then
-    die "Please specify web deployment directory either in config.sh (WDIR) or on command line (-w DIR)."
+    die "Please specify output directory in config.sh (ODIR)."
 fi
 if [[ !(${ORGANISM} && ${RELEASE}) ]] ; then
   die "Please specify both organism and release."
@@ -183,16 +137,9 @@ fi
 if [[ ! ${NAME} ]] ; then
   NAME="${ORGANISM}"
 fi
-#
-if [[ ${ORGANISM} == "mus_musculus" && ${MGI_MODELS} == "true" ]] ; then
-  GFF_URL="${MGI_URL}"
-  MODULES="-m pg_MGI"
-  DOWNLOADER="curl"
-else
-  GFF_URL="${ENSEMBL_BASE}/release-${RELEASE}/gff3/${ORGANISM}/*.${RELEASE}.gff3.gz"
-  MODULES="-m pg_ensembl,pg_tagEnsemblWithMgi"
-  DOWNLOADER="rsync"
-fi
+GFF_URL="${ENSEMBL_BASE}/release-${RELEASE}/gff3/${ORGANISM}/*.${RELEASE}.gff3.gz"
+MODULES="-m pg_ensembl,pg_tagEnsemblWithMgi"
+DOWNLOADER="rsync"
 
 #
 if [[ ${DATATYPE} == "" || ${DATATYPE} == "models" ]] ; then
@@ -211,8 +158,4 @@ if [[ ${DATATYPE} == "" || ${DATATYPE} == "assembly" ]] ; then
   if [[ ${PHASE} == "" || ${PHASE} == "import" ]] ; then
     importAssembly
   fi
-fi
-#
-if [[ ${PHASE} == "" || ${PHASE} == "deploy" ]] ; then
-    deploy
 fi
