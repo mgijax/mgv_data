@@ -301,10 +301,10 @@ def getArgs (cmdLineTokens=None) :
     help='Output directory.')
   parser.add_argument('-k','--chunkSize',
     type=int,
-    metavar='K',
+    metavar='CHUNKSIZE',
     dest='chunkSize',
     default=1,
-    help='Transcript file chunk size. 0 = everything in one file (no chunking); 1 = one chunk per chromosome; >1 = chunk by chromosome and by start position / chunkSize.')
+    help='Transcript file chunk size, in bases. 0 = everything in one file (no chunking); 1 = one chunk per chromosome; >1 = chunk by chromosome and by start position / chunkSize.')
   parser.add_argument('--sample',
     action='store_true',
     dest='sample',
