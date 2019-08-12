@@ -95,22 +95,15 @@ class Gff3Importer:
     #
     self.genomeInfo['tracks'] = [{
       'name': 'genes',
-      'reader' : {
-        'type' : 'ChunkedGff3FileReader',
-        'chunkSize' : 0
-      }
+      'type' : 'ChunkedGff3',
+      'chunkSize' : 0
     }, {
       'name': 'transcripts',
-      'reader' : {
-        'type' : 'ChunkedGff3FileReader',
-        'chunkSize': self.opts.chunkSize
-      }
+      'type' : 'ChunkedGff3',
+      'chunkSize': self.opts.chunkSize
     }, {
       'name': 'sequences',
-      'reader' : {
-        'type' : 'MouseMineSequenceReader',
-        'url' : 'http://www.mousemine.org/mousemine/service'
-      }
+      'type' : 'PlainSequence'
     }]
     self.outputDir = os.path.join(self.opts.outputDir, self.opts.genomePath)
     
