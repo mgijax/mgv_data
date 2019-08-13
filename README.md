@@ -1,74 +1,70 @@
 
 # mgv-data 
 
-Scripts for building the server-side data for the Multiple Genome Viewer (MGV).
+Scripts for building and serving data for the Multiple Genome Viewer (MGV).
 
-## To build the mouse data set
-This repo comes preconfigured to build the data set being served by MGV at MGI.
-This consists of the genome assemblies and gene model annotations for 19 inbred strains of mice.
+## Building the default data set
+This repo comes preconfigured to build the data set being served by MGV at MGI,
+which consists of the genome assemblies and gene model annotations for 19 inbred strains of mice.
 Most of the data comes from Ensembl, except for C57BL/6J gene models and MGI canonical ids and nomenclature,
-which come from MGI. To build and deploy this data set:
-1. Install the repo: 
+which come from MGI. To build this data set:
+1. Install the repo and cd to the bin directory. 
 ```bash
 git clone git@github.com:JoelRichardson/mgv-data.git
-```
-1. Edit config.sh for your environment. You'll probably want to set data directories
-2. Run the build: 
-```bash
 cd mgv-data/bin
-./build.sh -d path/to/downloads/area -o path/to/output/area
 ```
-3. Deploy to a web accessible directory
-```bash
-./deploy path/to/output/area path/to/deployment/area
+2. Edit config.sh for your environment. You'll probably want to set data directories for where files are downloaded (DDIR), built into (ODIR) and served from (WDIR).
+3. Ensure things are executable:
+ ```bash
+chmod u+x build.sh getGenome deploy.sh
 ```
-To save space, you can deploy from the same directory you built in (or, more precisely, you can build in the
-same place you're going to deploy from...):
-```bash
-./deploy path/to/output/area
+4. Run the build: 
+ ```bash
+./build.sh
 ```
 
-## Building with other Ensembl organisms
-Customizing the build should be relatively straightforward as long as the data come from Ensembl.
+## Serving data to MGV
 
-1. Edit genomes.tsv. This file drives the build process. Each line has 4 fields:
- - Ensembl build number
- - Taxon id
- - Organism name as used in paths at Ensembl (eg, mus_musculus_aj)
- - Organism name as printed for users (eg, A/J)
-2. 
+The data that serves MGV is a directory hierarchy of static files, organized by genome.
+The data comprise genome features, stored as (modified) GFF3 and served as static files, and genome assemblies, stored as plain strings and served by a CGI script.
 
-## Building with non-Ensembl data
+1. Run the deployment script. The deployment directory is configured in config.sh. 
+ ```bash
+./deploy.sh
+```
+Rsync is used to copy new/changed files from the build area to the deployment area. 
+You can save space and time by building directly into the deployment area (set both ODIR and WDIR to the same value).
 
-## 
+The CGI is a Python script, fetch.py, which is invoked by a shell wrapper, fetch.cgi. The deploy script copies both pieces to the deployment directory and makes the wrapper executable. You may have to adjust this step, depending on your local environment. 
 
-The data backend for MGV is organized by genome, and comprises gene models and genome assemblies.
-The default top-level script (build.sh) builds a data set for MGV comprising the 19 sequenced and 
-annotated inbred strains.
-Most of the data comes from Ensembl, although specific pieces and certain transformations are MGI specific.
-The scripts are designed to be reconfigurable with little effort for building
-from other genomes available at Ensembl.
+## Customizing a build
 
-## Mouse-specific bits
-For each of the mouse strains, the build script retrieves the genome assembly (.fa) and genome annotation 
-(.gff3) files from Ensembl.
-One exception is the genome annotation for the C57BL/6J strain, which comes from MGI. The MGI file
-combines gene model predictions from multiple sources, including Ensembl.
-In addition, all genes from all strains are tagged with their equivalent ("canonical") MGI id.
+If you're using data from Ensembl:
+1. Edit build.sh to call getGenome.sh for the organisms you want. Optionally change the default version number (in config.sh).
+2. If you need to do custom translations on the GFF3, supply/write the appropriate Python modules, and specify them to getGenome.sh (see -m command line option).
 
-## Files
+The existing build script (build.sh) and custom translations (pg_MGI.py, pg_Ensembl.py, and pg_tagEnsemblWithMgi.py) should provide sufficient examples to go by.
+
+Using data NOT from Ensembl:
+
+The data files need not come from Ensembl, provided they are in the same format as those provided by Ensembl.
+1. Use the --gff-url argument to directly specify the location of the compressed GFF3 (.gff3.gz) file containing the genome annotations.
+2. Use the --fasta-url argument to directly specify the location of the compressed Fasta (.fa.gz) file containing the genome assembly.
+
+## Directory and file structure
 
 ### ./bin:
 * build.sh Top level build script
-* genomes.tsv List of genomes the drives a build. Read by build.sh. Table has 3 columns: genomePath, genomeName,
-and taxonId. genomePath is the name of the organism as it appears in paths at Ensembl, e.g., "mus_musculus_aj".
-genomeName is a label to use for the genome, e.g., "A/J". TaxonId is the NCBI taxon id for the organism, e.g., "10090"
 * getGenome.sh Gets genome data from Ensembl and imports into MGV data backend.
 * importGff3.py Imports a genome annotation (GFF3) file for one genome, splits it up into chunks, and stores it 
 in the right directory structure.
 * importFasta.py Imports a genome assembly (Fasta) file for one genome, and writes it into the format requires for MGV.
-* sequenceHound.py A CGI that extracts specified sequences from the assembly files. Called by the SequenceCart download
+* fetch.py A CGI that extracts specified sequences from the assembly files. Called by the SequenceCart download
 function in MGV.
+* fetch.cgi A shell wrapper that invokes fetch.py
+* pg_MGI.py Custom translator appied to the MGI.gff3 file. Sets the cID attribute.
+* pg_ensembl.py Custom translator for Ensembl. Sets column 3 to "protein_coding_gene" when col 3 says "gene" and col 9 biotype says "protein_coding".
+* pg_tagEnsemblWithMgi.py Custom translator applied Ensembl gene records. Finds corresponding MGI gene and tags record with the MGI id and symbol.
 
 ### ./downloads
 Where compressed GFF3 and Fasta files go when downloaded from Ensembl/MGI.
