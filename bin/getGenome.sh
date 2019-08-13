@@ -15,6 +15,68 @@ usage () {
 }
 
 # ---------------------
+help () {
+  cat << pleh
+
+  This script adds a genome (usually, one from Ensembl) to the data set served to MGV.
+  Required command line options specify the genome name, printable label, and taxon id.
+  Other options may control what part(s) of the process to run, which chromosomes to import, and other aspects.
+  Adding a genome adds two data types, genome assemblies (Fasta) and genome annotations (GFF3),
+  and consists of two phases, download and import.
+  By default, both phases are run for both data types, but either or both can be specified
+  via command line options -t and -p.
+
+  Options:
+      -g GENOME	Name of the genome used in paths, e.g., "mus_musculus_dba2j". Required.
+
+      -G GENOME	If this option is specified and is not the same as the -g GENOME, exits quietly
+
+      -n LABEL	Printable label for the genome, e.g., "DBA/2J"
+
+      -x TAXON	NBCI taxon ID. Required.
+
+      --gff-url URL	If specified, downloads the GFF3 file from here instead of Ensembl.
+
+      --fasta-url URL	If specified, downloads the genome assembly file from here instead of Ensembl.
+
+      -r RELEASE	If specified, overrides ENSEMBL_RELEASE specified in config.sh
+
+      -t TYPE		One of: models, assembly. If specified, only processes this data type. By
+      			default, processes both types.
+
+      -p PHASE		One of: download, import. If specified, only runs this phase. By default,
+      			runs both phases.
+
+      --exclude-types SOTYPES	Comma-separated list of SO types to exclude doing GFF3 filtering. If specified,
+      			GFF3 records with any of the specified values in the type column are filtered out.
+			Overrides the values value set in config.sh.
+
+      --chr-regex REGEX	A regular expression specifying which chromosomes to include. Applies in both 
+      			GFF3 and Fasta import phases. During GFF3 import, the regex is matched against 
+			the first column. During Fasta import, the regex is appied to the ID in the
+			sequence header line. Overrides the value set in config.sh.
+
+      --chunk-size SIZE	Specifies the approximate size (in bp) to use to split gene model structure data.
+      			Overrides the value set in config.sh.
+
+      -m MODULES	If specified, includes these processing filters during import of GFF3.
+      			Provides a hook for doing custom transformations and filtering.
+			Argument is a comma-separated list of module names (no .py extension).
+			These must exist in the same directory as the import script. Each
+			must define a function named "feature" which takes a feature as argument
+			and returns the feature (possibly modified), or None. If None is returned,
+			the feature is omitted/skipped. The feature is a list of 9 items indexed
+			from 0 to 8. The last item (the attributes column) is a dict from attr name
+			to value, which is a string or list of strings.
+
+      --force		The import phase uses file modification times to suppress the import if the
+      			download file has not changed. Specifying --force on the command line will
+			force the import to happen regardless of modification dates.
+
+pleh
+}
+
+# ---------------------
 downloadModels () {
   #
   logit "Downloading ${GFF_URL} to ${GFF_GZ_FILE}."
@@ -76,7 +138,8 @@ do
     case "$1" in
     --help|-h)
         # print help and exit
-        usage
+        help
+	exit 0 
         ;;
     -g)
         # set the organism path name, eg mus_musculus_dba2j
@@ -123,7 +186,7 @@ do
         shift
         MODULES="-m $1"
         ;;
-    --exclude)
+    --exclude-types)
         # which SO types to exclude from GFF3 file
         shift
         EXCLUDE_TYPES="$1"
@@ -132,6 +195,11 @@ do
         # which chromsomes to process.
         shift
         CHR_REGEX="$1"
+        ;;
+    --chunk-size)
+        # chunk size for splitting up transcript files
+        shift
+        CHUNK_SIZE="$1"
         ;;
     --force)
         # which chromsomes to process.
@@ -144,7 +212,7 @@ do
         ;;
     -D)
         # flag to specify that we're doing a dry run
-        DRY_RUN="--dry-run"
+        DRY_RUN="true"
         ;;
     *)
         # anything else is an error

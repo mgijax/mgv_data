@@ -12,8 +12,10 @@ ENSEMBL_RELEASE="97"
 # Regular expression for matching chromosomes
 # Default matches chromosomes of one or 2 characters
 # (good for screening out scaffolds)
+# can override with --chr-regex command line option.
 CHR_REGEX="..?" 
 # feature types (column 3 values) to exclude
+# can override with --exclude-types command line option.
 EXCLUDE_TYPES="biological_region,chromosome,scaffold"
 # transcript file chunk size
 CHUNK_SIZE="4000000"

@@ -3,6 +3,16 @@
 # build.sh
 #
 # Top level build script, specific for building the annotated mouse strains.
+# To build everything:
+#	$ ./build.sh
+
+# Any command line are pass along to the calls to getGenome. Examples:
+#
+# Only build for the A/J strain:
+#	$ ./build.sh -G mus_musculus_aj
+# 
+# Only run the GFF3 import phase:
+#	$ ./build.sh -t models -p import
 #
 
 source config.sh
