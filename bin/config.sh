@@ -7,6 +7,8 @@ ODIR="./output"
 WDIR="./output"
 # first part of url for downloading Ensembl genomes data
 ENSEMBL_BASE="rsync://ftp.ensembl.org/ensembl/pub"
+# default release number to use. Can override with -r command line option.
+ENSEMBL_RELEASE="97"
 # Regular expression for matching chromosomes
 # Default matches chromosomes of one or 2 characters
 # (good for screening out scaffolds)

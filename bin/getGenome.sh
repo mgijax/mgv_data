@@ -70,6 +70,7 @@ importAssembly () {
 # ---------------------
 SCRIPT="$0"
 MODULES=""
+RELEASE="${ENSEMBL_RELEASE}"
 until [ -z "$1" ]  # Until all parameters used up . . .
 do
     case "$1" in
