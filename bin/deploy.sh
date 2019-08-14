@@ -19,16 +19,19 @@ if [[ ${ODIR} != ${WDIR} ]] ; then
 else
     logit "Skipping rsync because output and deployment directories are the same."
 fi
-# rsync the scripts
-logit "Copying CGI scripts."
-rsync -av ./fetch.cgi ${WDIR}
-checkExit
-rsync -av ./fetch.py ${WDIR}
+# copy the scripts
+logit "Generating CGI wrapper"
+cat > ${CDIR}/fetch.cgi << EOF
+#!/usr/bin/env bash
+${PYTHON} ${CDIR}/fetch.py --cgi --dir ${WDIR}
+EOF
 checkExit
 logit "Setting execute permission."
-chmod ogu+x ${WDIR}/fetch.cgi
+chmod ogu+x ${CDIR}/fetch.cgi
 checkExit
-
+#
+rsync -av ./fetch.py ${CDIR}
+checkExit
 # build the root index.json file which names each of the available subdirectories.
 logit "Building ${WDIR}/index.json"
 cd ${WDIR}

@@ -1,10 +1,14 @@
 
+# discover the installation directory (don't change this)
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # downloads directory
-DDIR="./downloads"
+DDIR="${DIR}/downloads"
 # output directory
-ODIR="./output"
-# web directory (can be the same as the output directory)
-WDIR="./output"
+ODIR="${DIR}/output"
+# web directory By default, is the same as the build directory.
+WDIR="${ODIR}"
+# cgi script directory. By default, is the same as the web data directory.
+CDIR="${WDIR}"
 # first part of url for downloading Ensembl genomes data
 ENSEMBL_BASE="rsync://ftp.ensembl.org/ensembl/pub"
 # default release number to use. Can override with -r command line option.
@@ -20,5 +24,4 @@ EXCLUDE_TYPES="biological_region,chromosome,scaffold"
 # transcript file chunk size
 CHUNK_SIZE="4000000"
 # Python executable
-PYTHON="python2.7"
-
+PYTHON="python"
