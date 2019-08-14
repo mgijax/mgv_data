@@ -18,7 +18,7 @@
 source config.sh
 source utils.sh
 
-MODULES="pg_ensembl,pg_stripPrefix,pg_tagEnsemblWithMgi"
+MODULES="ensembl,stripPrefix,tagEnsemblWithMgi"
 MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_129s1svimj -n 129S1/SvImJ $*
@@ -29,7 +29,7 @@ MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 # C57BL/6J is a little different.
 # Get the GFF3 from MGI, and use different preprocessing.
 # Assembly still comes from Ensembl.
-./getGenome.sh -x 10090 -m pg_MGI     -g mus_musculus            -n C57BL/6J --gff-url "${MGI_URL}" $*
+./getGenome.sh -x 10090 -m MGI        -g mus_musculus            -n C57BL/6J --gff-url "${MGI_URL}" $*
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_c57bl6nj   -n C57BL/6NJ $*
 ./getGenome.sh -x 10089 -m ${MODULES} -g mus_caroli              -n CAROLI/EiJ $*
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_casteij    -n CAST/EiJ $*
@@ -45,6 +45,6 @@ MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_wsbeij     -n WSB/EiJ $*
 
 #
-./getGenome.sh -x 9096 -m pg_ensembl,pg_stripPrefix -g homo_sapiens             -n H.sapiens $*
-./getGenome.sh -x 10116 -m pg_ensembl,pg_stripPrefix -g rattus_norvegicus       -n R.norvegicus $*
+./getGenome.sh -x 9096  -m ensembl,stripPrefix -g homo_sapiens            -n H.sapiens $*
+./getGenome.sh -x 10116 -m ensembl,stripPrefix -g rattus_norvegicus       -n R.norvegicus $*
 

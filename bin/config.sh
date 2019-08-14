@@ -24,4 +24,4 @@ EXCLUDE_TYPES="biological_region,chromosome,scaffold"
 # transcript file chunk size
 CHUNK_SIZE="4000000"
 # Python executable
-PYTHON="python"
+PYTHON="python2.7"
