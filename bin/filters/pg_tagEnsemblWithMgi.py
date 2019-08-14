@@ -19,18 +19,8 @@ for r in urlopen(url):
     rr = r.decode('utf-8').strip().split()
     eid2mgi[rr[2]] = rr
 
-def stripPrefix(eid) :
-    parts = eid.split(':', 1)
-    if parts[0] in ["gene","transcript","CDS"]:
-	return parts[1]
-    return eid
-
 def feature(f):
     attrs = f[8]
-    if 'ID' in attrs:
-        attrs['ID'] = stripPrefix(attrs['ID'])
-    if 'Parent' in attrs:
-        attrs['Parent'] = map(stripPrefix, attrs['Parent'])
     if "projection_parent_gene" in attrs:
         eid = attrs['projection_parent_gene'].split(".")[0]
         mgi = eid2mgi.get(eid, None)

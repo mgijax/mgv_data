@@ -119,10 +119,11 @@ downloadAssembly () {
 importAssembly () {
   logit "Importing ${ORGANISM} genome assembly to ${G_ODIR}/sequences."
   mkdir -p "${G_ODIR}"
-  mkdir -p "${G_ODIR}/sequences"
   if [[ ${DRY_RUN} == "" ]] ; then
-    if [[ ("${FORCE}" != "") || ("${GFF_GZ_FILE}" -nt "${ODIR}/${ORGANISM}/index.json") ]] ; then
+    if [[ ("${FORCE}" != "") || ("${GFF_GZ_FILE}" -nt "${G_ODIR}/sequences") ]] ; then
+	mkdir -p "${G_ODIR}/sequences"
 	gunzip -c "${FASTA_GZ_FILE}" | ${PYTHON} importFasta.py -c "${CHR_REGEX}" -o ${G_ODIR}/sequences
+	touch "${G_ODIR}/sequences"
     else
         logit "Skipped import because file has not been updated. Use --force to override."
     fi

@@ -18,7 +18,7 @@
 source config.sh
 source utils.sh
 
-MODULES="pg_ensembl,pg_tagEnsemblWithMgi"
+MODULES="pg_ensembl,pg_stripPrefix,pg_tagEnsemblWithMgi"
 MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_129s1svimj -n 129S1/SvImJ $*
@@ -43,4 +43,8 @@ MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_pwkphj     -n PWK/PhJ $*
 ./getGenome.sh -x 10096 -m ${MODULES} -g mus_spretus             -n SPRET/EiJ $*
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_wsbeij     -n WSB/EiJ $*
+
+#
+./getGenome.sh -x 9096 -m pg_ensembl,pg_stripPrefix -g homo_sapiens             -n H.sapiens $*
+./getGenome.sh -x 10116 -m pg_ensembl,pg_stripPrefix -g rattus_norvegicus       -n R.norvegicus $*
 

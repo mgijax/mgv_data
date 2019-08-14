@@ -49,7 +49,7 @@ def getOpts () :
   opts.chrRegex = re.compile("^(%s)$" % opts.chrRegex)
   #
   if opts.modules:
-    opts.modules = list(map(lambda m: importlib.import_module(m), opts.modules.split(',')))
+    opts.modules = list(map(lambda m: importlib.import_module("filters."+m), opts.modules.split(',')))
   else:
     opts.modules = []
   #
