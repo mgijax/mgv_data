@@ -43,8 +43,11 @@ def split (ifd, odir):
   line = ifd.readline()
   ofd = None
   writing = False
+  lcount = 0
   while line:
+      lcount += 1
       if line.startswith('>'):
+	  sys.stderr.write(line)
           seqid = line.split()[0][1:]
           writing = opts.chrRegex.match(seqid)
           if writing:
