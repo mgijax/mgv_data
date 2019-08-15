@@ -6,7 +6,8 @@
 # To build everything:
 #	$ ./build.sh
 
-# Any command line are pass along to the calls to getGenome. Examples:
+# Any command line parameters are passed along to getGenome.
+# Examples:
 #
 # Only build for the A/J strain:
 #	$ ./build.sh -G mus_musculus_aj
@@ -45,6 +46,6 @@ MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_wsbeij     -n WSB/EiJ $*
 
 #
-./getGenome.sh -x 9096  -m ensembl,stripPrefix -g homo_sapiens            -n H.sapiens $*
-./getGenome.sh -x 10116 -m ensembl,stripPrefix -g rattus_norvegicus       -n R.norvegicus $*
+./getGenome.sh -x 9096  -m ensembl,stripPrefix,tagEnsemblHumanWithMgi -g homo_sapiens            -n H.sapiens $*
+./getGenome.sh -x 10116 -m ensembl,stripPrefix,tagEnsemblRatWithMgi   -g rattus_norvegicus       -n R.norvegicus $*
 
