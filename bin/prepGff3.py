@@ -61,14 +61,29 @@ def write (line) :
   sys.stdout.write(line)
   lastLine = line
 
-def handleComment (line):
-  if line.strip() == "###" and line == lastLine:
-    return
-  if line.startswith('##sequence-region'):
-    chrom = line.split()[1]
-    if not opts.chrRegex.match(chrom):
+def handleHeader (header) :
+  h2 = []
+  for line in header:
+      if line.startswith('##sequence-region'):
+	chrom = line.split()[1]
+	if not opts.chrRegex.match(chrom):
+	  continue
+      h2.append(line)	  
+  for m in opts.modules:
+    hf = getattr(m, 'header', None)
+    if not hf:
+        continue
+    h2 = hf(h2)
+    if not h2:
       return
-  write(line)
+  for line in h2:
+      write(line)
+  
+def handleComment (line):
+  if line.strip() == "###":
+    if line != lastLine:
+      write(line)
+    return
 
 def handleFeature (f) :
   if f[2] in opts.exclude:
@@ -76,17 +91,27 @@ def handleFeature (f) :
   if not opts.chrRegex.match(f[0]):
     return
   for m in opts.modules:
-    if not m.feature(f):
+    ff = getattr(m, 'feature', None)    
+    if ff and not ff(f):
       return
   write(formatLine(f))
 
 def main () :
   global opts
   opts = getOpts()
+  inHdr = True
+  header = []
   for line in sys.stdin:
     if line.startswith('#'):
-      handleComment(line)
+      if inHdr:
+        header.append(line)
+      elif line.strip() == "###":
+        if line != lastLine:
+	  write(line)
     else:
+      if inHdr:
+	  handleHeader(header)
+	  inHdr = False
       f = parseLine(line)
       handleFeature (f)
 

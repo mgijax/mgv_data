@@ -8,6 +8,24 @@
 # All other features are unaffected.
 #
 
+import sys
+def header (header):
+    attrs = {
+    'genome-build' : 1,
+    'genome-version' : 1,
+    'genome-date' : 1,
+    'genome-build-accession' : 1,
+    'genebuild-last-updated' : 1,
+    }
+    h2 = []
+    for l in header:
+      if l.startswith('#!'):
+        n = l.split()[0][2:]
+	v = attrs.pop(n, 0)
+	if v:
+	  h2.append(l)
+    return h2
+
 def feature(f):
     if f[2] in ["gene","pseudogene"]:
         attrs = f[8]

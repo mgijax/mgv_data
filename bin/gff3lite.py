@@ -136,7 +136,7 @@ def parseLine (line) :
   return flds
 
 #
-PRAGMA_RE = re.compile(r'##([-\w]+) (.*)')
+PRAGMA_RE = re.compile(r'#[#!]([-\w]+) (.*)')
 def parsePragmas(lines):
   ps = {}
   for l in lines:
