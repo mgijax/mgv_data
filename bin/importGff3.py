@@ -3,13 +3,6 @@
 # importGff3.py
 #
 # Imports a GFF3 genome annotation file (a la Ensembl) into form needed by MGV.
-# (1) Filters out certain feature types (eg, biological_region and chromosome)
-# (2) Chunks data for efficiency. All top level features go in one file,
-# Transcripts and exons go in chunks of specified size.
-# (3) Updates genome info.
-#
-# usage:
-#    python importGff3.py < MyGenomeAnnotations.gff3
 #
 # Chunking:
 #    For efficiency, output can be chunked at specified granularities.
@@ -68,30 +61,12 @@ class Gff3Importer:
   def processHeader (self) :
 
     self.pragmas = next(self.datastream)
-    self.genomeInfo['taxonid'] = self.getOpt('taxonid')
     self.genomeInfo['name'] = self.getOpt('genome')
     self.genomeInfo['timestamp'] = self.getOpt('timestamp')
-    #
-    chrs = []
-    copt = self.getOpt('chromosomes')
-    if copt:
-      if type(copt) is str:
-        # parse the command line arg
-        lst = map(lambda x: x.split(':'), copt.split(','))
-        for item in lst:
-          chrs.append({
-            "name": item[0],
-            "length": int(item[-1]) if len(item) > 1 else 0
-          })
-      else:
-        # parse the 'sequence-region' pragma lines.
-        for c in copt:
-          item = c.split()
-          chrs.append({
-            "name": item[0],
-            "length": int(item[-1])
-          })
-      self.genomeInfo['chromosomes'] = chrs
+    self.genomeInfo['metadata'] = dict(self.pragmas)
+    self.genomeInfo['metadata'].pop('gff-version',None)
+    self.genomeInfo['metadata'].pop('sequence-region',None)
+    self.genomeInfo['metadata']['taxonid'] = self.getOpt('taxonid')
     #
     self.genomeInfo['tracks'] = [{
       'name': 'genes',
@@ -239,11 +214,8 @@ class Gff3Importer:
     self.tlFile = open(self.tlFileName, 'w')
     for i,grp in enumerate(self.datastream):
       toplevel = self.processGrp(grp)
-      if self.opts.sample and i > 1000:
-         break
     #
-    if self.genomeInfo['chromosomes'] is None:
-      self.genomeInfo['chromosomes'] = self.seenChrOrder
+    self.genomeInfo['chromosomes'] = self.seenChrOrder
     #
     self.writeGenomeInfo()
 #
@@ -257,10 +229,8 @@ def sanitizeName (n):
 #       genome - name/label of genome (as shown to user)
 #       taxonid - NCBI taxon id
 #       timestamp - timestamp
-#       chromosomes - list of chromosomes and lengths, in preferred order
 #       outputDir - when the output gets written
 #       chunkSize - for chunking transcripts and exons
-#       sample - True/False. If true, only generate a sample sized output.
 def getArgs (cmdLineTokens=None) :
   if not cmdLineTokens: cmdlineTokens = sys.argv
   parser = argparse.ArgumentParser(description='Import genome annotations from a GFF3 file.')
@@ -283,10 +253,6 @@ def getArgs (cmdLineTokens=None) :
     dest='timestamp',
     default=TIMESTAMP,
     help='Value to use as the timestamp. Default is the current time. Pretty much any string is OK. Specify a timestamp value or a ##pragma name.')
-  parser.add_argument('-c','--chromosomes',
-    metavar='CHROMS',
-    dest='chromosomes',
-    help='Chromosomes. Specifies the chromosome names, preferred order, and lengths. By default, preferred chromosome order is the order they appear in the GFF3 data, and chromosome lengths are set to the max coordinate of their features. This parameter allows you to override both. CHROMS is either a pragma name (typically "##sequence-region" or a string of the form "chr:length,chr:length:...". In the former case, each matching pragma row is parsed. The format of each pragma value is expected to be "chr start end" . ')
   parser.add_argument('-d','--outputDirectory',
     metavar='DIR',
     dest='outputDir',
@@ -298,11 +264,7 @@ def getArgs (cmdLineTokens=None) :
     dest='chunkSize',
     default=1,
     help='Transcript file chunk size, in bases. 0 = everything in one file (no chunking); 1 = one chunk per chromosome; >1 = chunk by chromosome and by start position / chunkSize.')
-  parser.add_argument('--sample',
-    action='store_true',
-    dest='sample',
-    default=False,
-    help='Sample output.')
+  #
   args = parser.parse_args(cmdLineTokens)
   if not args.genomePath:
     args.genomePath = sanitizeName(args.genome)
