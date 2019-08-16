@@ -42,6 +42,7 @@ The CGI is a Python script, fetch.py, which is invoked by a shell wrapper, fetch
 If you're using data from Ensembl:
 1. Edit build.sh to call getGenome.sh for the organisms you want. Optionally change the default version number (in config.sh).
 2. If you need to do custom translations on the GFF3, supply/write the appropriate Python modules, and specify them to getGenome.sh (see -m command line option).
+3. One primary purpose of a custom translation is setting the cID ("canonical" or "class" ID) attribute on the genes. This is used to determine "equivalence" of genes across genomes. For the mouse strain genomes, the cID is the MGI id of the gene in the reference catalog. For the rat and human genomes, the cID is set to the MGI id of that gene's mouse ortholog, if there is one. For a custom build, you'll need to figure out how to tag gene features with appropriate cID values, and write appropriate translators to do it.
 
 The existing build script (build.sh) and custom translations (pg_MGI.py, pg_Ensembl.py, and pg_tagEnsemblWithMgi.py) should provide sufficient examples to go by.
 
