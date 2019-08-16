@@ -1,6 +1,6 @@
 
 # discover the installation directory (don't change this)
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR=`dirname $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )`
 # downloads directory
 DDIR="${DIR}/downloads"
 # output directory
