@@ -143,7 +143,8 @@ def main () :
   opts = getOptions()
   global DATA_DIR
   DATA_DIR = opts.dataDirectory
-  print ('Content-Type: text/x-fasta')
+  print ('Content-Type: text/plain')
+  #print ('Content-Type: text/x-fasta')
   if "filename" in opts:
      print ('Content-Disposition: attachment; filename = "%s"' % opts.filename)
   print ("")
