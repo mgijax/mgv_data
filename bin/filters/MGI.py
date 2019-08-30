@@ -17,7 +17,6 @@ def header (header):
     'genome-version' : 1,
     'genome-date' : 1,
     'genome-build-accession' : 1,
-    'genebuild-last-updated' : 1,
     }
     h2 = []
     for l in header:
