@@ -8,6 +8,7 @@
 # 3. Moves transcript and CDS ids into ID attrs
 # All other features are unaffected.
 #
+# Date: Mon Aug 12 10:00:19 EDT 2019
 
 import sys
 def header (header):
@@ -20,7 +21,10 @@ def header (header):
     }
     h2 = []
     for l in header:
-      if l.startswith('#!'):
+      if l.startswith('# Date:'):
+        v = l[7:].strip()
+        h2.append('#!mgi-catalog-date %s\n' % v)
+      elif l.startswith('#!'):
         n = l.split()[0][2:]
         v = attrs.pop(n, 0)
         if v:
