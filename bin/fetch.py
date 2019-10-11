@@ -1,4 +1,4 @@
-#
+
 # fetch.py
 #
 # CGI for retrieving an arbitrary set of sequences from the available genomes.
@@ -57,7 +57,6 @@ def getSequenceFromFile (desc) :
   # The directory is the last component of the url:
   gurl = desc["genomeUrl"]
   gdir = gurl.replace("/"," ").split()[-1]
-  # ASSUMES the cwd is the rootdata directory!
   path = "%s/%s/sequences/%s" % (DATA_DIR, gdir, desc["chromosome"])
   # 
   fd = os.open(path, os.O_RDONLY)
@@ -462,4 +461,5 @@ def reverseComplement (dna) :
 # ----------------------------------------------------------------------------------------------------------------
 
 # GO!!
-main()
+if __name__ == '__main__':
+  main()
