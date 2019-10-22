@@ -19,7 +19,7 @@
 source config.sh
 source utils.sh
 
-./getHomologies 10090 10116 9606
+./getHomologies.sh 10090 10116 9606
 
 MODULES="ensembl,stripPrefix,tagEnsemblWithMgi,tagEnsemblWithHid"
 MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"

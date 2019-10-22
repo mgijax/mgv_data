@@ -67,7 +67,7 @@ class CCfinder:
   def outputCCs (self) :
     for (i,cc) in enumerate(self.ccs):
       for x in cc:
-        sys.stdout.write('%d %s\n' % (i, x))
+        sys.stdout.write('%d\t%s\n' % (i, x))
   #
   def main(self):
     self.buildGraph()

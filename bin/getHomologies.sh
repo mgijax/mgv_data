@@ -33,6 +33,6 @@ do
   done
 done
 #
-${PYTHON} getHomologies.py ${files[@]} > ${DDIR}/homologies.txt
+${PYTHON} getHomologies.py ${files[@]} > ${ODIR}/homologies.txt
 #
 rm ${files[@]}
