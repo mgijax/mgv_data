@@ -19,10 +19,9 @@
 source config.sh
 source utils.sh
 
-./getHomologies.sh 10090 10116 9606
-
 MODULES="ensembl,stripPrefix,tagEnsemblWithMgi,tagEnsemblWithHid"
-MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
+
+./getHomologies.sh -x 10090 -x 10116 -x 9606 > ${DDIR}/homologies.txt
 
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_129s1svimj -n 129S1/SvImJ $*
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_aj         -n A/J $*

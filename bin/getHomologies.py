@@ -25,6 +25,10 @@ class CCfinder:
   def pairs(self, src):
     j = json.loads(src.read())
     for r in j['results']:
+      #
+      if not (r['best'] == 'Yes' and r['bestReverse'] == 'Yes'):
+        continue
+      #
       g1 = r['gene']['id']
       s1 = r['gene']['symbol']
       o1 = r['gene']['taxonId']
@@ -66,7 +70,9 @@ class CCfinder:
   #
   def outputCCs (self) :
     for (i,cc) in enumerate(self.ccs):
-      for x in cc:
+      cclist = list(cc)
+      cclist.sort()
+      for x in cclist:
         sys.stdout.write('%d\t%s\n' % (i, x))
   #
   def main(self):

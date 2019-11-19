@@ -6,9 +6,9 @@
 source config.sh
 source utils.sh
 #
-./getHomologies.sh 10090 10116 9606 7955 6239 7227 559292
+./getHomologies.sh -x 10090 -x 10116 -x 9606 -x 7955 -x 6239 -x 7227 -x 559292 > "${DDIR}/homologies.txt"
 #
-./getGenome.sh -x 10090 -m MGI,tagEnsemblWithHid        -g mus_musculus            -n M.musculus --gff-url "${MGI_URL}" $*
+./getGenome.sh -x 10090 -m MGI,tagEnsemblWithHid -g mus_musculus -n M.musculus --gff-url "${MGI_URL}" $*
 ./getGenome.sh -x 9096  -m ensembl,stripPrefix,tagEnsemblHuman,tagEnsemblWithHid -g homo_sapiens     -n H.sapiens $*
 ./getGenome.sh -x 10116 -m ensembl,stripPrefix,tagEnsemblRat,tagEnsemblWithHid  -g rattus_norvegicus -n R.norvegicus $*
 ./getGenome.sh -x 7955  -m ensembl,stripPrefix,tagEnsemblWithHid  -g danio_rerio -n D.rerio $*
