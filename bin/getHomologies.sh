@@ -1,61 +1,36 @@
-#!/bin/bash
 #
-# Computes homology clusters (connected components) from Alliance data, and assigns 
-# cluster ids to gene ids.
-# Downloads three set of homology pairs from the Alliance (mouse-human, mouse-rat,
-# and human-rat), builds a graph, and enumerates its connected components. 
+# Downloads the Alliance homology TSV file to the download directory,
+# then reformats it a bit, and writes "homologies.tsv" to the output directory.
+# The output file has these columns:
+#	ID1	ID2	YVAL
+# where ID1 and ID2 are curie IDs (eg MGI:97490 and HGNC:8620) 
+# and YVAL is one the values "YN", "NY", or "YY". Example:
+#
+#	FB:FBgn0000017 RGD:6502032 NY
+#	FB:FBgn0000017 WB:WBGene00000018 YY
+#	FB:FBgn0000017 ZFIN:ZDB-GENE-020809-2 YY
+#	FB:FBgn0000017 ZFIN:ZDB-GENE-100812-9 NY
 #
 
 source config.sh
 source utils.sh
 
-taxonIds=()
-until [ -z "$1" ]  # Until all parameters used up . . .
-do
-    case "$1" in
-    -x)
-        # set the organism path name, eg mus_musculus_dba2j
-        shift
-        taxonIds+=("$1")
-        ;;
-    *)
-        # anything else is an error
-        echo "Unrecognized option:" $1
-        usage
-    esac
-    shift
-done
-
-nt=${#taxonIds[@]}
-
-function getAlliancePairs {
-  ga="$1"
-  gb="$2"
-  fname="$3"
-  logit "Get alliance pair: $1 $2"
-  if [ ! -f "$fname" ]; then
-      curl -X GET "https://www.alliancegenome.org/api/homologs/${ga}/${gb}?stringencyFilter=stringent&rows=200000&start=1" -H "accept: application/json" > "${fname}"
-  else
-      logit "Warning: Skipping download. File exists: ${fname}"
-  fi
-}
-
-for (( c=0; c<${nt}; c++ ))
-do  
-  for (( d=${c}; d<${nt}; d++ ))
-  do  
-     if [ ${c} != ${d} ] ; then
-       t1=${taxonIds[${c}]}
-       t2=${taxonIds[${d}]}
-       file="${DDIR}/${t1}-${t2}.json "
-       getAlliancePairs $t1 $t2 $file
-       files+="${file}"
-     fi
-  done
-done
+# download from Alliance, if updated
+agrfile="${DDIR}/agrOrthology.tsv"
+agrfile2="${ODIR}/homologies.tsv"
 #
-mkdir -p ${DDIR}
-logit "${PYTHON} getHomologies.py ${files[@]}"
-${PYTHON} getHomologies.py ${files[@]}
-#
-#rm ${files[@]}
+if test -e "$agrfile"
+then zflag=(-z "$agrfile")
+else zflag=()
+fi
+curl -o "$agrfile" "${zflag[@]}" "$AGR_HOM_URL"
+
+# Strip it down to the essentials. Output file with no header/comment lines
+# and just the id and yes/no columns.
+cat "$agrfile" | \
+    grep -v "^#" | \
+    cut -f 1,5,12,13 | \
+    tail -n +2 | \
+    awk '{print $1,$2,substr($3,1,1)substr($4,1,1)}' | \
+    sort > "$agrfile2"
+

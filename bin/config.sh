@@ -3,8 +3,7 @@ export DIR=`dirname $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )`
 # downloads directory
 export DDIR="${DIR}/downloads"
 # output directory
-#export ODIR="${DIR}/output"
-export ODIR="${DIR}/allianceOutput"
+export ODIR="${DIR}/output"
 # web directory By default, is the same as the build directory.
 export WDIR="${ODIR}"
 # cgi script directory. By default, is the same as the web data directory.
