@@ -17,7 +17,7 @@ source utils.sh
 
 # download from Alliance, if updated
 agrfile="${DDIR}/agrOrthology.tsv"
-agrfile2="${ODIR}/homologies.tsv"
+agrfile2="${ODIR}/homologies.json"
 #
 if test -e "$agrfile"
 then zflag=(-z "$agrfile")
@@ -31,6 +31,6 @@ cat "$agrfile" | \
     grep -v "^#" | \
     cut -f 1,5,12,13 | \
     tail -n +2 | \
-    awk '{print $1,$2,substr($3,1,1)substr($4,1,1)}' | \
-    sort > "$agrfile2"
+    sort | \
+    awk -f jsonify.awk > "$agrfile2"
 
