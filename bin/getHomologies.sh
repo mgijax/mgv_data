@@ -29,7 +29,7 @@ curl -o "$agrfile" "${zflag[@]}" "$AGR_HOM_URL"
 # and just the id and yes/no columns.
 cat "$agrfile" | \
     grep -v "^#" | \
-    cut -f 1,5,12,13 | \
+    cut -f 1,3,5,7,12,13 | \
     tail -n +2 | \
     sort | \
     awk -f jsonify.awk > "$agrfile2"
