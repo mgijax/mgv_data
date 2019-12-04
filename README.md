@@ -42,9 +42,9 @@ The CGI is a Python script, fetch.py, which is invoked by a shell wrapper, fetch
 If you're using data from Ensembl:
 1. Edit build.sh to call getGenome.sh for the organisms you want. Optionally change the default version number (in config.sh).
 2. If you need to do custom translations on the GFF3, supply/write the appropriate Python modules, and specify them to getGenome.sh (see -m command line option).
-3. One primary purpose of a custom translation is setting the cID ("canonical" or "class" ID) attribute on the genes. This is used to determine "equivalence" of genes across genomes. For the mouse strain genomes, the cID is the MGI id of the gene in the reference catalog. For the rat and human genomes, the cID is set to the MGI id of that gene's mouse ortholog, if there is one. For a custom build, you'll need to figure out how to tag gene features with appropriate cID values, and write appropriate translators to do it.
+3. One primary purpose of a custom translation is setting the cID ("canonical" or "class" ID) attribute on the genes. Generally, this is the official/MOD ID of the gene (eg, MGI id for mouse genes, HGNC id for human, FlyBase for drosophila, etc. The cID is the determinant of equivalence between genomes in the same species. It is also the basis for homology relationships across species. For a custom build, you'll need to figure out how to tag gene features with appropriate cID values, and write appropriate translators to do it.
 
-The existing build script (build.sh) and custom translations (pg_MGI.py, pg_Ensembl.py, and pg_tagEnsemblWithMgi.py) should provide sufficient examples to go by.
+The existing build script (build.sh) and custom translations should provide sufficient examples to go by.
 
 Using data NOT from Ensembl:
 
@@ -58,13 +58,19 @@ The data files need not come from Ensembl, provided they are in the same format 
 * getGenome.sh Gets genome data from Ensembl and imports into MGV data backend.
 * importGff3.py Imports a genome annotation (GFF3) file for one genome, splits it up into chunks, and stores it 
 in the right directory structure. 
+* getHomologies.sh Downloads homology data from the Alliance of Genome Resources. This consists of gene-to-gene orthology assertions.
 * importFasta.py Imports a genome assembly (Fasta) file for one genome, and writes it into the format requires for MGV.
 * fetch.py A CGI that extracts specified sequences from the assembly files. Called by the SequenceCart download
 function in MGV.
 * fetch.cgi A shell wrapper that invokes fetch.py
-* pg_MGI.py Custom translator appied to the MGI.gff3 file. Sets the cID attribute.
-* pg_ensembl.py Custom translator for Ensembl. Sets column 3 to "protein_coding_gene" when col 3 says "gene" and col 9 biotype says "protein_coding".
-* pg_tagEnsemblWithMgi.py Custom translator applied Ensembl gene records. Finds corresponding MGI gene and tags record with the MGI id and symbol.
+* MGI.py Custom translator appied to the MGI.gff3 file. Sets the cID attribute.
+* ensembl.py Custom translator for Ensembl. Sets column 3 to "protein_coding_gene" when col 3 says "gene" and col 9 biotype says "protein_coding".
+* tagEnsemblFish.py Tags D.rerio genes with their ZFIN ids.
+* tagEnsemblFly.py Tags  D.melonogater with their FlyBase ids.
+* tagEnsemblHuman.py Tags H.sapiens genes with their HGNC ids.
+* tagEnsemblWorm.py Tags C.elegans genes with their WormBase ids.
+* tagEnsemblYeast.py Tags S.cerevisiae genes with their SGD ids.
+* tagEnsemblRat.py Tags R.norvegicus genes with their RGD ids.
 
 ## Directory and file structure
 

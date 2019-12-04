@@ -23,6 +23,7 @@ fi
 logit "Generating CGI wrapper"
 cat > ${CDIR}/fetch.cgi << EOF
 #!/usr/bin/env bash
+# THIS IS A GENERATED FILE. See deploy.sh
 ${PYTHON} ${CDIR}/fetch.py --cgi --dir ${WDIR}
 EOF
 checkExit
