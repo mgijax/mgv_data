@@ -33,6 +33,10 @@ checkExit
 #
 rsync -av ./fetch.py ${CDIR}
 checkExit
+#
+logit "Creating Bio symlink."
+ln -s -f ${BIOPY} ${CDIR}
+
 # build the root index.json file which names each of the available subdirectories.
 logit "Building ${WDIR}/index.json"
 cd ${WDIR}

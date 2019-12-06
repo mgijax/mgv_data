@@ -33,7 +33,11 @@ export EXCLUDE_TYPES="biological_region,chromosome,scaffold"
 export CHUNK_SIZE="4000000"
 
 # Python executable
-export PYTHON="python2.7"
+export PYTHON="/opt/python3.7/bin/python3"
+
+# BioPython library
+# FIXME: should not have to do this. Need Bio installed in global site packages.
+export BIOPY="/home/jer/.local/lib/python3.7/site-packages/Bio"
 
 # Where to get the genome annotation file for C57BL/6J
 export MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
