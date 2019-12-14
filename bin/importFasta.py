@@ -51,7 +51,8 @@ def split (ifd, odir):
           seqid = line.split()[0][1:]
           writing = opts.chrRegex.match(seqid)
           if writing:
-              ofile = os.path.join(odir, seqid + '.fa')
+              # output is plain text, not Fasta
+              ofile = os.path.join(odir, seqid + '.txt')
               if ofd: ofd.close()
               ofd = open(ofile, 'w')
           line = ifd.readline()
