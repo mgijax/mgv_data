@@ -25,12 +25,5 @@ else zflag=()
 fi
 curl -o "$agrfile" "${zflag[@]}" "$AGR_HOM_URL"
 
-# Strip it down to the essentials. Output file with no header/comment lines
-# and just the id and yes/no columns.
-cat "$agrfile" | \
-    grep -v "^#" | \
-    cut -f 1,3,5,7,12,13 | \
-    tail -n +2 | \
-    sort | \
-    awk -f jsonify.awk > "$agrfile2"
-
+mkdir -p "${ODIR}/homologies"
+${PYTHON} getHomologies.py -d "${ODIR}/homologies" < "${agrfile}"
