@@ -1,0 +1,3 @@
+AddType application/json .json
+AddType text/tab-separated-values .gff3
+AddOutputFilterByType DEFLATE application/json text/tab-separated-values
