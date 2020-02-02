@@ -35,6 +35,15 @@ The data comprise genome features, stored as (modified) GFF3 and served as stati
 Rsync is used to copy new/changed files from the build area to the deployment area. 
 You can save space and time by building directly into the deployment area (set both ODIR and WDIR to the same value).
 
+Note that these file are NOT compressed.
+Instead, the web server should be configured to use http compression.
+For example, to configure Apache, you could add a .htaccess file with the following:
+```
+AddType application/json .json
+AddType text/tab-separated-values .gff3
+AddOutputFilterByType DEFLATE application/json text/tab-separated-values
+```
+
 The CGI is a Python script, fetch.py, which is invoked by a shell wrapper, fetch.cgi. The deploy script copies both pieces to the deployment directory and makes the wrapper executable. You may have to adjust this step, depending on your local environment. 
 
 ## Customizing a build
@@ -80,9 +89,9 @@ Where the generated output goes, i.e., the directory that will be served to MGV.
 * ./fetch.py The actual CGI. Its job is to extract subsequences from the genome assemblies, possibly doing reverse complementation or protein translation, and return the results as Fasta.
 * ./mus_musculus_aj/ (et. al.) The data for each genome is stored in its own subdirectory
 ** ./mus_musculus_aj/index.json A json formatted object describing the genome
-** ./mus_musculus_aj/genes/ Contains a single file, named '0' which is a GFF3 file containing just the top level gene features for the genome.
-** ./mus_musculus_aj/transcripts/ Contains all the transcripts, exons, and CDSs. These are divided into subdirectories by chromosome, and the data for each chromosome is divided into 4MB chunks, each named simply by its chunk number. So for example, the file ./mus_musculus_aj/transcripts/12/8 refers to the 8th chunk (which covers 32-36 Mbp) of chromosome 12 of the A/J strain.
-** ./mus_musculus_aj/sequences/ Contains the genome assembly, one file per chromosome, named by that chromsome. E.g., ./mus_musculus_aj/sequences/10 is the file containing the sequence for chromosome 10 of A/J. The sequence files are not
+** ./mus_musculus_aj/genes/ Contains a single file, named '0.gff3' which is a GFF3 file containing just the top level gene features for the genome.
+** ./mus_musculus_aj/transcripts/ Contains all the transcripts, exons, and CDSs. These are divided into subdirectories by chromosome, and the data for each chromosome is divided into 4MB chunks, each named simply by its chunk number. So for example, the file ./mus_musculus_aj/transcripts/12/8.gff3 refers to the 8th chunk (which covers 32-36 Mbp) of chromosome 12 of the A/J strain.
+** ./mus_musculus_aj/sequences/ Contains the genome assembly, one file per chromosome, named by that chromsome. E.g., ./mus_musculus_aj/sequences/10.txt is the file containing the sequence for chromosome 10 of A/J. The sequence files are not
 Fasta, but simply the linearized sequence. (No header line, no line breaks.)
 
 Gene models are stored as modified GFF3 as follows:
