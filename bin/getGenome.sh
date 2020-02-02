@@ -60,18 +60,23 @@ help () {
       			Overrides the value set in config.sh.
 
       -m MODULES	If specified, includes these processing filters during import of GFF3.
-      			Provides a hook for doing custom transformations and filtering.
-			Argument is a comma-separated list of module names (no .py extension).
-			These must exist in the same directory as the import script. Each
-			must define a function named "feature" which takes a feature as argument
+      			Provides a hook for doing simple transformations and filtering.
+			MODULES is a comma-separated list of module names (no .py extension).
+			These must exist in the bin/filter directory. Each
+			defines a function named "feature" which takes a feature as argument
 			and returns the feature (possibly modified), or None. If None is returned,
 			the feature is omitted/skipped. The feature is a list of 9 items indexed
 			from 0 to 8. The last item (the attributes column) is a dict from attr name
-			to value, which is a string or list of strings.
+			to value, which is a string or list of strings. For example, here is a
+			module that adds a "length" attribute to column 9:
+			    # bin/filters/addLength.py
+			    def feature(f) :
+				f[8]["length"] = f[4] - f[3] + 1
+				return f
 
-      --force		The import phase uses file modification times to suppress the import if the
-      			download file has not changed. Specifying --force on the command line will
-			force the import to happen regardless of modification dates.
+      --force		The download and import phases use file modification times to suppress the
+      			operation if the file has not changed. Specifying --force on the 
+			command line will force the operation to happen regardless of modification dates.
 
 pleh
 }
@@ -99,7 +104,7 @@ importModels () {
     if [[ ("${FORCE}" != "") || ("${GFF_GZ_FILE}" -nt "${ODIR}/${ORGANISM}/index.json") ]] ; then
 	gunzip -c "${GFF_GZ_FILE}" | \
 	${PYTHON} prepGff3.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" ${MODULES} | \
-	${PYTHON} importGff3.py -p ${ORGANISM} -g ${NAME} -x ${TAXONID} -k ${CHUNK_SIZE} -d ${ODIR}
+	${PYTHON} importGff3.py -p "${ORGANISM}" -g "${NAME}" -x "${TAXONID}" -k "${CHUNK_SIZE}" -d "${ODIR}"
     else
         logit "Skipped import because file has not been updated. Use --force to override."
     fi

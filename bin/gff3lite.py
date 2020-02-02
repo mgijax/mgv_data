@@ -69,7 +69,7 @@ class Gff3Parser :
         elif header != None:
           header.append(line)
         continue
-      # Fetaure line
+      # Feature line
       if header != None and self.returnHeader:
         # User wants header and this is the first feature. 
         # Yield the header then remember that we did so.

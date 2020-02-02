@@ -91,9 +91,9 @@ class Gff3Importer:
 
   def getFileName(self, track, chr, blk):
     if chr:
-      return os.path.join(self.outputDir, track, chr, str(blk))
+      return os.path.join(self.outputDir, track, chr, str(blk) + '.gff3')
     else:
-      return os.path.join(self.outputDir, track, str(blk))
+      return os.path.join(self.outputDir, track, str(blk), '.gff3')
 
   def getFileHandle(self, fname):
     if fname == self.currFileName:
@@ -210,7 +210,7 @@ class Gff3Importer:
   def main (self) :
     self.ensureDirectory(self.outputDir)
     self.ensureDirectory(os.path.join(self.outputDir, 'genes'))
-    self.tlFileName = os.path.join(self.outputDir, 'genes', '0')
+    self.tlFileName = os.path.join(self.outputDir, 'genes', '0.gff3')
     self.tlFile = open(self.tlFileName, 'w')
     for i,grp in enumerate(self.datastream):
       toplevel = self.processGrp(grp)

@@ -1,78 +1,83 @@
 #
-# processHomologies.py
+# getHomologies.py
 #
-# Reads JSON files containing homologous ID pairs.
-# Puts them all into a single graph of gene IDs and edges.
-# Then enumerates the connected components.
-# Outputs each gene ID with its connected component ID
-#
-# usage:
-#     python processHomologies.py file1.json file2.json ...
+# Processes Alliance orthology download file.
+# - Strips out all but the essential bits
+# - Splits into one file per taxon id
 #
 import sys
+import os.path
+import argparse
 import json
 
-class CCfinder:
-  def __init__(self):
-    self.neighbors = {}
-    self.ccs = []
-    if len(sys.argv) == 1:
-      self.sources = [sys.argv]
-    else:
-      self.sources = map(open, sys.argv[1:])
-
-  # Reads the ID pairs in an input file.
-  def pairs(self, src):
-    j = json.loads(src.read())
-    for r in j['results']:
-      g1 = r['gene']['id']
-      s1 = r['gene']['symbol']
-      o1 = r['gene']['taxonId']
-      #
-      g2 = r['homologGene']['id']
-      s2 = r['homologGene']['symbol']
-      o2 = r['homologGene']['taxonId']
-      #
-      yield (g1,g2)
-
-  # Builds the graphs
-  def buildGraph (self) :
-    for s in self.sources:
-      for (a,b) in self.pairs(s):
-        self.neighbors.setdefault(a,[]).append(b)
-        self.neighbors.setdefault(b,[]).append(a)
-
-  # Recursive traversal step.
-  # Args:
-  #   n - the current node (a gene ID)
-  #   ccc - current connected component (list of nodes)
-  def reach(self, n, ccc):
-    if n in self.visited:
-      return
-    self.visited.add(n)
-    ccc.add(n)
-    for nn in self.neighbors.get(n, []):
-      self.reach(nn, ccc)
-  #
-  def enumerateCCs (self):
-    self.visited = set()
-    self.count = 0
-    self.ccs = []
-    for n in self.neighbors.keys():
-      ccc = set()
-      self.reach(n, ccc)
-      if len(ccc): self.ccs.append(ccc)
-
-  #
-  def outputCCs (self) :
-    for (i,cc) in enumerate(self.ccs):
-      for x in cc:
-        sys.stdout.write('%d %s\n' % (i, x))
-  #
-  def main(self):
-    self.buildGraph()
-    self.enumerateCCs()
-    self.outputCCs()
+taxon2file = {}
 
 #
-CCfinder().main()
+def getFile (taxonid) :
+  global opts
+  fname = os.path.join(opts.odir, taxonid + '.json')
+  if taxonid not in taxon2file:
+    taxon2file[taxonid] = {
+      "fname" : fname,
+      "fd" : open(fname, 'w'),
+      "count" : 0
+    }
+  return taxon2file[taxonid]
+  
+#
+def closeAll () :
+  for rec in taxon2file.values():
+    rec["fd"].write("]")
+    rec["fd"].close()
+#
+def outputRecord (id1, tx1, id2, tx2, yn) :
+  rec = getFile(tx1)
+  if rec["count"] == 0:
+      rec["fd"].write("[")
+  else:
+      rec["fd"].write(",")
+  rec["count"] += 1
+  rec["fd"].write(json.dumps([id1, tx1, id2, tx2, yn]))
+  rec["fd"].write("\n")
+
+#
+inCount = 0
+def processLine (line) :
+  global inCount
+  if line.startswith("#"):
+    return
+  # skip column labels
+  inCount += 1
+  if inCount == 1:
+    return
+  # parse and ouput
+  fs = line[:-1].split('\t')
+  # Example desired record - just the essentials:
+  # ['FB:FBgn0033981', 'NCBITaxon:7227', 'MGI:3646373', 'NCBITaxon:10090', 'YN']
+  outputRecord(
+    fs[0],
+    fs[2].replace('NCBITaxon:',''),
+    fs[4],
+    fs[6].replace('NCBITaxon:',''),
+    fs[11][0] + fs[12][0])
+
+#
+def getOpts () :
+  parser = argparse.ArgumentParser()
+  parser.add_argument(
+    '-d',
+    '--directory',
+    dest="odir",
+    default=".",
+    help="Output directory.")
+  return parser.parse_args()
+
+#
+def main () :
+  global opts
+  opts = getOpts()
+  for line in sys.stdin:
+    processLine(line)
+  closeAll()
+
+main()

@@ -1,38 +1,29 @@
-#!/bin/bash
 #
-# Computes mouse-human-rat homology clusters from Alliance data, and assigns 
-# cluster ids to gene ids.
-# Downloads three set of homology pairs from the Alliance (mouse-human, mouse-rat,
-# and human-rat), builds a graph, and enumerates its connected components. 
+# Downloads the Alliance homology TSV file to the download directory,
+# then reformats it a bit, and writes "homologies.tsv" to the output directory.
+# The output file has these columns:
+#	ID1	ID2	YVAL
+# where ID1 and ID2 are curie IDs (eg MGI:97490 and HGNC:8620) 
+# and YVAL is one the values "YN", "NY", or "YY". Example:
+#
+#	FB:FBgn0000017 RGD:6502032 NY
+#	FB:FBgn0000017 WB:WBGene00000018 YY
+#	FB:FBgn0000017 ZFIN:ZDB-GENE-020809-2 YY
+#	FB:FBgn0000017 ZFIN:ZDB-GENE-100812-9 NY
 #
 
 source config.sh
 source utils.sh
 
-taxonIds=($*)
-nt=${#taxonIds[@]}
-
-function getAlliancePairs {
-  ga="$1"
-  gb="$2"
-  fname="$3"
-  curl -X GET "https://www.alliancegenome.org/api/homologs/${ga}/${gb}?stringencyFilter=stringent&rows=200000&start=1" -H "accept: application/json" > "${fname}"
-}
-
-for (( c=0; c<${nt}; c++ ))
-do  
-  for (( d=${c}; d<${nt}; d++ ))
-  do  
-     if [ ${c} != ${d} ] ; then
-       t1=${taxonIds[${c}]}
-       t2=${taxonIds[${d}]}
-       file="${DDIR}/${t1}-${t2}.json "
-       getAlliancePairs $t1 $t2 $file
-       files+="${file}"
-     fi
-  done
-done
+# download from Alliance, if updated
+agrfile="${DDIR}/agrOrthology.tsv"
+agrfile2="${ODIR}/homologies.json"
 #
-${PYTHON} getHomologies.py ${files[@]} > ${DDIR}/homologies.txt
-#
-rm ${files[@]}
+if test -e "$agrfile"
+then zflag=(-z "$agrfile")
+else zflag=()
+fi
+curl -o "$agrfile" "${zflag[@]}" "$AGR_HOM_URL"
+
+mkdir -p "${ODIR}/homologies"
+${PYTHON} getHomologies.py -d "${ODIR}/homologies" < "${agrfile}"
