@@ -10,7 +10,8 @@ Most of the data comes from Ensembl, except for C57BL/6J gene models and MGI can
 which come from MGI. To build this data set:
 1. Install the repo and cd to the bin directory. 
 ```bash
-git clone git@github.com:JoelRichardson/mgv-data.git
+git clone git@github.com:mgijax/mgv-data.git
+(or git clone https://github.com/mgijax/mgv-data.git)
 cd mgv-data/bin
 ```
 2. Edit config.sh for your environment. You'll probably want to set data directories for where files are downloaded (DDIR), built into (ODIR) and served from (WDIR).
