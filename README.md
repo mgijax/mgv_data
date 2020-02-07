@@ -1,7 +1,7 @@
 
 # mgv-data 
 
-Scripts for building and serving data for the Multiple Genome Viewer (MGV).
+Scripts for building and serving data for the [Multiple Genome Viewer (MGV)](https://github.com/mgijax/mgv).
 
 ## Building the default data set
 This repo comes preconfigured to build the data set being served by MGV at MGI,
