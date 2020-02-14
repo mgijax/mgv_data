@@ -24,7 +24,7 @@ source utils.sh
 
 ./getHomologies.sh
 
-MODULES="ensembl,stripPrefix,tagEnsemblWithMgi"
+MODULES="ensembl,stripPrefix,tagEnsemblMgi"
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_129s1svimj -n 129S1/SvImJ $*
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_aj         -n A/J $*
 ./getGenome.sh -x 10090 -m ${MODULES} -g mus_musculus_akrj       -n AKR/J $*
