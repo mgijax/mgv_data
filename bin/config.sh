@@ -7,6 +7,10 @@ export DDIR="${DIR}/downloads"
 # output directory
 export ODIR="${DIR}/output"
 
+# log directory
+export LDIR="${DIR}/logs"
+export LOGFILE="${LDIR}/mgv_data_build.log"
+
 # web directory By default, is the same as the build directory.
 export WDIR="${ODIR}"
 
