@@ -48,5 +48,5 @@ def feature(f):
         i2i[attrs['ID']] = tid
         attrs['ID'] = tid
     if 'Parent' in attrs:
-        attrs['Parent'] = map(lambda p: i2i.get(p, p), attrs['Parent'])
+        attrs['Parent'] = [i2i.get(p, p) for p in attrs['Parent']]
     return f

@@ -8,7 +8,7 @@
 try:
     from urllib.request import urlopen
 except:
-    from urllib import urlopen
+    from urllib.request import urlopen
 
 # URL for a query that returns all mouse genes with their Ensembl IDs. Data returned 
 # as TSV with 3 columns: MGIid, symbol, Ensembl id

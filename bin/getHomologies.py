@@ -26,7 +26,7 @@ def getFile (taxonid) :
   
 #
 def closeAll () :
-  for rec in taxon2file.values():
+  for rec in list(taxon2file.values()):
     rec["fd"].write("]")
     rec["fd"].close()
 #

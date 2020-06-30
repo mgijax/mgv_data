@@ -49,7 +49,7 @@ def getOpts () :
   opts.chrRegex = re.compile("^(%s)$" % opts.chrRegex)
   #
   if opts.modules:
-    opts.modules = list(map(lambda m: importlib.import_module("filters."+m), opts.modules.split(',')))
+    opts.modules = list([importlib.import_module("filters."+m) for m in opts.modules.split(',')])
   else:
     opts.modules = []
   #
@@ -65,10 +65,10 @@ def handleHeader (header) :
   h2 = []
   for line in header:
       if line.startswith('##sequence-region'):
-	chrom = line.split()[1]
-	if not opts.chrRegex.match(chrom):
-	  continue
-      h2.append(line)	  
+        chrom = line.split()[1]
+        if not opts.chrRegex.match(chrom):
+          continue
+      h2.append(line)     
   for m in opts.modules:
     hf = getattr(m, 'header', None)
     if not hf:
@@ -107,11 +107,11 @@ def main () :
         header.append(line)
       elif line.strip() == "###":
         if line != lastLine:
-	  write(line)
+          write(line)
     else:
       if inHdr:
-	  handleHeader(header)
-	  inHdr = False
+          handleHeader(header)
+          inHdr = False
       f = parseLine(line)
       handleFeature (f)
 

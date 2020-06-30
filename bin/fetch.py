@@ -21,7 +21,7 @@ import argparse
 try:
   from urllib.request import urlopen
 except:
-  from urllib import urlopen
+  from urllib.request import urlopen
 import json
 import string
 import cgi
@@ -145,7 +145,7 @@ def main () :
   print ('Content-Type: text/plain')
   #print ('Content-Type: text/x-fasta')
   if "filename" in opts:
-     print ('Content-Disposition: attachment; filename = "%s"' % opts.filename)
+     print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
   print ("")
   doSequences(opts.descriptors)
 
@@ -429,11 +429,11 @@ genetic_code_s = '''
 '''
 
 # create table of amino acids from the string
-amino_acids = map(lambda a: a.strip().split(), amino_acids_s.strip().split('\n'))
+amino_acids = [a.strip().split() for a in amino_acids_s.strip().split('\n')]
 # create map from 3-letter AA code to single letter code
 aaShort2Letter = dict([(r[1],r[2]) for r in amino_acids])
 # create table of the genetic code from the string
-genetic_code_t = map(lambda c: c.strip().split(), genetic_code_s.strip().split('\n'))
+genetic_code_t = [c.strip().split() for c in genetic_code_s.strip().split('\n')]
 # create map from codon to residue
 genetic_code = dict([ (r[0],r[1]) for r in genetic_code_t ])
 # create character mapping table for doing complements
@@ -447,7 +447,7 @@ except:
 def translate (cds) :
   cds = cds.upper().replace('T', 'U')
   codons = [ cds[i:i+3] for i in range(0, len(cds),3) ]
-  residues = ''.join(map(lambda c: aaShort2Letter.get(genetic_code.get(c, ''), ''), codons))
+  residues = ''.join([aaShort2Letter.get(genetic_code.get(c, ''), '') for c in codons])
   return residues
 
 def complement (dna) :

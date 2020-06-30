@@ -3,5 +3,5 @@ def feature(f):
     attrs = f[8]
     gid = attrs.get('gene_id','')
     if gid:
- 	attrs['cID'] = 'FB:'+gid
+        attrs['cID'] = 'FB:'+gid
     return f

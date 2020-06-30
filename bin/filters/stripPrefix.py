@@ -4,7 +4,7 @@
 def stripPrefix(eid) :
     parts = eid.split(':', 1)
     if parts[0] in ["gene","transcript","CDS"]:
-	return parts[1]
+        return parts[1]
     return eid
 
 def feature(f):
@@ -12,5 +12,5 @@ def feature(f):
     if 'ID' in attrs:
         attrs['ID'] = stripPrefix(attrs['ID'])
     if 'Parent' in attrs:
-        attrs['Parent'] = map(stripPrefix, attrs['Parent'])
+        attrs['Parent'] = list(map(stripPrefix, attrs['Parent']))
     return f

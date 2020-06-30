@@ -6,5 +6,5 @@ def feature(f):
     descr = attrs.get('description','')
     m = RE.search(descr)
     if m:
- 	attrs['cID'] = 'ZFIN:'+m.group(1)
+        attrs['cID'] = 'ZFIN:'+m.group(1)
     return f

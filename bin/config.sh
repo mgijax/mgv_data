@@ -21,7 +21,7 @@ export CDIR="${WDIR}"
 export ENSEMBL_BASE="rsync://ftp.ensembl.org/ensembl/pub"
 
 # default release number to use. Can override with -r command line option.
-export ENSEMBL_RELEASE="98"
+export ENSEMBL_RELEASE="99"
 
 # Regular expression for matching chromosomes
 # Default matches chromosomes of one or 2 characters
@@ -37,10 +37,11 @@ export EXCLUDE_TYPES="biological_region,chromosome,scaffold"
 export CHUNK_SIZE="4000000"
 
 # Python executable
-export PYTHON="python2.7"
+export PYTHON="python3"
 
 # Where to get the genome annotation file for C57BL/6J
 export MGI_URL="http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 
 # Where to get the Alliance homology TSV file
-export AGR_HOM_URL="http://download.alliancegenome.org/2.3.0/ORTHOLOGY-ALLIANCE/COMBINED/ORTHOLOGY-ALLIANCE_COMBINED_45.tsv"
+#export AGR_HOM_URL="http://download.alliancegenome.org/2.3.0/ORTHOLOGY-ALLIANCE/COMBINED/ORTHOLOGY-ALLIANCE_COMBINED_45.tsv"
+export AGR_HOM_URL="http://download.alliancegenome.org/3.0.1/ORTHOLOGY-ALLIANCE/COMBINED/ORTHOLOGY-ALLIANCE_COMBINED_4.tsv"

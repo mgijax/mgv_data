@@ -18,10 +18,7 @@
 #
 import sys
 import types
-try:
-    import urllib.parse as ulib
-except:
-    import urllib as ulib
+import urllib.parse as ulib
 import json
 import re
 
@@ -76,7 +73,7 @@ class Gff3Parser :
         yield parsePragmas(header)
         header = None
       #
-      record = list(map(lambda a: self.convertDots if a == '.' else a, parseLine(line)))
+      record = list([self.convertDots if a == '.' else a for a in parseLine(line)])
       if self.returnGroups:
         if record[0] != currSeqid:
           if group: yield group
@@ -112,7 +109,7 @@ def parseColumn9 (text) :
 #
 def formatColumn9(c9):
   parts = []
-  for (n,v) in c9.items():
+  for (n,v) in list(c9.items()):
     nn = ulib.quote(n)
     if type(v) is str:
       vv = ulib.quote(v)

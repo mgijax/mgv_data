@@ -134,8 +134,8 @@ class Gff3Importer:
     elif self.opts.chunkSize == 1:
       self.writeGrpToBlk(grp, track, chr, 0)
     else:
-      gStart = min(map(lambda f: f[3], grp))
-      gEnd = max(map(lambda f: f[4], grp))
+      gStart = min([f[3] for f in grp])
+      gEnd = max([f[4] for f in grp])
       startBlk = gStart // self.opts.chunkSize
       endBlk = gEnd // self.opts.chunkSize
       for blk in range(startBlk, endBlk+1):
@@ -180,7 +180,7 @@ class Gff3Importer:
         # This requires a lot less space (~time) to transfor than representing each exon as a separate
         # feature with full coordinates. NOTE that we lose exon IDs (and potentially other attributes) 
         # by doing this. Maybe worth it, maybe not?
-        exons = list(filter(lambda x: x[2] == 'exon', pid2kids[fid]))
+        exons = list([x for x in pid2kids[fid] if x[2] == 'exon'])
         exons.sort(key=lambda e: e[3])
         eexons = f[8].setdefault('exons',[])
         for e in exons:
@@ -188,7 +188,7 @@ class Gff3Importer:
           length = e[4] - e[3] + 1
           eexons.append('%d_%d' % (offset,length))
         #
-        cdss = list(filter(lambda x: x[2] == 'CDS', pid2kids[fid]))
+        cdss = list([x for x in pid2kids[fid] if x[2] == 'CDS'])
         if cdss:
           cdss.sort(key=lambda x: x[3])
           cid = cdss[0][8]['ID']
