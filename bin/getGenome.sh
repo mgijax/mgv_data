@@ -101,13 +101,15 @@ importModels () {
   logit "Importing ${ORGANISM} gene models to ${ODIR}."
   mkdir -p "${G_ODIR}"
   if [[ ${DRY_RUN} == "" ]] ; then
-    if [[ ("${FORCE}" != "") || ("${GFF_GZ_FILE}" -nt "${ODIR}/${ORGANISM}/index.json") ]] ; then
-	gunzip -c "${GFF_GZ_FILE}" | \
-	${PYTHON} prepGff3.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" ${MODULES} | \
-	${PYTHON} importGff3.py -p "${ORGANISM}" -g "${NAME}" -x "${TAXONID}" -k "${CHUNK_SIZE}" -d "${ODIR}"
-    else
-        logit "Skipped import because file has not been updated. Use --force to override."
-    fi
+        if [[ "${GFF_GZ_FILE}" =~ ^.*\.gz ]] ; then
+            gunzip -c "${GFF_GZ_FILE}" | \
+            ${PYTHON} prepGff3.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" ${MODULES} | \
+            ${PYTHON} importGff3.py -p "${ORGANISM}" -g "${NAME}" -x "${TAXONID}" -k "${CHUNK_SIZE}" -d "${ODIR}"
+        else
+            cat "${GFF_GZ_FILE}" | \
+            ${PYTHON} prepGff3.py -x "${EXCLUDE_TYPES}" -c "${CHR_REGEX}" ${MODULES} | \
+            ${PYTHON} importGff3.py -p "${ORGANISM}" -g "${NAME}" -x "${TAXONID}" -k "${CHUNK_SIZE}" -d "${ODIR}"
+        fi
   fi
 }
 
@@ -125,13 +127,9 @@ importAssembly () {
   logit "Importing ${ORGANISM} genome assembly to ${G_ODIR}/sequences."
   mkdir -p "${G_ODIR}"
   if [[ ${DRY_RUN} == "" ]] ; then
-    if [[ ("${FORCE}" != "") || ("${GFF_GZ_FILE}" -nt "${G_ODIR}/sequences") ]] ; then
 	mkdir -p "${G_ODIR}/sequences"
 	gunzip -c "${FASTA_GZ_FILE}" | ${PYTHON} importFasta.py -c "${CHR_REGEX}" -o ${G_ODIR}/sequences
 	touch "${G_ODIR}/sequences"
-    else
-        logit "Skipped import because file has not been updated. Use --force to override."
-    fi
   fi
 }
 
@@ -207,10 +205,6 @@ do
         shift
         CHUNK_SIZE="$1"
         ;;
-    --force)
-        # which chromsomes to process.
-        FORCE="true"
-        ;;
     -p)
         # which phase to run (download, import)
         shift
@@ -250,7 +244,12 @@ fi
 if [[ "${FASTA_URL}" == "" ]] ; then
     FASTA_URL="${ENSEMBL_BASE}/release-${RELEASE}/fasta/${ORGANISM}/dna/*.dna.toplevel.fa.gz"
 fi
-GFF_GZ_FILE="${DDIR}/${ORGANISM}.${RELEASE}.gff3.gz"
+if [[ "${GFF_URL}" =~ ^.*\.gz$ ]]; then
+    GFF_GZ_FILE="${DDIR}/${ORGANISM}.${RELEASE}.gff3.gz"
+else
+    GFF_GZ_FILE="${DDIR}/${ORGANISM}.${RELEASE}.gff3"
+fi 
+
 FASTA_GZ_FILE="${DDIR}/${ORGANISM}.${RELEASE}.fa.gz"
 G_ODIR="${ODIR}/${ORGANISM}"
 G_WDIR="${WDIR}/${ORGANISM}"
