@@ -1,232 +1,253 @@
 {
-  "defaults" : {
-    "ensembl" : { "release" : "99" },
-    "alliance" : { "release" : "3.1.0" }
+  "vars" : {
+      "chr_re" : "^..?$",
+      "ensemblRelease" : "99",
+      "allianceRelease" : "3.1.0",
+      "ensemblMouseStrain" : {
+        "source" : "ensembl",
+        "release" : "@ensemblRelease",
+        "filters" : ["ensemblMouseStrain"],
+        "exclude_types" : ["biological_region", "chromosome", "scaffold"]
+      },
+      "ensemblNonMouseAssembly" : {
+        "source" : "ensembl",
+        "release" : "@ensemblRelease"
+      },
+      "allianceGff" : {
+        "source": "alliance",
+        "release" : "@allianceRelease",
+        "filters" : ["allianceGff"],
+        "doSort" : true
+      },
+      "mgiGff" : {
+        "source" : "mgi",
+        "filters" : ["mgiGff"]
+      }
   },
-  "genomes" : [{
+  "data" : [{
     "name" : "mus_musculus_129s1svimj"
     ,"label" : "129S1/SvImJ"
     ,"taxonid" : "10090"
     ,"build" : "129S1_SvImJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_aj"
     ,"label" : "A/J"
     ,"taxonid" : "10090"
     ,"build" : "A_J_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_akrj"
     ,"label" : "AKR/J"
     ,"taxonid" : "10090"
     ,"build" : "AKR_J_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_balbcj"
     ,"label" : "BALB/cJ"
     ,"taxonid" : "10090"
     ,"build" : "BALB_cJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_c3hhej"
     ,"label" : "C3H/HeJ"
     ,"taxonid" : "10090"
     ,"build" : "C3H_HeJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_c57bl6nj"
     ,"label" : "C57BL/6NJ"
     ,"taxonid" : "10090"
     ,"build" : "C57BL_6NJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus"
     ,"label" : "C57BL/6J"
     ,"taxonid" : "10090"
     ,"build" : "GRCm38"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y","MT"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "mgi" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@mgiGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_caroli"
     ,"label" : "CAROLI/EiJ"
     ,"taxonid" : "10089"
     ,"build" : "CAROLI_EIJ_v1.1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_casteij"
     ,"label" : "CAST/EiJ"
     ,"taxonid" : "10090"
     ,"build" : "CAST_EiJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_cbaj"
     ,"label" : "CBA/J"
     ,"taxonid" : "10090"
     ,"build" : "CBA_J_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_dba2j"
     ,"label" : "DBA/2J"
     ,"taxonid" : "10090"
     ,"build" : "DBA_2J_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_fvbnj"
     ,"label" : "FVB/NJ"
     ,"taxonid" : "10090"
     ,"build" : "FVB_NJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_lpj"
     ,"label" : "LP/J"
     ,"taxonid" : "10090"
     ,"build" : "LP_J_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_nodshiltj"
     ,"label" : "NOD/ShiLtJ"
     ,"taxonid" : "10090"
     ,"build" : "NOD_ShiLtJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_nzohlltj"
     ,"label" : "NZO/HlLtJ"
     ,"taxonid" : "10090"
     ,"build" : "NZO_HlLtJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_pahari"
     ,"label" : "PAHARI/EiJ"
     ,"taxonid" : "10093"
     ,"build" : "PAHARI_EIJ_v1.1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","X"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_pwkphj"
     ,"label" : "PWK/PhJ"
     ,"taxonid" : "10090"
     ,"build" : "PWK_PhJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_spretus"
     ,"label" : "SPRETUS/EiJ"
     ,"taxonid" : "10096"
     ,"build" : "SPRET_EiJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_wsbeij"
     ,"label" : "WSB/EiJ"
     ,"taxonid" : "10090"
     ,"build" : "WSB_EiJ_v1"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","X","Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "ensembl" }
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : "@ensemblMouseStrain"
+    ,"models" : "@ensemblMouseStrain"
     ,"_" : "##############################################"
   }, {
     "name" : "homo_sapiens"
     ,"label" : "H.sapiens"
     ,"taxonid" : "9606"
     ,"build" : "GRCh38"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y","MT"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "alliance", "provider": "HUMAN" }
+    ,"assembly" : "@ensemblNonMouseAssembly"
+    ,"models" : {
+        "source" : "alliance",
+        "release" : "@allianceRelease",
+        "provider": "HUMAN",
+        "doSort" : true,
+        "filters" : ["allianceGff"]
+        }
     ,"_" : "##############################################"
   }, {
     "name" : "rattus_norvegicus"
     ,"label" : "R. norvegicus"
     ,"taxonid" : "10116"
     ,"build" : "Rnor_6.0"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","X","Y","MT"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "alliance", "provider": "RGD" }
+    ,"assembly" : "@ensemblNonMouseAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "RGD" }
     ,"_" : "##############################################"
   }, {
     "name" : "danio_rerio"
     ,"label" : "D. rerio"
     ,"taxonid" : "7955"
     ,"build" : "GRCz11"
-    ,"chromosomes" : ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","MT"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "alliance", "provider": "ZFIN" }
+    ,"assembly" : "@ensemblNonMouseAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "ZFIN" }
     ,"_" : "##############################################"
   }, {
     "name" : "caenorhabditis_elegans"
     ,"label" : "C. elegans"
     ,"taxonid" : "6239"
     ,"build" : "WBcel235"
-    ,"chromosomes" : ["I", "II", "IV", "V", "X"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "alliance", "provider": "WB" }
+    ,"assembly" : "@ensemblNonMouseAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "WB" }
     ,"_" : "##############################################"
   }, {
     "name" : "drosophila_melanogaster"
     ,"label" : "D. melanogaster"
     ,"taxonid" : "7227"
     ,"build" : "BDGP6.28"
-    ,"chromosomes" : ["2L", "2R", "3L", "3R", "4", "X", "Y"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "alliance", "provider": "FB" }
+    ,"assembly" : "@ensemblNonMouseAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "FB" }
     ,"_" : "##############################################"
   }, {
     "name" : "saccharomyces_cerevisiae"
     ,"label" : "S. cerevisiae"
     ,"taxonid" : "559292"
     ,"build" : "R64-1-1"
-    ,"chromosomes" : ["I", "II", "IV", "V", "VI", "IX", "X", "XI", "XV"]
-    ,"assembly" : { "source" : "ensembl" }
-    ,"models" : { "source" : "alliance", "provider": "SGD" }
+    ,"assembly" : "@ensemblNonMouseAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "SGD", "filters" : ["sgdGff"] }
     ,"_" : "##############################################"
   }]
 }

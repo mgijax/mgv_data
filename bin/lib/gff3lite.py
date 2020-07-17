@@ -29,6 +29,7 @@ SEMI = ';'
 COMMA = ','
 EQ = '='
 HASH = '#'
+GT = '>'
 
 MULTIVALUED = ["Parent", "Dbxref", "Alias", "Note", "Ontology_term"]
 GROUPSEPARATOR = "###"
@@ -56,7 +57,13 @@ class Gff3Parser :
     header = []
     group = []
     currSeqid = None
+    inSeqs = False
     for line in self.sfd:
+      if inSeqs:
+          continue
+      if line.startswith(GT):
+          inSeqs = True
+          continue
       # Comment line
       if line.startswith(HASH):
         if self.returnGroups and line.strip() == GROUPSEPARATOR:
@@ -70,12 +77,13 @@ class Gff3Parser :
       if header != None and self.returnHeader:
         # User wants header and this is the first feature. 
         # Yield the header then remember that we did so.
-        yield parsePragmas(header)
+        yield ''.join(header)
         header = None
       #
       record = list([self.convertDots if a == '.' else a for a in parseLine(line)])
       if self.returnGroups:
-        if record[0] != currSeqid:
+        if record[0] != currSeqid or "Parent" not in record[8]:
+          # if chromosome changes or the feature is top-level (has no parent), start a new group
           if group: yield group
           group = []
         group.append(record)
@@ -87,6 +95,26 @@ class Gff3Parser :
       yield group
     #
     self.close()
+
+  def sortIterate (self) :
+    # 
+    origRH = self.returnHeader
+    origRG = self.returnGroups
+    self.returnHeader = True
+    self.returnGroups = True
+    gffStream = self.iterate()
+    header = next(gffStream)
+    if origRH:
+        yield header
+    allModels = list(gffStream)
+    # sort by models by chromosome, then start position of the top-level feature
+    allModels.sort(key = lambda m: (m[0][0], m[0][3]))
+    for model in allModels:
+        if origRG:
+            yield model
+        else:
+            for m in model:
+                yield m
 #
 def parseColumn9 (text) :
   c9 = {}
@@ -98,6 +126,10 @@ def parseColumn9 (text) :
     if len(p) == 0:
       continue
     bits = p.split(EQ, 1)
+    if len(bits) == 1:
+        # syntax error - unescaped ';' in an attribute value?
+        # ignore it, and try to keep going
+        continue
     n = bits[0].strip()
     v = bits[1].strip()
     if n in MULTIVALUED:
@@ -122,15 +154,19 @@ def formatColumn9(c9):
     
 #
 def parseLine (line) :
-  if line.endswith(NL) :
-    line = line[:-1]
-  flds = line.split(TAB)
-  if len(flds) != 9:
-    raise RuntimeError("Line does not have 9 columns.")
-  flds[3] = int(flds[3])
-  flds[4] = int(flds[4])
-  flds[8] = parseColumn9(flds[8])
-  return flds
+  try:
+      if line.endswith(NL) :
+        line = line[:-1]
+      flds = line.split(TAB)
+      if len(flds) != 9:
+        raise RuntimeError("Line does not have 9 columns.")
+      flds[3] = int(flds[3])
+      flds[4] = int(flds[4])
+      flds[8] = parseColumn9(flds[8])
+      return flds
+  except Exception as e:
+      sys.stderr.write("Error parsing GFF line: " + line)
+      raise
 
 #
 PRAGMA_RE = re.compile(r'#[#!]([-\w]+) (.*)')
@@ -159,3 +195,5 @@ def formatLine (row):
 if __name__ == "__main__":
   for r in Gff3Parser(sys.stdin,returnGroups=True, returnHeader=True).iterate():
     print(r)
+    print("###")
+

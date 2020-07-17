@@ -11,107 +11,11 @@ import json
 from argparse import ArgumentParser
 import re
 from urllib.request import urlopen
+import gzip
 
-### ------------------------------------------------------------------
-class Source :
-    def __init__ (self, args) :
-        for (k,v) in args.items() :
-            setattr(self, k, v)
-        self.init()
-        #
-        self.ddir = os.path.abspath(os.path.join(self.builder.args.downloads_dir, self.name))
-        fname = self.url.split("/")[-1]
-        self.fpath = os.path.abspath(os.path.join(self.ddir, fname))
-
-    def runCommand (self, cmd) :
-        self.builder.log("Running command: " + cmd)
-        os.system(cmd)
-
-    def init(self):
-        pass
-
-    def downloadData (self) :
-        if not self.url:
-            raise RuntimeError("No URL")
-        #
-        if self.url.startswith("rsync://"):
-           cmd = 'rsync -av --progress "%s" "%s"' % (self.url, self.fpath)
-        else:
-           cmd = 'curl -z "%s" -o "%s" "%s"' % (self.fpath, self.fpath, self.url)
-        if not self.debug:
-            self.runCommand("mkdir -p %s" % self.ddir)
-            self.runCommand(cmd)
-
-    def importData (self) :
-        self.builder.log("Importing file: " + self.fpath)
-
-### ------------------------------------------------------------------
-class UrlSource (Source) :
-    pass
-
-### ------------------------------------------------------------------
-# Gets gene models and genome assembies from Ensembl.
-# Examples:
-# ftp://ftp.ensembl.org/pub/release-99/fasta/danio_rerio/dna/Danio_rerio.GRCz11.dna.toplevel.fa.gz
-# ftp://ftp.ensembl.org/pub/release-99/gff3/danio_rerio/Danio_rerio.GRCz11.99.chr.gff3.gz
-class EnsemblSource (Source) :
-    BASEURL = "rsync://ftp.ensembl.org/ensembl/pub"
-    def init (self) :
-        if self.type == "assembly":
-            self.url = self.BASEURL + "/release-%s/fasta/%s/dna/%s.%s.dna.toplevel.fa.gz" % \
-                                      (self.release, self.name, self.name.capitalize(), self.build)
-        elif self.type == "models":
-            self.url = self.BASEURL + "/release-%s/gff3/%s/%s.%s.%s.chr.gff3.gz" % \
-                                      (self.release, self.name, self.name.capitalize(), self.build, self.release)
-        else:
-            raise RuntimeError("Don't know this type: " + self.type)
-
-### ------------------------------------------------------------------
-# Gets gene models from the Alliance for non-mouse organisms
-class AllianceSource (Source) :
-    SNAPSHOT_CACHE = {}
-    SNAPSHOT_URL="https://fms.alliancegenome.org/api/snapshot/release/" 
-    DOWNLOAD_URL="https://download.alliancegenome.org/"
-    def init (self) :
-        if self.type != "models" :
-            raise RuntimeError("Don't know this type:" + self.type)
-        self.url = self.getUrl("GFF")
-
-    def getSnapshotFileList(self):
-        if self.release in self.SNAPSHOT_CACHE:
-            snapshot = self.SNAPSHOT_CACHE[self.release]
-        else:
-            fd = urlopen(self.SNAPSHOT_URL+self.release)
-            snapshot = json.loads(fd.read())
-            fd.close()
-            self.SNAPSHOT_CACHE[self.release] = snapshot
-        files = snapshot["snapShot"]["dataFiles"]
-        return files
-
-    def getUrl (self, type) :
-        fList = self.getSnapshotFileList()
-        fList = list(filter(lambda f: f["dataType"]["name"] == type and f["dataSubType"]["name"] == self.provider, fList))
-        if len(fList) == 0:
-            raise RuntimeError("File does not exist.")
-        elif len(fList) > 1:
-            raise RuntimeError("File specification is not unique.")
-        f = fList[0]
-        return self.DOWNLOAD_URL + f["s3Path"]
-
-### ------------------------------------------------------------------
-# Gets gene models for C57BL/6J mouse strain
-class MgiSource (Source) :
-    def init (self) :
-        if self.type != "models" :
-            raise RuntimeError("Don't know this type:" + self.type)
-        self.url = "http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
-
-### ------------------------------------------------------------------
-sourceNameMap = {
-    "ensembl" : EnsemblSource,
-    "alliance" : AllianceSource,
-    "mgi" : MgiSource
-}
+from lib.Downloader import downloaderNameMap
+from lib.Importer import GffImporter, FastaImporter
+from lib.Config import ConfigFileReader
 
 ### ------------------------------------------------------------------
 class MgvDataBuilder :
@@ -175,38 +79,36 @@ class MgvDataBuilder :
 
         return args
 
+    def makeDownloaderObject(self, g, type) :
+        sname = g[type].get("source","UrlDownloader")
+        cls = downloaderNameMap[sname]
+        return cls(self, g, type)
+
     def readConfigFile (self, fname) :
         with open(fname) as fd:
             cfg = json.load(fd)
         return cfg
 
-    def makeSourceObject(self, type, g) :
-        if "source" in g[type]:
-            sname = g[type]["source"]
-            cls = sourceNameMap[sname]
-        else:
-            sname = "UrlSource"
-            cls = Source
-        # creates args from defaults (if any) plus everything in g
-        args = self.cfg["defaults"].get(sname, {})
-        args.update(g)
-        args.update(g[type])
-        args["type"] = type
-        args["builder"] = self
-        args["debug"] = self.args.debug
-        return cls(args)
+    def deepCopy (self, obj) :
+        return json.loads(json.dumps(obj))
 
-    def processGenome (self, g) :
-        gn = g["name"]
+    def processGenome (self, gg) :
+        gn = gg["name"]
         for t in ["assembly", "models"] :
             if self.args.type in [t, None] :
-                srcobj = self.makeSourceObject(t, g)
+                downloader = self.makeDownloaderObject(gg, t)
+                # Download genome data
                 if self.args.phase in ["download", None] :
-                    self.log("%s: downloading %s: %s" % (gn, t, srcobj.url))
-                    srcobj.downloadData()
+                    self.log("%s: downloading %s: %s" % (gn, t, downloader.cfg[t]["url"]))
+                    downloader.downloadData()
+                # Import genome data
                 if self.args.phase in ["import", None] :
+                    if t == "assembly":
+                        impobj = FastaImporter(self, "assembly", gg, self.args.output_dir)
+                    elif t == "models":
+                        impobj = GffImporter(self, "models", gg, self.args.output_dir)
                     self.log("%s: importing %s" % (gn, t))
-                    srcobj.importData()
+                    impobj.go()
 
     def main (self) :
         #
@@ -215,15 +117,16 @@ class MgvDataBuilder :
             self.logfile = open(self.args.log_file, 'w')
         self.log("\n\nThis is the MGV back end data builder.")
         self.log("Arguments: " + str(self.args))
-        self.genome_re = re.compile(self.args.genome)
-        self.log(str(self.args))
+        self.genome_re = re.compile('^' + self.args.genome + '$')
         #
-        self.cfg = self.readConfigFile(self.args.config_file)
-        for g in self.cfg['genomes']:
+        self.cfg = ConfigFileReader(self.args.config_file).read()
+        for g in self.cfg:
             if self.genome_re.match(g["name"]):
+                self.log(str(g))
                 self.processGenome(g)
             else:
                 self.log("Skipped %s." % g["name"])
+        self.log("Builder exiting.")
         self.logfile.close()
 
 
