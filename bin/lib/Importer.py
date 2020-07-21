@@ -18,9 +18,13 @@ class Importer :
         self.output_dir = output_dir
         self.filters = tcfg.get("filters", [])[:]
 
-    def ensureDirectory (self, d):
+    def ensureDirectory (self, d, empty = False):
         if not os.path.exists(d):
             os.makedirs(d)
+        if empty:
+            cmd = "rm -fr %s/*" % d
+            self.log(cmd)
+            os.system(cmd)
 
     def streamDownloadedFile (self) :
         if self.fpath.endswith(".gz") :
@@ -44,21 +48,22 @@ class Importer :
                 src = filtCls(self)(src)
         return src
 
+    # OVERRIDE ME
+    def processLine(self, line):
+        pass
+
     def go (self) :
         self.log("Importing file: " + self.fpath)
         self.log("Filters: " + str(self.filters))
         count = 0
         for line in self.filterDownloadedFile():
-            self.log(line, timestamp=False, newline='')
-            count += 1
-            if count == 10:
-                break
+            self.processLine(line)
 
 from .FastaImporter import split
 class FastaImporter (Importer) :
     def go (self) :
         odir = os.path.join(self.output_dir, self.cfg["name"], "sequences")
-        self.ensureDirectory(odir)
+        self.ensureDirectory(odir, empty=True)
         split(self.filterDownloadedFile(), odir, self.chr_re, self.log)
 
 from .GffImporter import Gff3Importer, getArgs
@@ -66,6 +71,7 @@ class GffImporter (Importer) :
     def __init__ (self, *args):
         Importer.__init__(self, *args)
         self.doSort = self.cfg[self.type].get("doSort", False)
+        self.transcriptChunkSize = self.cfg[self.type]["transcriptChunkSize"]
 
     def streamDownloadedFile (self) :
         # GffImporter streams the file a gene model at a time.
@@ -94,12 +100,87 @@ class GffImporter (Importer) :
                     yield formatLine(f)
 
     def go (self):
+        odir = os.path.join(self.output_dir, self.cfg["name"], "genes")
+        self.ensureDirectory(odir, empty=True)
+        odir = os.path.join(self.output_dir, self.cfg["name"], "transcripts")
+        self.ensureDirectory(odir, empty=True)
         opts = getArgs([
             "-p", self.cfg["name"],
             "-g", self.cfg["label"],
             "-x", self.cfg["taxonid"],
             "-d", self.output_dir,
-            "-k", "4000000"
+            "-k", self.transcriptChunkSize
         ])
         imp = Gff3Importer(self.filterDownloadedFile(), opts)
         imp.main()
+
+##
+
+import sys
+import os.path
+import argparse
+import json
+
+class OrthologyImporter (Importer) :
+
+    def __init__(self, *args):
+        Importer.__init__(self, *args)
+        self.taxon2file = {}
+        self.inCount = 0
+        self.output_dir = os.path.join(self.output_dir, self.cfg["name"])
+        self.ensureDirectory(self.output_dir)
+
+    #
+    def getFile (self, taxonid) :
+      fname = os.path.join(self.output_dir, taxonid + '.json')
+      if taxonid not in self.taxon2file:
+        self.taxon2file[taxonid] = {
+          "fname" : fname,
+          "fd" : open(fname, 'w'),
+          "count" : 0
+        }
+      return self.taxon2file[taxonid]
+      
+    #
+    def closeAll (self) :
+      for rec in list(self.taxon2file.values()):
+        rec["fd"].write("]")
+        rec["fd"].close()
+    #
+    def outputRecord (self, id1, tx1, id2, tx2, yn) :
+      rec = self.getFile(tx1)
+      if rec["count"] == 0:
+          rec["fd"].write("[")
+      else:
+          rec["fd"].write(",")
+      rec["count"] += 1
+      rec["fd"].write(json.dumps([id1, tx1, id2, tx2, yn]))
+      rec["fd"].write("\n")
+
+    def processLine (self, line) :
+      if line.startswith("#"):
+        return
+      # skip column labels
+      self.inCount += 1
+      if self.inCount == 1:
+        return
+      # parse and ouput
+      fs = line[:-1].split('\t')
+      # Example desired record - just the essentials:
+      # ['FB:FBgn0033981', 'NCBITaxon:7227', 'MGI:3646373', 'NCBITaxon:10090', 'YN']
+      self.outputRecord(
+        fs[0],
+        fs[2].replace('NCBITaxon:',''),
+        fs[4],
+        fs[6].replace('NCBITaxon:',''),
+        fs[11][0] + fs[12][0])
+
+    def go (self) :
+        Importer.go(self)
+        self.closeAll()
+
+importerNameMap = {
+    "models" : GffImporter,
+    "assembly" : FastaImporter,
+    "orthology" : OrthologyImporter,
+}

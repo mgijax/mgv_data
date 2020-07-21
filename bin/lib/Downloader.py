@@ -59,12 +59,13 @@ class EnsemblDownloader (Downloader) :
     def init (self) :
         c = self.cfg
         t = self.cfg[self.type]
+        pth = c.get("remotePath", c["name"])
         if self.type == "assembly":
             t["url"] = self.BASEURL + "/release-%s/fasta/%s/dna/%s.%s.dna.toplevel.fa.gz" % \
-                                      (t["release"], c["name"], c["name"].capitalize(), c["build"])
+                                      (t["release"], pth, pth.capitalize(), c["build"])
         elif self.type == "models":
-            t["url"] = self.BASEURL + "/release-%s/gff3/%s/%s.%s.%s.chr.gff3.gz" % \
-                                      (t["release"], c["name"], c["name"].capitalize(), c["build"], t["release"])
+            t["url"] = self.BASEURL + "/release-%s/gff3/%s/%s.%s.%s.gff3.gz" % \
+                                      (t["release"], pth, pth.capitalize(), c["build"], t["release"])
         else:
             raise RuntimeError("Don't know this type: " + self.type)
 
@@ -75,15 +76,19 @@ class AllianceDownloader (Downloader) :
     SNAPSHOT_URL="https://fms.alliancegenome.org/api/snapshot/release/" 
     DOWNLOAD_URL="https://download.alliancegenome.org/"
     def init (self) :
-        if self.type != "models" :
+        if self.type not in ["models","orthology"] :
             raise RuntimeError("Don't know this type:" + self.type)
-        self.cfg[self.type]["url"] = self.getUrl("GFF")
+        dtype = self.cfg[self.type]["dataType"]
+        self.cfg[self.type]["url"] = self.getUrl(dtype)
+        self.log("URL: " + self.cfg[self.type]["url"])
 
     def getSnapshotFileList(self):
         rel = self.cfg[self.type]["release"]
         if rel in self.SNAPSHOT_CACHE:
+            self.log("Reusing snapshot from cache.")
             snapshot = self.SNAPSHOT_CACHE[rel]
         else:
+            self.log("Getting snapshot file at: " + self.SNAPSHOT_URL+rel)
             fd = urlopen(self.SNAPSHOT_URL+rel)
             snapshot = json.loads(fd.read())
             fd.close()

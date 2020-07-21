@@ -13,12 +13,15 @@ import re
 from urllib.request import urlopen
 import gzip
 
-from lib.Downloader import downloaderNameMap
-from lib.Importer import GffImporter, FastaImporter
 from lib.Config import ConfigFileReader
+from lib.Downloader import downloaderNameMap
+from lib.Importer import importerNameMap
+from lib.Deployer import Deployer
 
 ### ------------------------------------------------------------------
 class MgvDataBuilder :
+    VALID_TYPES = ["assembly", "models", "orthology"]
+    VALID_PHASES = ["download", "import", "deploy"]
     def __init__ (self) :
         self.logfile = sys.stderr
         self.genome_re = None
@@ -43,12 +46,12 @@ class MgvDataBuilder :
             help = "Which genomes to build. By default, builds all genomes. Specify a regex pattern used to match the genome names.")
         parser.add_argument(
             "-p", "--phase",
-            choices = ["download", "import"],
+            choices = self.VALID_PHASES,
             default = None,
             help = "Which phase to run. One of: %(choices)s. If not specified, runs all phases.")
         parser.add_argument(
             "-t", "--type",
-            choices = ["models", "assembly"],
+            choices = self.VALID_TYPES,
             default = None,
             help = "Which datatype to process. One of: %(choices)s. If not specified, processes all types.")
         parser.add_argument(
@@ -60,13 +63,12 @@ class MgvDataBuilder :
             default = "./downloads",
             help = "Where downloaded files go. Default = %(default)s")
         parser.add_argument(
-            "-w", "--working-dir",
-            default = "./work",
-            help = "Where working files go during a build. Default = %(default)s")
-        parser.add_argument(
             "-o", "--output-dir",
             default = "./output",
             help = "Where the output files go. Default = %(default)s")
+        parser.add_argument(
+            "-w", "--web-dir",
+            help = "Web accessible directory for deploy phase. Default = same as the output directory.")
         parser.add_argument(
             "-D", "--debug",
             action = "store_true",
@@ -74,8 +76,8 @@ class MgvDataBuilder :
             help = "Run in debug mode.")
         args = parser.parse_args()
         args.downloads_dir = os.path.abspath(args.downloads_dir)
-        args.working_dir = os.path.abspath(args.working_dir)
         args.output_dir = os.path.abspath(args.output_dir)
+        args.web_dir = os.path.abspath(args.web_dir) if args.web_dir else args.output_dir
 
         return args
 
@@ -92,23 +94,27 @@ class MgvDataBuilder :
     def deepCopy (self, obj) :
         return json.loads(json.dumps(obj))
 
-    def processGenome (self, gg) :
+    def process(self, gg) :
+        self.log("Processing cfg: " + str(gg))
         gn = gg["name"]
-        for t in ["assembly", "models"] :
+        for t in self.VALID_TYPES:
             if self.args.type in [t, None] :
+                if not t in gg:
+                    continue
                 downloader = self.makeDownloaderObject(gg, t)
-                # Download genome data
+                # Download data
                 if self.args.phase in ["download", None] :
                     self.log("%s: downloading %s: %s" % (gn, t, downloader.cfg[t]["url"]))
                     downloader.downloadData()
-                # Import genome data
+                # Import data
                 if self.args.phase in ["import", None] :
-                    if t == "assembly":
-                        impobj = FastaImporter(self, "assembly", gg, self.args.output_dir)
-                    elif t == "models":
-                        impobj = GffImporter(self, "models", gg, self.args.output_dir)
+                    cls = importerNameMap[t]
+                    impobj = cls(self, t, gg, self.args.output_dir)
                     self.log("%s: importing %s" % (gn, t))
                     impobj.go()
+                # Deploy
+                if self.args.phase in ["deploy", None]:
+                    Deployer(self, t, gg, self.args.output_dir, self.args.web_dir).go()
 
     def main (self) :
         #
@@ -122,8 +128,7 @@ class MgvDataBuilder :
         self.cfg = ConfigFileReader(self.args.config_file).read()
         for g in self.cfg:
             if self.genome_re.match(g["name"]):
-                self.log(str(g))
-                self.processGenome(g)
+                self.process(g)
             else:
                 self.log("Skipped %s." % g["name"])
         self.log("Builder exiting.")

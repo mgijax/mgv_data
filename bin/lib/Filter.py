@@ -29,7 +29,7 @@ class GffFilter (Filter) :
             return self.processModel(obj)
 
     def processModel(self, model):
-        return [self.processFeature(f) for f in model]
+        return list(filter(lambda x: x, [self.processFeature(f) for f in model]))
 
 
 class EnsemblMouseStrain (GffFilter) :
@@ -75,6 +75,29 @@ class EnsemblMouseStrain (GffFilter) :
                 attrs['Name'] = mgi[1]
         return feat
 
+class EnsemblNonMouseFilter (GffFilter) :
+    taxon2re = {
+        "7955":  ('description', re.compile(r'Source:ZFIN.*Acc:([A-Z0-9-]+)'), "ZFIN:"),
+        "9606":  ('description', re.compile(r'Acc:(HGNC:\d+)'),                ""),
+        "10116": ('description', re.compile(r'Source:RGD.*Acc:(\d+)'),         "RGD:"),
+        "559292":('description', re.compile(r'Source:SGD.*Acc:(S\d+)'),        "SGD:"),
+        "7227":  ('gene_id',     re.compile(r'(.*)'),                          "FB:"), 
+        "6239":  ('gene_id',     re.compile(r'(.*)'),                          "WB:"),
+
+    }
+    def __init__(self, *args):
+        GffFilter.__init__(self, *args)
+        self.cfg = self.importer.cfg
+        self.attrName, self.id_re, self.id_prefix = self.taxon2re[self.cfg["taxonid"]]
+
+    def processFeature (self, f) :
+        attrs = f[8]
+        attrVal = attrs.get(self.attrName,'')
+        m = self.id_re.search(attrVal)
+        if m:
+            attrs['cID'] = self.id_prefix + m.group(1)
+        return f
+        
 class MgiGff (GffFilter) :
     def __init__ (self, impobj) :
         Filter.__init__(self, impobj)
@@ -143,6 +166,7 @@ class SgdGff (AllianceGff) :
 #
 filterNameMap = {
   "ensemblMouseStrain" : EnsemblMouseStrain,
+  "ensemblNonMouseFilter" : EnsemblNonMouseFilter,
   "mgiGff" : MgiGff,
   "allianceGff" : AllianceGff,
   "sgdGff" : SgdGff
