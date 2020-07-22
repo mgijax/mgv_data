@@ -84,10 +84,12 @@ class Gff3Importer:
       'name': 'sequences',
       'type' : 'PlainSequence'
     }]
-    self.outputDir = os.path.join(self.opts.outputDir, self.opts.genomePath)
+    self.outputRootDir = os.path.join(self.opts.outputDir, self.opts.genomePath)
+    self.outputDir = os.path.join(self.outputRootDir, "models")
     
   def log(self, s):
     sys.stderr.write(s)
+    sys.stderr.flush()
 
   def ensureDirectory (self, d):
     if not os.path.exists(d):
@@ -116,7 +118,10 @@ class Gff3Importer:
       self.currFileName = fname
       self.currFile = open(fname, 'w')
       self.outputFiles[fname] = 0
-      self.log(fname + '\n')
+
+      fn = os.path.basename(fname)
+      dn = os.path.basename(os.path.dirname(fname))
+      self.log('%s/%s ' % (dn, fn))
       return self.currFile
 
   def formatFeature(self, f):
@@ -207,7 +212,7 @@ class Gff3Importer:
     self.writeGrp('transcripts', transcripts)
 
   def writeGenomeInfo(self):
-    fd = open(os.path.join(self.outputDir, 'index.json'), 'w')
+    fd = open(os.path.join(self.outputRootDir, 'index.json'), 'w')
     fd.write(json.dumps(self.genomeInfo, indent=2))
     fd.close()
 

@@ -57,7 +57,7 @@ def getSequenceFromFile (desc) :
   # The directory is the last component of the url:
   gurl = desc["genomeUrl"]
   gdir = gurl.replace("/"," ").split()[-1]
-  path = "%s/%s/sequences/%s.txt" % (DATA_DIR, gdir, desc["chromosome"])
+  path = "%s/%s/assembly/%s.txt" % (DATA_DIR, gdir, desc["chromosome"])
   # 
   fd = os.open(path, os.O_RDONLY)
   #

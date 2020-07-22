@@ -5,13 +5,14 @@ from urllib.request import urlopen
 
 ### ------------------------------------------------------------------
 class Downloader :
-    def __init__ (self, builder, cfg, type) :
+    def __init__ (self, builder, cfg, type, debug=False) :
         self.cfg = cfg
         tcfg = cfg[type]
         self.builder = builder
         self.log = self.builder.log
         self.type = type
         self.init()
+        self.debug = debug
         if "url" not in tcfg:
             raise RuntimeError("%s: url is not set." % self.__class__.__name__)
         # Download directory. Each genome gets its own subdirectory.
@@ -27,7 +28,8 @@ class Downloader :
 
     def runCommand (self, cmd) :
         self.log("Running command: " + cmd)
-        os.system(cmd)
+        if not self.debug:
+            os.system(cmd)
 
     def init(self):
         pass
@@ -38,12 +40,14 @@ class Downloader :
             raise RuntimeError("No URL")
         #
         if tcfg["url"].startswith("rsync://"):
-           cmd = 'rsync -av --progress "%s" "%s"' % (tcfg["url"], tcfg["fpath"])
+           # want to use -av here, but rsync sometimes hangs, and it seems -v is to blame.
+           # See: https://stackoverflow.com/questions/20773118/rsync-suddenly-hanging-indefinitely-during-transfers
+           cmd = 'rsync -a "%s" "%s"' % (tcfg["url"], tcfg["fpath"])
         else:
            cmd = 'curl -z "%s" -o "%s" "%s"' % (tcfg["fpath"], tcfg["fpath"], tcfg["url"])
-        if not self.builder.args.debug:
-            self.runCommand("mkdir -p %s" % self.cfg["ddir"])
-            self.runCommand(cmd)
+        self.log("Downloading %s data for %s" % (self.type, self.cfg["name"]))
+        self.runCommand("mkdir -p %s" % self.cfg["ddir"])
+        self.runCommand(cmd)
 
 ### ------------------------------------------------------------------
 class UrlDownloader (Downloader) :

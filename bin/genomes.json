@@ -223,7 +223,8 @@
     ,"build" : "GRCh38"
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblNonMouseAssembly"
-    ,"models" : { "@":"@allianceGff", "provider" : "HUMAN" }
+    ,"xodels" : { "@":"@allianceGff", "provider" : "HUMAN" }
+    ,"models" : "@ensemblNonMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "rattus_norvegicus"
@@ -232,7 +233,8 @@
     ,"build" : "Rnor_6.0"
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblNonMouseAssembly"
-    ,"models" : { "@":"@allianceGff", "provider" : "RGD" }
+    ,"xodels" : { "@":"@allianceGff", "provider" : "RGD" }
+    ,"models" : "@ensemblNonMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "danio_rerio_alliance"
@@ -269,7 +271,8 @@
     ,"build" : "BDGP6.28"
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblNonMouseAssembly"
-    ,"models" : { "@":"@allianceGff", "provider" : "FB" }
+    ,"xodels" : { "@":"@allianceGff", "provider" : "FB" }
+    ,"models" : "@ensemblNonMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "saccharomyces_cerevisiae"
@@ -278,7 +281,8 @@
     ,"build" : "R64-1-1"
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblNonMouseAssembly"
-    ,"models" : { "@":"@allianceGff", "provider" : "SGD", "filters" : ["sgdGff"] }
+    ,"xodels" : { "@":"@allianceGff", "provider" : "SGD", "filters" : ["sgdGff"] }
+    ,"models" : "@ensemblNonMouseGff"
     ,"_" : "##############################################"
   }]
 }

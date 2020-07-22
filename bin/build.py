@@ -47,7 +47,8 @@ class MgvDataBuilder :
         parser.add_argument(
             "-p", "--phase",
             choices = self.VALID_PHASES,
-            default = None,
+            action = "append",
+            default = [],
             help = "Which phase to run. One of: %(choices)s. If not specified, runs all phases.")
         parser.add_argument(
             "-t", "--type",
@@ -68,7 +69,10 @@ class MgvDataBuilder :
             help = "Where the output files go. Default = %(default)s")
         parser.add_argument(
             "-w", "--web-dir",
-            help = "Web accessible directory for deploy phase. Default = same as the output directory.")
+            help = "Web accessible directory containing data generated files. Default = same as --output-dir.")
+        parser.add_argument(
+            "--cgi-dir",
+            help = "Place to put the CGI scripts used by MGV Default = same as --web-dir.")
         parser.add_argument(
             "-D", "--debug",
             action = "store_true",
@@ -78,13 +82,16 @@ class MgvDataBuilder :
         args.downloads_dir = os.path.abspath(args.downloads_dir)
         args.output_dir = os.path.abspath(args.output_dir)
         args.web_dir = os.path.abspath(args.web_dir) if args.web_dir else args.output_dir
+        args.cgi_dir = os.path.abspath(args.cgi_dir) if args.cgi_dir else args.web_dir
+        if len(args.phase) == 0:
+            args.phase = self.VALID_PHASES
 
         return args
 
     def makeDownloaderObject(self, g, type) :
         sname = g[type].get("source","UrlDownloader")
         cls = downloaderNameMap[sname]
-        return cls(self, g, type)
+        return cls(self, g, type, self.args.debug)
 
     def readConfigFile (self, fname) :
         with open(fname) as fd:
@@ -94,6 +101,16 @@ class MgvDataBuilder :
     def deepCopy (self, obj) :
         return json.loads(json.dumps(obj))
 
+    def ensureDirectory (self, d, empty = False):
+        if self.args.debug:
+            return
+        if not os.path.exists(d):
+            os.makedirs(d)
+        if empty:
+            cmd = "rm -fr %s/*" % d
+            self.log(cmd)
+            os.system(cmd)
+
     def process(self, gg) :
         self.log("Processing cfg: " + str(gg))
         gn = gg["name"]
@@ -101,20 +118,18 @@ class MgvDataBuilder :
             if self.args.type in [t, None] :
                 if not t in gg:
                     continue
-                downloader = self.makeDownloaderObject(gg, t)
                 # Download data
-                if self.args.phase in ["download", None] :
-                    self.log("%s: downloading %s: %s" % (gn, t, downloader.cfg[t]["url"]))
+                downloader = self.makeDownloaderObject(gg, t)
+                if "download" in self.args.phase:
                     downloader.downloadData()
                 # Import data
-                if self.args.phase in ["import", None] :
+                if "import" in self.args.phase:
                     cls = importerNameMap[t]
-                    impobj = cls(self, t, gg, self.args.output_dir)
-                    self.log("%s: importing %s" % (gn, t))
+                    impobj = cls(self, t, gg, self.args.output_dir, self.args.debug)
                     impobj.go()
                 # Deploy
-                if self.args.phase in ["deploy", None]:
-                    Deployer(self, t, gg, self.args.output_dir, self.args.web_dir).go()
+                if "deploy" in self.args.phase:
+                    Deployer(self, t, gg, self.args.output_dir, self.args.web_dir, self.args.cgi_dir, debug=self.args.debug).go()
 
     def main (self) :
         #
@@ -126,11 +141,12 @@ class MgvDataBuilder :
         self.genome_re = re.compile('^' + self.args.genome + '$')
         #
         self.cfg = ConfigFileReader(self.args.config_file).read()
+        if self.args.debug:
+            self.log("Running in DEBUG mode. No commands will be executed.")
+        #
         for g in self.cfg:
             if self.genome_re.match(g["name"]):
                 self.process(g)
-            else:
-                self.log("Skipped %s." % g["name"])
         self.log("Builder exiting.")
         self.logfile.close()
 

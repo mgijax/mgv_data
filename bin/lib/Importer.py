@@ -6,8 +6,9 @@ from .Filter import filterNameMap
 from .gff3lite import Gff3Parser, parseLine, formatLine
 
 class Importer :
-    def __init__ (self, builder, type, cfg, output_dir) :
+    def __init__ (self, builder, type, cfg, output_dir, debug) :
         self.builder = builder
+        self.debug = debug
         self.type = type
         self.cfg = cfg
         tcfg = self.cfg[self.type]
@@ -17,14 +18,6 @@ class Importer :
         self.log = self.builder.log
         self.output_dir = output_dir
         self.filters = tcfg.get("filters", [])[:]
-
-    def ensureDirectory (self, d, empty = False):
-        if not os.path.exists(d):
-            os.makedirs(d)
-        if empty:
-            cmd = "rm -fr %s/*" % d
-            self.log(cmd)
-            os.system(cmd)
 
     def streamDownloadedFile (self) :
         if self.fpath.endswith(".gz") :
@@ -56,15 +49,20 @@ class Importer :
         self.log("Importing file: " + self.fpath)
         self.log("Filters: " + str(self.filters))
         count = 0
+        if self.debug:
+            return
         for line in self.filterDownloadedFile():
             self.processLine(line)
 
 from .FastaImporter import split
 class FastaImporter (Importer) :
     def go (self) :
-        odir = os.path.join(self.output_dir, self.cfg["name"], "sequences")
-        self.ensureDirectory(odir, empty=True)
-        split(self.filterDownloadedFile(), odir, self.chr_re, self.log)
+        lfunc = lambda s: self.log(s, newline='')
+        odir = os.path.join(self.output_dir, self.cfg["name"], "assembly")
+        self.log("Importing Fasta: %s -> %s/assembly" % (self.fpath, odir))
+        if not self.debug:
+            self.builder.ensureDirectory(odir, empty=True)
+            split(self.filterDownloadedFile(), odir, self.chr_re, lfunc)
 
 from .GffImporter import Gff3Importer, getArgs
 class GffImporter (Importer) :
@@ -97,22 +95,26 @@ class GffImporter (Importer) :
                 yield obj
             else:
                 for f in obj:
-                    yield formatLine(f)
+                    if self.chr_re.match(f[0]):
+                        yield formatLine(f)
 
     def go (self):
-        odir = os.path.join(self.output_dir, self.cfg["name"], "genes")
-        self.ensureDirectory(odir, empty=True)
-        odir = os.path.join(self.output_dir, self.cfg["name"], "transcripts")
-        self.ensureDirectory(odir, empty=True)
+        odir = os.path.join(self.output_dir, self.cfg["name"], "models")
+        gdir = os.path.join(odir, "genes")
+        self.builder.ensureDirectory(gdir, empty=True)
+        tdir = os.path.join(odir, "transcripts")
+        self.builder.ensureDirectory(tdir, empty=True)
         opts = getArgs([
             "-p", self.cfg["name"],
             "-g", self.cfg["label"],
             "-x", self.cfg["taxonid"],
             "-d", self.output_dir,
-            "-k", self.transcriptChunkSize
+            "-k", self.transcriptChunkSize,
         ])
-        imp = Gff3Importer(self.filterDownloadedFile(), opts)
-        imp.main()
+        self.log("Importing GFF: %s -> %s" % (self.fpath, odir))
+        if not self.debug:
+            imp = Gff3Importer(self.filterDownloadedFile(), opts)
+            imp.main()
 
 ##
 
@@ -128,7 +130,7 @@ class OrthologyImporter (Importer) :
         self.taxon2file = {}
         self.inCount = 0
         self.output_dir = os.path.join(self.output_dir, self.cfg["name"])
-        self.ensureDirectory(self.output_dir)
+        self.builder.ensureDirectory(self.output_dir)
 
     #
     def getFile (self, taxonid) :
