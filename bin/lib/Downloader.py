@@ -10,7 +10,7 @@ class Downloader :
         tcfg = cfg[type]
         self.builder = builder
         self.log = self.builder.log
-        self.type = type
+        self.type = type # models, assembly, orthology
         self.init()
         self.debug = debug
         if "url" not in tcfg:
@@ -29,20 +29,23 @@ class Downloader :
     def runCommand (self, cmd) :
         self.log("Running command: " + cmd)
         if not self.debug:
-            os.system(cmd)
+            rc = os.system(cmd)
+            if rc:
+                raise RuntimeError("Command exited with non-zero status: " + str(rc))
 
     def init(self):
         pass
 
-    def downloadData (self) :
+    def go (self) :
         tcfg = self.cfg[self.type]
         if not "url" in tcfg:
             raise RuntimeError("No URL")
         #
         if tcfg["url"].startswith("rsync://"):
-           # want to use -av here, but rsync sometimes hangs, and it seems -v is to blame.
-           # See: https://stackoverflow.com/questions/20773118/rsync-suddenly-hanging-indefinitely-during-transfers
-           cmd = 'rsync -a "%s" "%s"' % (tcfg["url"], tcfg["fpath"])
+           # For some reason, rsync started hanging on some large files. 
+           # Turning off the incremental algorithm (-W/--whole-file) seems to help.
+           # See: https://stackoverflow.com/a/59654781
+           cmd = 'rsync -avW --progress "%s" "%s"' % (tcfg["url"], tcfg["fpath"])
         else:
            cmd = 'curl -z "%s" -o "%s" "%s"' % (tcfg["fpath"], tcfg["fpath"], tcfg["url"])
         self.log("Downloading %s data for %s" % (self.type, self.cfg["name"]))
@@ -59,11 +62,16 @@ class UrlDownloader (Downloader) :
 # ftp://ftp.ensembl.org/pub/release-99/fasta/danio_rerio/dna/Danio_rerio.GRCz11.dna.toplevel.fa.gz
 # ftp://ftp.ensembl.org/pub/release-99/gff3/danio_rerio/Danio_rerio.GRCz11.99.chr.gff3.gz
 class EnsemblDownloader (Downloader) :
-    BASEURL = "rsync://ftp.ensembl.org/ensembl/pub"
+    #
+    # Was using happily rsync but recently it's been hanging.
+    # BASEURL = "rsync://ftp.ensembl.org/ensembl/pub"
+    #
+    # Using ftp is reliable and actually pretty fast
+    BASEURL= "ftp://ftp.ensembl.org/pub"
     def init (self) :
         c = self.cfg
         t = self.cfg[self.type]
-        pth = c.get("remotePath", c["name"])
+        pth = t.get("remotePath", c["name"])
         if self.type == "assembly":
             t["url"] = self.BASEURL + "/release-%s/fasta/%s/dna/%s.%s.dna.toplevel.fa.gz" % \
                                       (t["release"], pth, pth.capitalize(), c["build"])
@@ -74,15 +82,53 @@ class EnsemblDownloader (Downloader) :
             raise RuntimeError("Don't know this type: " + self.type)
 
 ### ------------------------------------------------------------------
+# cfg:
+#    assemblyId string  GCA_000001635.9_GRCm39
+# Example id -> url:
+#  GCA_000001635.9_GRCm39 ->
+#    ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/635/GCA_000001635.9_GRCm39/GCA_000001635.9_GRCm39_genomic.fna.gz
+#  GCF_000001635.25_GRCm38.p5 ->
+#    ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/635/GCF_000001635.25_GRCm38.p5/GCF_000001635.25_GRCm38.p5_genomic.fna.gz
+class NcbiDownloader (Downloader) :
+    BASEURL = "ftp://ftp.ncbi.nlm.nih.gov/genomes/all/"
+    def init (self) :
+        c = self.cfg
+        t = self.cfg[self.type]
+        if self.type == "assembly":
+            ident = t["assemblyId"]
+            (prefix, triples, version, name) = self.parseAssemblyId(ident)
+            t["url"] = self.BASEURL + ("%s/%s/%s/%s_genomic.fna.gz" % (prefix, "/".join(triples), ident, ident))
+            self.log("URL: " + t["url"])
+        else:
+            raise RuntimeError("Don't know this type: " + self.type)
+
+    # given "GCA_000001635.9_GRCm39", returns ("GCA", ["000","001","635"] ".9", "GRCm39")
+    def parseAssemblyId (self, ident) :
+        prefix,numeric,name = ident.split("_")
+        if not prefix in ["GCA","GCF"]:
+            raise RuntimeError("Invalid assembly id (bad prefix): " + ident)
+        nparts = numeric.split(".")
+        if len(nparts) > 2:
+            raise RuntimeError("Invalid assembly id (bad numeric): " + ident)
+        numeric = nparts[0]
+        version = "" if len(nparts) == 1 else nparts[1]
+        if len(numeric) != 9:
+            raise RuntimeError("Invalid assembly id (numeric not 9 digits): " + ident)
+        triples = [ numeric[i:i+3] for i in (0,3,6) ]
+        return (prefix, triples, version, name)
+
+
+        
+### ------------------------------------------------------------------
 # Gets gene models from the Alliance for non-mouse organisms
 class AllianceDownloader (Downloader) :
     SNAPSHOT_CACHE = {}
     SNAPSHOT_URL="https://fms.alliancegenome.org/api/snapshot/release/" 
     DOWNLOAD_URL="https://download.alliancegenome.org/"
     def init (self) :
-        if self.type not in ["models","orthology"] :
+        if self.type not in ["models","orthologs"] :
             raise RuntimeError("Don't know this type:" + self.type)
-        dtype = self.cfg[self.type]["dataType"]
+        dtype = self.cfg[self.type]["allianceDataType"]
         self.cfg[self.type]["url"] = self.getUrl(dtype)
         self.log("URL: " + self.cfg[self.type]["url"])
 
@@ -92,8 +138,12 @@ class AllianceDownloader (Downloader) :
             self.log("Reusing snapshot from cache.")
             snapshot = self.SNAPSHOT_CACHE[rel]
         else:
-            self.log("Getting snapshot file at: " + self.SNAPSHOT_URL+rel)
-            fd = urlopen(self.SNAPSHOT_URL+rel)
+            if self.builder.args.snapshot_file:
+                self.log("Getting snapshot file at: " + self.builder.args.snapshot_file)
+                fd = open(self.builder.args.snapshot_file, 'r')
+            else:
+                self.log("Getting snapshot file at: " + self.SNAPSHOT_URL+rel)
+                fd = urlopen(self.SNAPSHOT_URL+rel)
             snapshot = json.loads(fd.read())
             fd.close()
             self.SNAPSHOT_CACHE[rel] = snapshot
@@ -121,6 +171,7 @@ class MgiDownloader (Downloader) :
 
 ### ------------------------------------------------------------------
 downloaderNameMap = {
+    "ncbi" : NcbiDownloader,
     "ensembl" : EnsemblDownloader,
     "alliance" : AllianceDownloader,
     "mgi" : MgiDownloader,

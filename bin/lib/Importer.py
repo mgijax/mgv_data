@@ -129,7 +129,7 @@ class OrthologyImporter (Importer) :
         Importer.__init__(self, *args)
         self.taxon2file = {}
         self.inCount = 0
-        self.output_dir = os.path.join(self.output_dir, self.cfg["name"])
+        self.output_dir = os.path.join(self.output_dir, self.cfg["name"], "orthology")
         self.builder.ensureDirectory(self.output_dir)
 
     #
@@ -184,5 +184,5 @@ class OrthologyImporter (Importer) :
 importerNameMap = {
     "models" : GffImporter,
     "assembly" : FastaImporter,
-    "orthology" : OrthologyImporter,
+    "orthologs" : OrthologyImporter,
 }

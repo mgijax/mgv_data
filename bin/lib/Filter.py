@@ -29,10 +29,16 @@ class GffFilter (Filter) :
             return self.processModel(obj)
 
     def processModel(self, model):
-        return list(filter(lambda x: x, [self.processFeature(f) for f in model]))
+        return list(filter(lambda x: x, [self._processFeature(f) for f in model]))
 
+    def _processFeature (self, f):
+        if not self.importer.chr_re.match(f[0]):
+            return None
+        if f[2] in self.importer.exclude_types:
+            return None
+        return self.processFeature(f)
 
-class EnsemblMouseStrain (GffFilter) :
+class EnsemblMouseFilter (GffFilter) :
     # index mapping ensembl IDs to MGI ids
     # Shared by all instances. The first one to try to access the index creates it.
     EID2MGI = None
@@ -57,10 +63,6 @@ class EnsemblMouseStrain (GffFilter) :
 
     def processFeature(self, feat):
         attrs = feat[8]
-        if not self.importer.chr_re.match(feat[0]):
-            return None
-        if feat[2] in self.importer.exclude_types:
-            return None
         if feat[2] == "gene" and attrs.get('biotype', None) == 'protein_coding':
             feat[2] = 'protein_coding_gene'
         if 'ID' in attrs:
@@ -92,6 +94,8 @@ class EnsemblNonMouseFilter (GffFilter) :
 
     def processFeature (self, f) :
         attrs = f[8]
+        if f[2] == "gene" and attrs.get('biotype', None) == 'protein_coding':
+            f[2] = 'protein_coding_gene'
         attrVal = attrs.get(self.attrName,'')
         m = self.id_re.search(attrVal)
         if m:
@@ -129,6 +133,19 @@ class AllianceGff (GffFilter) :
         attrs.pop("description", None)
         if "curie" in attrs and "Parent" not in attrs:
             attrs["cID"] = attrs["curie"]
+        if "so_term_name" in attrs:
+            f[2] = attrs.pop("so_term_name")
+        elif "Ontology_term" in attrs:
+            soid = None
+            soids = list(filter(lambda i: i.startswith("SO:"), attrs["Ontology_term"]))
+            if len(soids):
+                soid = soids[0]
+            if soid == "SO:0001217":
+                f[2] = "protein_coding_gene"
+            elif soid == "SO:0000336":
+                f[2] = "pseudogene"
+            elif soid == "SO:0001263":
+                f[2] = "ncRNA_gene"
         return f
 
 class SgdGff (AllianceGff) : 
@@ -163,11 +180,34 @@ class SgdGff (AllianceGff) :
         model = model + exons
         return AllianceGff.processModel(self, model)
 
+class NcbiMouseAssemblyFilter (Filter) :
+    # Looking for lines like this:
+    #    >CM000994.3 Mus musculus chromosome 1, GRCm39 reference primary assembly C57BL/6J
+    # Change them to put the chromosome number up front:
+    #    >1 CM000994.3 Mus musculus chromosome 1, GRCm39 reference primary assembly C57BL/6J
+    # Also want MT:
+    #    >AY172335.1 Mus musculus strain C57BL/6J mitochondrion, complete genome
+    #
+    # Don't want anything with "contig" in it:
+    #    >GL456233.2 Mus musculus chromosome X unlocalized genomic contig MMCHRX_RANDOM_CTG2, GRCm39 reference primary assembly C57BL/6J
+    # Or
+    #    >GL456378.1 Mus musculus unplaced genomic contig MSCHRUN_CTG3, GRCm39 reference primary assembly C57BL/6J
+    def processObj(self, line) :
+        if line.startswith(">") and not "contig" in line:
+            if "mitochondrion" in line:
+                return ">MT " + line[1:]
+            ci = line.find("chromosome") + 10
+            cj = line.find(",", ci)
+            c = line[ci:cj].strip()
+            return ">%s %s" % (c, line[1:])
+        return line
+
 #
 filterNameMap = {
-  "ensemblMouseStrain" : EnsemblMouseStrain,
+  "ensemblMouseFilter" : EnsemblMouseFilter,
   "ensemblNonMouseFilter" : EnsemblNonMouseFilter,
   "mgiGff" : MgiGff,
   "allianceGff" : AllianceGff,
-  "sgdGff" : SgdGff
+  "sgdGff" : SgdGff,
+  "ncbiMouseAssemblyFilter" : NcbiMouseAssemblyFilter,
 }

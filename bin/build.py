@@ -20,7 +20,7 @@ from lib.Deployer import Deployer
 
 ### ------------------------------------------------------------------
 class MgvDataBuilder :
-    VALID_TYPES = ["assembly", "models", "orthology"]
+    VALID_TYPES = ["assembly", "models", "orthologs"]
     VALID_PHASES = ["download", "import", "deploy"]
     def __init__ (self) :
         self.logfile = sys.stderr
@@ -74,6 +74,9 @@ class MgvDataBuilder :
             "--cgi-dir",
             help = "Place to put the CGI scripts used by MGV Default = same as --web-dir.")
         parser.add_argument(
+            "--snapshot-file",
+            help = "Alliance release snapshot file to use in lieu of querying API. (default = get snapshot from Alliance API)")
+        parser.add_argument(
             "-D", "--debug",
             action = "store_true",
             default = False,
@@ -87,16 +90,6 @@ class MgvDataBuilder :
             args.phase = self.VALID_PHASES
 
         return args
-
-    def makeDownloaderObject(self, g, type) :
-        sname = g[type].get("source","UrlDownloader")
-        cls = downloaderNameMap[sname]
-        return cls(self, g, type, self.args.debug)
-
-    def readConfigFile (self, fname) :
-        with open(fname) as fd:
-            cfg = json.load(fd)
-        return cfg
 
     def deepCopy (self, obj) :
         return json.loads(json.dumps(obj))
@@ -118,18 +111,36 @@ class MgvDataBuilder :
             if self.args.type in [t, None] :
                 if not t in gg:
                     continue
+                #
+                if type(gg[t]) is str and gg[t].startswith("="):
+                    if "deploy" in self.args.phase:
+                        ggg = self.getCfg(gg[t][1:])
+                        tgtPath = os.path.join(self.args.web_dir, ggg["name"], t)
+                        lnkPath = os.path.join(self.args.web_dir, gg["name"], t)
+                        cmd = 'ln -s %s %s' % (tgtPath, lnkPath)
+                        self.log("Creating symlink: " + cmd)
+                    continue
+                sname = gg[t].get("source","UrlDownloader")
+                cls = downloaderNameMap[sname]
+                downloader = cls(self, gg, t, self.args.debug)
                 # Download data
-                downloader = self.makeDownloaderObject(gg, t)
                 if "download" in self.args.phase:
-                    downloader.downloadData()
+                    downloader.go()
                 # Import data
                 if "import" in self.args.phase:
                     cls = importerNameMap[t]
-                    impobj = cls(self, t, gg, self.args.output_dir, self.args.debug)
-                    impobj.go()
+                    importer = cls(self, t, gg, self.args.output_dir, self.args.debug)
+                    importer.go()
                 # Deploy
                 if "deploy" in self.args.phase:
-                    Deployer(self, t, gg, self.args.output_dir, self.args.web_dir, self.args.cgi_dir, debug=self.args.debug).go()
+                    deployer = Deployer(self, t, gg, self.args.output_dir, self.args.web_dir, self.args.cgi_dir, debug=self.args.debug)
+                    deployer.go()
+
+    def getCfg (self, name = None) :
+        if name is None:
+            return self.cfg
+        else:
+            return self.name2cfg.get(name, None)
 
     def main (self) :
         #
@@ -144,9 +155,17 @@ class MgvDataBuilder :
         if self.args.debug:
             self.log("Running in DEBUG mode. No commands will be executed.")
         #
+        self.name2cfg = {}
+        for g in self.cfg:
+            self.name2cfg[g["name"]] = g
+        #
         for g in self.cfg:
             if self.genome_re.match(g["name"]):
+                self.log("Processing " + g["name"])
                 self.process(g)
+            else:
+                # self.log("Skipping " + g["name"])
+                pass
         self.log("Builder exiting.")
         self.logfile.close()
 

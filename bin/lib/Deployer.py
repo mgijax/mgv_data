@@ -66,7 +66,9 @@ class Deployer:
         for fn in fnames:
             fpath = os.path.join(self.web_rootdir, fn)
             if os.path.isdir(fpath):
-                subdirs.append(fn + "/")
+                c = self.builder.getCfg(fn)
+                if c and "taxonid" in c:
+                    subdirs.append(fn + "/")
         subdirs.sort()
         jsubdirs = json.dumps(subdirs)
         ifn = os.path.join(self.web_rootdir, "index.json")

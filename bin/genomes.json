@@ -4,16 +4,19 @@
       "ensemblRelease" : "99",
       "allianceRelease" : "3.1.0",
       "transcriptChunkSize" : "4000000",
-      "ensemblMouseStrain" : {
-        "source" : "ensembl",
-        "release" : "@ensemblRelease",
-        "filters" : ["ensemblMouseStrain"],
-        "exclude_types" : ["biological_region", "chromosome", "scaffold"],
-        "transcriptChunkSize" : "@transcriptChunkSize"
+      "ncbiAssembly" : {
+        "source" : "ncbi"
       },
-      "ensemblNonMouseAssembly" : {
+      "ensemblAssembly" : {
         "source" : "ensembl",
         "release" : "@ensemblRelease"
+      },
+      "ensemblMouseGff" : {
+        "source" : "ensembl",
+        "release" : "@ensemblRelease",
+        "filters" : ["ensemblMouseFilter"],
+        "exclude_types" : ["biological_region", "chromosome", "scaffold"],
+        "transcriptChunkSize" : "@transcriptChunkSize"
       },
       "ensemblNonMouseGff" : {
         "source" : "ensembl",
@@ -26,24 +29,26 @@
         "source": "alliance",
         "release" : "@allianceRelease",
         "filters" : ["allianceGff"],
-        "dataType" : "GFF",
+        "allianceDataType" : "GFF",
         "doSort" : true,
+        "exclude_types" : ["region", "chromosome", "scaffold"],
         "transcriptChunkSize" : "@transcriptChunkSize"
       },
       "mgiGff" : {
         "source" : "mgi",
         "filters" : ["mgiGff"],
         "transcriptChunkSize" : "@transcriptChunkSize"
+      },
+      "allianceOrthology" : {
+        "source" : "alliance",
+        "release" : "@allianceRelease",
+        "allianceDataType" : "ORTHOLOGY-ALLIANCE",
+        "provider" : "COMBINED"
       }
   },
   "data" : [{
-    "name" : "alliance_orthology",
-    "orthology" : {
-        "source" : "alliance",
-        "dataType" : "ORTHOLOGY-ALLIANCE",
-        "provider" : "COMBINED",
-        "release" : "@allianceRelease"
-    }
+    "name" : "homologies",
+    "orthologs" : "@allianceOrthology"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_129s1svimj"
@@ -51,8 +56,8 @@
     ,"taxonid" : "10090"
     ,"build" : "129S1_SvImJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_aj"
@@ -60,8 +65,8 @@
     ,"taxonid" : "10090"
     ,"build" : "A_J_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_akrj"
@@ -69,8 +74,8 @@
     ,"taxonid" : "10090"
     ,"build" : "AKR_J_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_balbcj"
@@ -78,8 +83,8 @@
     ,"taxonid" : "10090"
     ,"build" : "BALB_cJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_c3hhej"
@@ -87,8 +92,8 @@
     ,"taxonid" : "10090"
     ,"build" : "C3H_HeJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus"
@@ -96,8 +101,20 @@
     ,"taxonid" : "10090"
     ,"build" : "GRCm38"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
     ,"models" : "@mgiGff"
+    ,"_" : "##############################################"
+  }, {
+    "name" : "mus_musculus_GRCm39"
+    ,"label" : "C57BL/6J (build 39)"
+    ,"taxonid" : "10090"
+    ,"build" : "GRCm39"
+    ,"chr_re" : "@chr_re"
+    ,"assembly" : {
+        "@" : "@ncbiAssembly",
+        "assemblyId" : "GCA_000001635.9_GRCm39",
+        "filters" : [ "ncbiMouseAssemblyFilter" ]
+    }
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_c57bl6nj"
@@ -105,8 +122,8 @@
     ,"taxonid" : "10090"
     ,"build" : "C57BL_6NJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_caroli"
@@ -114,8 +131,8 @@
     ,"taxonid" : "10089"
     ,"build" : "CAROLI_EIJ_v1.1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_casteij"
@@ -123,8 +140,8 @@
     ,"taxonid" : "10090"
     ,"build" : "CAST_EiJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_cbaj"
@@ -132,8 +149,8 @@
     ,"taxonid" : "10090"
     ,"build" : "CBA_J_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_dba2j"
@@ -141,8 +158,8 @@
     ,"taxonid" : "10090"
     ,"build" : "DBA_2J_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_fvbnj"
@@ -150,8 +167,8 @@
     ,"taxonid" : "10090"
     ,"build" : "FVB_NJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_lpj"
@@ -159,8 +176,8 @@
     ,"taxonid" : "10090"
     ,"build" : "LP_J_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_nodshiltj"
@@ -168,8 +185,8 @@
     ,"taxonid" : "10090"
     ,"build" : "NOD_ShiLtJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_nzohlltj"
@@ -177,8 +194,8 @@
     ,"taxonid" : "10090"
     ,"build" : "NZO_HlLtJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_pahari"
@@ -186,8 +203,8 @@
     ,"taxonid" : "10093"
     ,"build" : "PAHARI_EIJ_v1.1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_pwkphj"
@@ -195,8 +212,8 @@
     ,"taxonid" : "10090"
     ,"build" : "PWK_PhJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_spretus"
@@ -204,8 +221,8 @@
     ,"taxonid" : "10096"
     ,"build" : "SPRET_EiJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "mus_musculus_wsbeij"
@@ -213,18 +230,17 @@
     ,"taxonid" : "10090"
     ,"build" : "WSB_EiJ_v1"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblMouseStrain"
-    ,"models" : "@ensemblMouseStrain"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : "@ensemblMouseGff"
     ,"_" : "##############################################"
   }, {
     "name" : "homo_sapiens"
-    ,"label" : "H.sapiens"
+    ,"label" : "H. sapiens"
     ,"taxonid" : "9606"
     ,"build" : "GRCh38"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblNonMouseAssembly"
-    ,"xodels" : { "@":"@allianceGff", "provider" : "HUMAN" }
-    ,"models" : "@ensemblNonMouseGff"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "HUMAN" }
     ,"_" : "##############################################"
   }, {
     "name" : "rattus_norvegicus"
@@ -232,26 +248,26 @@
     ,"taxonid" : "10116"
     ,"build" : "Rnor_6.0"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblNonMouseAssembly"
-    ,"xodels" : { "@":"@allianceGff", "provider" : "RGD" }
-    ,"models" : "@ensemblNonMouseGff"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "RGD" }
     ,"_" : "##############################################"
   }, {
-    "name" : "danio_rerio_alliance"
+    "name" : "danio_rerio"
     ,"label" : "D. rerio"
     ,"taxonid" : "7955"
     ,"build" : "GRCz11"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblNonMouseAssembly"
+    ,"assembly" : "@ensemblAssembly"
     ,"models" : { "@":"@allianceGff", "provider" : "ZFIN" }
     ,"_" : "##############################################"
   }, {
     "name" : "danio_rerio_ensembl"
-    ,"label" : "D. rerio"
+    ,"label" : "D. rerio (ensembl)"
     ,"taxonid" : "7955"
     ,"build" : "GRCz11"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblNonMouseAssembly"
+    ,"xssembly" : { "@" : "@ensemblAssembly", "remotePath" : "danio_rerio" }
+    ,"assembly" : "=danio_rerio"
     ,"models" : { "@":"@ensemblNonMouseGff", "remotePath" : "danio_rerio" }
     ,"_" : "##############################################"
   }, {
@@ -259,10 +275,9 @@
     ,"label" : "C. elegans"
     ,"taxonid" : "6239"
     ,"build" : "WBcel235"
-    ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblNonMouseAssembly"
-    ,"xodels" : { "@":"@allianceGff", "provider" : "WB", "transcriptChunkSize" : "500000" }
-    ,"models" : { "@" : "@ensemblNonMouseGff", "transcriptChunkSize" : "500000" }
+    ,"chr_re" : ".*"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "WB", "transcriptChunkSize" : "500000" }
     ,"_" : "##############################################"
   }, {
     "name" : "drosophila_melanogaster"
@@ -270,19 +285,17 @@
     ,"taxonid" : "7227"
     ,"build" : "BDGP6.28"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblNonMouseAssembly"
-    ,"xodels" : { "@":"@allianceGff", "provider" : "FB" }
-    ,"models" : "@ensemblNonMouseGff"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "FB" }
     ,"_" : "##############################################"
   }, {
     "name" : "saccharomyces_cerevisiae"
     ,"label" : "S. cerevisiae"
     ,"taxonid" : "559292"
     ,"build" : "R64-1-1"
-    ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblNonMouseAssembly"
-    ,"xodels" : { "@":"@allianceGff", "provider" : "SGD", "filters" : ["sgdGff"] }
-    ,"models" : "@ensemblNonMouseGff"
+    ,"chr_re" : ".*"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "SGD", "filters" : ["sgdGff"] }
     ,"_" : "##############################################"
   }]
 }
