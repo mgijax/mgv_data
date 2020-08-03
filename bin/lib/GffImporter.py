@@ -42,6 +42,7 @@ class Gff3Importer:
     #
     self.seenChrs = {}
     self.seenChrOrder = []
+    self.isRoman = False
     #
     self.outputDir = None
     self.outputFiles = {}
@@ -170,6 +171,8 @@ class Gff3Importer:
         c = { 'name': seqid, 'length': 0 }
         self.seenChrs[seqid] = c
         self.seenChrOrder.append(c)
+        if seqid == "II":
+            self.isRoman = True
       c['length'] = max(c['length'], f[4])
       for pid in f[8].get('Parent',[]):
         pid2kids.setdefault(pid, []).append(f)
@@ -225,12 +228,44 @@ class Gff3Importer:
       toplevel = self.processGrp(grp)
     #
     self.genomeInfo['chromosomes'] = self.seenChrOrder
+    self.genomeInfo['chromosomes'].sort(key = romanSortKey if self.isRoman else standardSortKey)
     #
     self.writeGenomeInfo()
 #
 def sanitizeName (n):
-  return n.replace('/','').lower()
+    return n.replace('/','').lower()
 
+def standardSortKey (c) :
+    c = c['name'].upper()
+    if c.isdigit() :
+        return (int(c), '')
+    else:
+        return (9999999, c)
+
+def romanSortKey (c) :
+    c = c['name'].upper()
+    n = parseRoman(c)
+    if n:
+        return (n, '')
+    else:
+        return (9999999, c)
+
+def parseRoman (s):
+      roman = {'I':1,'V':5,'X':10,'L':50,'C':100,'D':500,'M':1000,'IV':4,'IX':9,'XL':40,'XC':90,'CD':400,'CM':900}
+      i = 0
+      num = 0
+      try:
+          while i < len(s):
+             if i+1<len(s) and s[i:i+2] in roman:
+                num+=roman[s[i:i+2]]
+                i+=2
+             else:
+                #print(i)
+                num+=roman[s[i]]
+                i+=1
+          return num
+      except:
+          return None
 #
 # Returns options object from command line. Has these fields:
 #       genomePath - name of genome in paths at Ensembl
