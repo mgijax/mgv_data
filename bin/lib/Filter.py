@@ -148,6 +148,66 @@ class AllianceGff (GffFilter) :
                 f[2] = "ncRNA_gene"
         return f
 
+#
+class RgdGff (AllianceGff) :
+    def processModel (self, model) :
+        # Propagate the protein_id that RGD puts in the mRNA's attributes into to
+        # CDSs' attributes
+        idMap = {}
+        tid2pid = {}
+        for f in model:
+            attrs = f[8]
+            if f[2] == "mRNA":
+                if 'curie' in attrs:
+                    newid = attrs['curie'].split(':')[-1]
+                    idMap[attrs['ID']] = newid
+                    attrs['ID'] = newid
+                tid2pid[attrs['ID']] = attrs.get('protein_id', None)
+            elif f[2] == "CDS":
+                parentid = attrs['Parent'][0]
+                parentid = idMap.get(parentid, parentid)
+                attrs['Parent'] = [parentid]
+                protid = tid2pid.get(parentid, None)
+                if protid:
+                    attrs['ID'] = protid
+        return AllianceGff.processModel(self, model)
+
+#
+class FlyBaseGff (AllianceGff) :
+    def processFeature (self, f) :
+        AllianceGff.processFeature(self, f)
+        attrs = f[8]
+        if f[2] == "CDS" and attrs['ID'].startswith('CDS:'):
+            attrs['ID'] = attrs['ID'][4:]
+        return f
+
+#
+class WormBaseGff (AllianceGff) :
+    def processFeature (self, f) :
+        AllianceGff.processFeature(self, f)
+        attrs = f[8]
+        if f[2] == "CDS" :
+            if 'protein_id' in attrs:
+                attrs['ID'] = attrs['protein_id']
+            elif attrs['ID'].startswith('CDS:'):
+                attrs['ID'] = attrs['ID'][4:]
+        elif 'ID' in attrs and attrs['ID'].startswith('Transcript:'):
+            attrs['ID'] = attrs['ID'][11:]
+        if 'Parent' in attrs:
+            ps = [p[11:] if p.startswith('Transcript:') else p for p in attrs['Parent']]
+            attrs['Parent'] = ps
+        return f
+
+#
+class ZfinGff (AllianceGff) :
+    def processFeature (self, f) :
+        AllianceGff.processFeature(self, f)
+        attrs = f[8]
+        if f[2] == "CDS" and attrs['ID'].startswith('CDS:'):
+            attrs['ID'] = attrs['ID'][4:]
+        return f
+
+#
 class SgdGff (AllianceGff) : 
     # SGF gff issues:
     # Yeast transcription/translation is simpler b.c. no introns. Just an mRNA and a CDS.
@@ -227,5 +287,9 @@ filterNameMap = {
   "mgiGff" : MgiGff,
   "allianceGff" : AllianceGff,
   "sgdGff" : SgdGff,
+  "rgdGff" : RgdGff,
+  "zfinGff" : ZfinGff,
+  "flybaseGff" : FlyBaseGff,
+  "wormbaseGff" : WormBaseGff,
   "ncbiMouseAssemblyFilter" : NcbiMouseAssemblyFilter,
 }

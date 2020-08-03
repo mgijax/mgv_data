@@ -1,5 +1,11 @@
 {
   "vars" : {
+
+      "mgiAccessionUrl" : "http://www.informatics.jax.org/accession/",
+      "mousemineAccessionUrl" : "http://www.mousemine.org/mousemine/portal.do?class=Gene&externalids=",
+      "allianceAccessionUrl" : "https://www.alliancegenome.org/gene/",
+      "ensemblAccessionUrl" : "http://www.ensembl.org/id/",
+
       "chr_re" : "^..?$",
       "ensemblRelease" : "99",
       "allianceRelease" : "3.1.0",
@@ -16,14 +22,41 @@
         "release" : "@ensemblRelease",
         "filters" : ["ensemblMouseFilter"],
         "exclude_types" : ["biological_region", "chromosome", "scaffold"],
-        "transcriptChunkSize" : "@transcriptChunkSize"
+        "transcriptChunkSize" : "@transcriptChunkSize",
+        "linkouts" : [{
+            "text": "MGI",
+            "url" : "@mgiAccessionUrl",
+            "attr": "ID"
+        }, {
+            "text": "MouseMine",
+            "url" : "@mousemineAccessionUrl",
+            "attr": "ID"
+        }, {
+            "text": "Alliance",
+            "url" : "@allianceAccessionUrl",
+            "attr": "cID"
+        }, {
+            "text" : "Ensembl",
+            "url" : "@ensemblAccessionUrl",
+            "attr": "ID"
+        }]
+
       },
       "ensemblNonMouseGff" : {
         "source" : "ensembl",
         "release": "@ensemblRelease",
         "filters": [ "ensemblNonMouseFilter" ],
         "exclude_types" : ["biological_region", "chromosome", "scaffold"],
-        "transcriptChunkSize" : "4000000"
+        "transcriptChunkSize" : "4000000",
+        "linkouts" : [{
+            "text": "Alliance",
+            "url" : "@allianceAccessionUrl",
+            "attr": "cID"
+        }, {
+            "text" : "Ensembl",
+            "url" : "@ensemblAccessionUrl",
+            "attr": "ID"
+        }]
       },
       "allianceGff" : {
         "source": "alliance",
@@ -240,7 +273,7 @@
     ,"build" : "GRCh38"
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblAssembly"
-    ,"models" : { "@":"@allianceGff", "provider" : "HUMAN" }
+    ,"models" : { "@":"@allianceGff", "provider" : "HUMAN", "filters" : ["rgdGff"] }
     ,"_" : "##############################################"
   }, {
     "name" : "rattus_norvegicus"
@@ -249,7 +282,7 @@
     ,"build" : "Rnor_6.0"
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblAssembly"
-    ,"models" : { "@":"@allianceGff", "provider" : "RGD" }
+    ,"models" : { "@":"@allianceGff", "provider" : "RGD", "filters" : ["rgdGff"] }
     ,"_" : "##############################################"
   }, {
     "name" : "danio_rerio"
@@ -258,7 +291,7 @@
     ,"build" : "GRCz11"
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblAssembly"
-    ,"models" : { "@":"@allianceGff", "provider" : "ZFIN" }
+    ,"models" : { "@":"@allianceGff", "provider" : "ZFIN", "filters" : ["zfinGff"] }
     ,"_" : "##############################################"
   }, {
     "name" : "danio_rerio_ensembl"
@@ -271,22 +304,22 @@
     ,"models" : { "@":"@ensemblNonMouseGff", "remotePath" : "danio_rerio" }
     ,"_" : "##############################################"
   }, {
-    "name" : "caenorhabditis_elegans"
-    ,"label" : "C. elegans"
-    ,"taxonid" : "6239"
-    ,"build" : "WBcel235"
-    ,"chr_re" : ".*"
-    ,"assembly" : "@ensemblAssembly"
-    ,"models" : { "@":"@allianceGff", "provider" : "WB", "transcriptChunkSize" : "500000" }
-    ,"_" : "##############################################"
-  }, {
     "name" : "drosophila_melanogaster"
     ,"label" : "D. melanogaster"
     ,"taxonid" : "7227"
     ,"build" : "BDGP6.28"
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblAssembly"
-    ,"models" : { "@":"@allianceGff", "provider" : "FB" }
+    ,"models" : { "@":"@allianceGff", "provider" : "FB", "filters" : ["flybaseGff"] }
+    ,"_" : "##############################################"
+  }, {
+    "name" : "caenorhabditis_elegans"
+    ,"label" : "C. elegans"
+    ,"taxonid" : "6239"
+    ,"build" : "WBcel235"
+    ,"chr_re" : ".*"
+    ,"assembly" : "@ensemblAssembly"
+    ,"models" : { "@":"@allianceGff", "provider" : "WB", "transcriptChunkSize" : "500000", "filters" : ["wormbaseGff"] }
     ,"_" : "##############################################"
   }, {
     "name" : "saccharomyces_cerevisiae"
