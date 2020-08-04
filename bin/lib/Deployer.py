@@ -7,6 +7,7 @@
 import os, stat
 import sys
 import json
+import time
 
 class Deployer:
     def __init__(self, builder, type, cfg, odir, wdir, cgidir, debug=False):
@@ -22,6 +23,19 @@ class Deployer:
         self.debug = debug
         self.builder.ensureDirectory(self.web_dir)
         self.builder.ensureDirectory(self.cgi_dir)
+
+    # Returns the date of the most recent update to any file in the given directory tree
+    # Date is returned as a string.
+    def getMostRecentUpdate (self, d) :
+        maxt = 0
+        for directory, subdirs, files in os.walk(d):
+            for f in files:
+                ff = os.path.join(directory, f)
+                s = os.stat(ff)
+                mt = s.st_mtime
+                maxt = max(maxt, mt)
+        mtt = time.asctime(time.localtime(maxt))
+        return mtt
 
     def deployData (self):
         if self.output_dir == self.web_dir:
@@ -78,82 +92,132 @@ class Deployer:
             with open(ifn, 'w') as ifd:
                 ifd.write(jsubdirs + "\n")
 
+    def getChromsomesAndLengthsFromModels (self) :
+        # scan the genes file. For each chroosome, keep the max end coordinate
+        fpath = os.path.join(self.web_rootdir, self.cfg['name'], 'models', 'genes', '0.gff3')
+        if not os.path.isfile(fpath):
+            return []
+        chroms = {}
+        with open(fpath, 'r') as fd:
+            for line in fd:
+                fields = line.split('\t')
+                chrom = fields[0]
+                coord = int(fields[4])
+                chroms[chrom] = max(chroms.get(chrom,0), coord)
+        chromsList = []
+        for chrom, length in chroms.items() :
+            chromsList.append({ "name":chrom, "length": length })
+        return chromsList
+
+    def getChromsomesAndLengthsFromAssembly (self):
+        directory = os.path.join(self.web_rootdir, self.cfg['name'], 'assembly')
+        if not os.path.isdir(directory):
+            return []
+        chrs = []
+        for f in os.listdir(directory):
+            fpath = os.path.join(directory, f)
+            if os.path.isfile(fpath) :
+                c = f.split('.')[0]
+                s = os.stat(fpath)
+                sz = s.st_size
+                chrs.append({ "name" : c, "length" : sz })
+        return chrs
+
+    def getChromsomesAndLengths (self) :
+        c_a = self.getChromsomesAndLengthsFromAssembly()
+        c_b = self.getChromsomesAndLengthsFromModels()
+        n2ca = dict(map(lambda ca: (ca["name"], ca), c_a))
+        n2cb = dict(map(lambda cb: (cb["name"], cb), c_b))
+        for cb in c_b:
+            if not cb["name"] in n2ca:
+                c_a.append(cb)
+                n2ca[cb["name"]] = cb
+            else:
+                ca = n2ca[cb["name"]]
+                ca["length"] = max(ca["length"], cb["length"])
+        chrs = c_a
+        csort = self.cfg.get("chr_sort","standard")
+        chrs.sort(key = romanSortKey if csort == "roman" else standardSortKey)
+        return chrs
+
+    def deployGenomeIndexFile (self) : 
+        timestamp = self.getMostRecentUpdate(self.output_dir)
+        self.log(timestamp, self.output_dir)
+        ixfile = os.path.join(self.web_rootdir, self.cfg['name'], 'index.json')
+        self.log("Writing genome info to " + ixfile)
+        c = self.cfg
+        self.log(str(c))
+        tcs = c["models"]["transcriptChunkSize"]
+        info = {
+          "name" : c["label"],
+          "timestamp" : timestamp,
+          "chromosomes" : self.getChromsomesAndLengths(),
+          "tracks": [
+            {   
+              "name": "genes",
+              "type": "ChunkedGff3",
+              "chunkSize": 0
+            },  
+            {   
+              "name": "transcripts",
+              "type": "ChunkedGff3",
+              "chunkSize": tcs
+            },  
+            {   
+              "name": "sequences",
+              "type": "PlainSequence"
+            }   
+          ],  
+          "linkouts" : c["models"].get("linkouts",[]),
+          "metadata" : {
+              "taxonid" : c["taxonid"],
+              "assemblyBuild" : c["build"],
+              "annotationSource" : c["models"]["source"],
+              "annotationRelease" : c["models"]["release"],
+          }
+        }
+        with open(ixfile, 'w') as fd:
+            s = json.dumps(info, indent = 2)
+            fd.write(s)
+
+
     def go (self) :
         self.deployData()
-        self.deployCgi()
+        if 'taxonid' in self. cfg:
+            self.deployGenomeIndexFile()
         self.deployIndex()
+        self.deployCgi()
 
 
+def standardSortKey (c) :
+    c = c['name'].upper()
+    if c.isdigit() :
+        return (int(c), '')
+    else:
+        return (9999999, c)
 
-'''
-#!/usr/bin/env bash
-#
-# deploy.sh
-#
-# Deploys data, CGIs, and .htaccess to web-accessible locations.
-#
-source config.sh
-source utils.sh
+def romanSortKey (c) :
+    c = c['name'].upper()
+    n = parseRoman(c)
+    if n:
+        return (n, '')
+    else:
+        return (9999999, c)
 
-###################################
-if [[ ${ODIR} == "" ]] ; then
-    die "Please specify output in config.sh (ODIR)."
-fi
-if [[ ${WDIR} == "" ]] ; then
-    die "Please specify web deployment directory in config.sh (WDIR)."
-fi
-###################################
+def parseRoman (s):
+      roman = {'I':1,'V':5,'X':10,'L':50,'C':100,'D':500,'M':1000,'IV':4,'IX':9,'XL':40,'XC':90,'CD':400,'CM':900}
+      i = 0
+      num = 0
+      try:
+          while i < len(s):
+             if i+1<len(s) and s[i:i+2] in roman:
+                num+=roman[s[i:i+2]]
+                i+=2
+             else:
+                #print(i)
+                num+=roman[s[i]]
+                i+=1
+          return num
+      except:
+          return None
 
-logit "deploy.sh: Deploying from ${ODIR} to ${WDIR}"
-
-###################################
-# Copy the output data files to the web directory (if they are not the same)
-if [[ ${ODIR} != ${WDIR} ]] ; then
-    # rsynch the data
-    logit "rsync'ing ${ODIR} to ${WDIR}"
-    rsync -av ${ODIR} ${WDIR}
-    checkExit
-else
-    logit "Skipping rsync because output and deployment directories are the same."
-fi
-
-###################################
-# CGI scripts
-logit "Generating CGI wrapper"
-cat > ${CDIR}/fetch.cgi << EOF
-#!/usr/bin/env bash
-# THIS IS A GENERATED FILE. See deploy.sh
-${PYTHON} ${CDIR}/fetch.py --cgi --dir ${WDIR}
-EOF
-checkExit
-logit "Setting execute permission."
-chmod ogu+x ${CDIR}/fetch.cgi
-checkExit
-#
-rsync -av ./fetch.py ${CDIR}
-checkExit
-###################################
-# index.json
-# Build the root file which names each of the available subdirectories.
-logit "Building ${WDIR}/index.json"
-pushd ${WDIR}
-SEP=""
-echo "[" > index.json
-# List subdirectories of the root that contain index.json files
-for i in $(ls -F */index.json)
-do
-    echo $SEP "\"$(dirname ${i})/\"" >> index.json
-    SEP=","
-done
-echo "]" >> index.json
-popd
-
-###################################
-# .htaccess
-rsync -av ./apache.htaccess "${ODIR}/.htaccess"
-
-###################################
-# success
-logit "deploy.sh: finished."
-exit 0
-'''
