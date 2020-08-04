@@ -128,8 +128,8 @@ class MgvDataBuilder :
                     downloader.go()
                 # Import data
                 if "import" in self.args.phase:
-                    cls = importerNameMap[t]
-                    importer = cls(self, t, gg, self.args.output_dir, self.args.debug)
+                    icls = importerNameMap[t]
+                    importer = icls(self, t, gg, self.args.output_dir, self.args.debug)
                     importer.go()
                 # Deploy
                 if "deploy" in self.args.phase:
@@ -160,6 +160,8 @@ class MgvDataBuilder :
             self.name2cfg[g["name"]] = g
         #
         for g in self.cfg:
+            if g.get("disabled", False) :
+                continue
             if self.genome_re.match(g["name"]):
                 self.log("Processing " + g["name"])
                 self.process(g)
