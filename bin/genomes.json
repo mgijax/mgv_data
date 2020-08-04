@@ -14,22 +14,26 @@
         "linkSgdByCid" : {
             "text": "SGD",
             "url" : "@sgdAccessionUrl",
-            "attr": "cID"
+            "attr": "cID",
+            "stripPrefix" : true
         },
         "linkWbByCid" : {
             "text": "WormBase",
             "url" : "@wbAccessionUrl",
-            "attr": "cID"
+            "attr": "cID",
+            "stripPrefix" : true
         },
         "linkFbByCid" : {
             "text": "FlyBase",
             "url" : "@fbAccessionUrl",
-            "attr": "cID"
+            "attr": "cID",
+            "stripPrefix" : true
         },
         "linkZfinByCid" : {
             "text": "ZFIN",
             "url" : "@zfinAccessionUrl",
-            "attr": "cID"
+            "attr": "cID",
+            "stripPrefix" : true
         },
         "linkHgncByCid" : {
             "text": "HGNC",
@@ -44,7 +48,8 @@
         "linkRgdByCid" : {
            "text" : "RGD",
            "url" : "@rgdAccessionUrl",
-           "attr": "cID"
+           "attr": "cID",
+           "stripPrefix" : true
         },
         "linkMouseMineByID" : {
           "text": "MouseMine",
