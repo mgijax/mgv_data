@@ -153,6 +153,8 @@ class RgdGff (AllianceGff) :
     def processModel (self, model) :
         # Propagate the protein_id that RGD puts in the mRNA's attributes into to
         # CDSs' attributes
+        # Changes mRNA IDs to the curie's base
+        # Changes CDS IDs to the protain id
         idMap = {}
         tid2pid = {}
         for f in model:
@@ -163,13 +165,14 @@ class RgdGff (AllianceGff) :
                     idMap[attrs['ID']] = newid
                     attrs['ID'] = newid
                 tid2pid[attrs['ID']] = attrs.get('protein_id', None)
-            elif f[2] == "CDS":
+            elif 'Parent' in attrs:
                 parentid = attrs['Parent'][0]
                 parentid = idMap.get(parentid, parentid)
                 attrs['Parent'] = [parentid]
-                protid = tid2pid.get(parentid, None)
-                if protid:
-                    attrs['ID'] = protid
+                if f[2] == "CDS":
+                    protid = tid2pid.get(parentid, None)
+                    if protid:
+                        attrs['ID'] = protid
         return AllianceGff.processModel(self, model)
 
 #
