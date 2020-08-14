@@ -175,10 +175,12 @@ class Gff3Importer:
         cdss = list([x for x in pid2kids[fid] if x[2] == 'CDS'])
         if cdss:
           cdss.sort(key=lambda x: x[3])
-          cid = cdss[0][8]['ID']
+          attrs = cdss[0][8]
+          cid = attrs['ID']
+          prid = attrs.get('protein_id', attrs.get('curie', ''))
           cstart = cdss[0][3]
           cend = cdss[-1][4]
-          f[8]['cds'] = '%s|%d|%d' % (cid, cstart, cend)
+          f[8]['cds'] = '%s|%s|%d|%d' % (cid, prid, cstart, cend)
         #
         transcripts.append(f)
       else:
