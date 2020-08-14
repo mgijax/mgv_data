@@ -26,7 +26,6 @@ import json
 import string
 import cgi
 import cgitb
-#cgitb.enable()
 
 # -----------------------------------------
 DEFAULT_LINE_LEN = 60
@@ -78,7 +77,7 @@ def getSequenceFromFile (desc) :
   return seq
 
 # -----------------------------------------
-def getSequence(desc):
+def getSequenceFromAssembly(desc):
   seq = getSequenceFromFile(desc)
   if desc.get('reverseComplement', False):
     seq = reverseComplement(seq)
@@ -93,9 +92,57 @@ def getSequence(desc):
   return hdr + '\n' + seq + '\n'
 
 # -----------------------------------------
+# Args:
+#   seqId - string or list of strings - seqIds of desired sequences in curie format.
+#   A curie is an id with a recognized prefix such as 'ENSEMBL' or 'RefSeq'. Example curies:
+#       ENSEMBL:MGP_CASTEiJ_P0038053
+#       RefSeq:FBtr0078736
+#       RefSeq:NM_001122733
+#       UniProt:Q9D404
+def getSequenceFromSeqfetch (desc) :
+    # Source names recognized by seqfetch
+    #     swissprot trembl sptrembl genbank refseq ensembl_mus_cdna ensembl_mus_prot
+    # Note that ensembl_mus_cdna and ensembl_mus_prot are really the same thing and actually implement
+    # generic Ensembl sequence retrieval. Here we'll use ensembl_mus_cdna.
+    #
+    #seqfetchBaseUrl = "http://www.informatics.jax.org/seqfetch/tofasta.cgi"
+    seqfetchBaseUrl = "http://bluebob.informatics.jax.org/seqfetch/tofasta.cgi"
+    # maps curie prefix to name to use in seqfetch requests
+    PREFIXMAP = {
+        "ensembl" : "ensembl_mus_cdna",
+        "refseq" : "genbank",
+        "uniprot" : "swissprot",
+    }
+    if "seqId" in desc:
+        if type(desc["seqId"]) is str:
+            seqIds = [desc["seqId"]]
+        else:
+            seqIds = desc["seqId"]
+    else:
+        raise RuntimeError("No seqId ids found in descriptor: " + str(desc))
+    seqIds.sort()
+    seqfetchDescrs = []
+    for c in seqIds:
+        if not ":" in c:
+            raise RuntimeError("ID is not a curie: " + str(c))
+        prefix, base = c.split(":", 1)
+        np = PREFIXMAP[prefix.lower()]
+        seqfetchDescrs.append("%s!%s!!!!!" % (np, base))
+    seqfetchArgs = "&".join([ "seq%s=%s" % (i,d) for (i,d) in enumerate(seqfetchDescrs) ])
+    url = seqfetchBaseUrl + '?' + seqfetchArgs
+    with urlopen(url) as fd:
+        seqs = fd.read()
+        seqs = seqs.decode('utf-8')
+    return seqs
+
+# -----------------------------------------
 def doSequences (descs) :
   for d in descs:
-    sys.stdout.write(getSequence(d))
+    if "seqId" in d:
+        s = getSequenceFromSeqfetch(d)
+    else:
+        s = getSequenceFromAssembly(d)
+    sys.stdout.write(s)
     sys.stdout.write('\n')
 
 # -----------------------------------------
@@ -154,6 +201,14 @@ def main () :
 # ----------------------------------------------------------------------------------------------------------------
 
 TESTDATA = [{
+
+"seqId" : [ "ENSEMBL:MGP_CASTEiJ_T0038053", "ENSEMBL:MGP_CASTEiJ_P0038053"]
+
+}, {
+
+"seqId" : "RefSeq:NM_001145293"
+
+}, {
 
 "header": ">test.0",
 "genome": "mus_musculus",
