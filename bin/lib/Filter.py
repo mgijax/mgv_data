@@ -1,8 +1,48 @@
+#
+# Filter.py
+#
+# Herein lies all the ugliness needed to convert GFF3 files as downloaded from their
+# respective sources into GFF3 as needed for import. 
+# A filter implements a set of transformations on a gene model.
+# In genomes.json, each stanza specifies (by name) zero or more filters to apply during import.
+# The names used in genome.json are defined in filterNameMap (at the end of this file), which maps
+# each name to the class that implements it.
+# A filter class is a subclass of GffFilter that defines one or both methods
+# processModel and processFeature. 
+# Each model is a list of individual features (gene, transcripts, exons, CDSs, etc)
+# that make up the model. The general flow is that processModel is called with the
+# list of features, and it then calls processFeature on each list element in turn.
+# The top level feature (the gene or pseudogene) is always the first
+# element of the list. 
+#
+# Overriding processFeature:
+# - good for simple line-by-line transforms
+# 
 
 import sys
 import re
 from .gff3lite import parseLine, formatLine
 from urllib.request import urlopen
+
+CURIE_INFO = [{
+  "prefix" : "ENSEMBL",
+  "baseRegex" : re.compile(r'ENS[A-Z]+[GTP]+\d+'),
+}, {
+  "prefix" : "ENSEMBL",
+  "baseRegex" : re.compile(r'MGP_[A-Z0-9]+_[GTP]\d+'),
+}, {
+  "prefix" : "RefSeq",
+  "baseRegex" : re.compile(r'[NX][RMP]_\d+')
+}]
+def curie_ize (ident) :
+    i = ident.find(":")
+    if i >= 0:
+        return ident
+    for info in CURIE_INFO:
+        if info["baseRegex"].match(ident):
+            return "%s:%s" % (info["prefix"], ident)
+    return None
+
 
 class Filter:
     def __init__ (self, impobj):
@@ -29,11 +69,19 @@ class GffFilter (Filter) :
             return self.processModel(obj)
 
     def processModel(self, model):
-        return list(filter(lambda x: x, [self._processFeature(f) for f in model]))
+        model = list(filter(lambda x: x, [self._processFeature(f) for f in model]))
+        #universal transform: make sure top level feature's coordinates span its descendants
+        if len(model) > 1:
+            f = model[0] # top level feature
+            f[3] = min([c[3] for c in model[1:]])
+            f[4] = max([c[4] for c in model[1:]])
+        return model
 
     def _processFeature (self, f):
+        # universal transform: filter out features on non-matching chromosome 
         if not self.importer.chr_re.match(f[0]):
             return None
+        # universal transform: filter out features with excluded types
         if f[2] in self.importer.exclude_types:
             return None
         return self.processFeature(f)
@@ -65,22 +113,29 @@ class EnsemblMouseFilter (GffFilter) :
         attrs = feat[8]
         if feat[2] == "gene" and attrs.get('biotype', None) == 'protein_coding':
             feat[2] = 'protein_coding_gene'
+        '''
         if 'ID' in attrs:
             attrs['ID'] = self.stripPrefix(attrs['ID'])
         if 'Parent' in attrs:
             attrs['Parent'] = list(map(self.stripPrefix, attrs['Parent']))
+        '''
         if "projection_parent_gene" in attrs:
             eid = attrs['projection_parent_gene'].split(".")[0]
             mgi = self.getEid2MgiIndex().get(eid, None)
             if mgi:
                 attrs['cID'] = mgi[0]
                 attrs['Name'] = mgi[1]
+        if "transcript_id" in attrs:
+            attrs["transcript_id"] = "ENSEMBL:" + attrs["transcript_id"]
+        if "protein_id" in attrs:
+            attrs["protein_id"] = "ENSEMBL:" + attrs["protein_id"]
         return feat
 
 class EnsemblNonMouseFilter (GffFilter) :
+    # used for finding/extracting canonical id from another attribute, by taxon id
     taxon2re = {
         "7955":  ('description', re.compile(r'Source:ZFIN.*Acc:([A-Z0-9-]+)'), "ZFIN:"),
-        "9606":  ('description', re.compile(r'Acc:(HGNC:\d+)'),                ""),
+        "9606":  ('description', re.compile(r'Acc:HGNC:(\d+)'),                "HGNC:"),
         "10116": ('description', re.compile(r'Source:RGD.*Acc:(\d+)'),         "RGD:"),
         "559292":('description', re.compile(r'Source:SGD.*Acc:(S\d+)'),        "SGD:"),
         "7227":  ('gene_id',     re.compile(r'(.*)'),                          "FB:"), 
@@ -105,26 +160,16 @@ class EnsemblNonMouseFilter (GffFilter) :
 class MgiGff (GffFilter) :
     def __init__ (self, impobj) :
         Filter.__init__(self, impobj)
-        self.i2i = {}
 
     def processFeature(self, f):
         attrs = f[8]
         if f[2] in ["gene","pseudogene"]:
-            #
             f[2] = attrs['so_term_name']
-            del attrs['so_term_name']
-            #
             attrs['cID'] = attrs['curie']
-            del attrs['curie']
-        elif f[2] == "CDS":
-            pid = attrs.get('protein_id', attrs['ID'])
-            attrs['ID'] = pid
-        elif f[2] != "exon":
-            tid = attrs.get('transcript_id', attrs['ID'])
-            self.i2i[attrs['ID']] = tid
-            attrs['ID'] = tid
-        if 'Parent' in attrs:
-            attrs['Parent'] = [self.i2i.get(p, p) for p in attrs['Parent']]
+        if 'transcript_id' in attrs:
+            attrs['transcript_id'] = curie_ize(attrs['transcript_id'])
+        if 'protein_id' in attrs:
+            attrs['protein_id'] = curie_ize(attrs['protein_id'])
         return f
 
 class AllianceGff (GffFilter) : 
@@ -151,63 +196,61 @@ class AllianceGff (GffFilter) :
 #
 class RgdGff (AllianceGff) :
     def processModel (self, model) :
-        # Propagate the protein_id that RGD puts in the mRNA's attributes into to
+        # Propagates the protein_id that RGD puts in the mRNA's attributes into to
         # CDSs' attributes
         # Changes mRNA IDs to the curie's base
         # Changes CDS IDs to the protain id
-        idMap = {}
+        # Removes CDSs from non-protein coding genes (why are they there in the first place??)
         tid2pid = {}
+        badMrnas = set()
         for f in model:
             attrs = f[8]
+            fid = attrs.get('ID', None)
             if f[2] == "mRNA":
+                if attrs.get('biotype', None) != 'protein_coding':
+                    f[2] = 'transcript'
+                    badMrnas.add(fid)
                 if 'curie' in attrs:
-                    newid = attrs['curie'].split(':')[-1]
-                    idMap[attrs['ID']] = newid
-                    attrs['ID'] = newid
-                tid2pid[attrs['ID']] = attrs.get('protein_id', None)
-            elif 'Parent' in attrs:
+                    attrs["transcript_id"] = attrs.pop('curie')
+                tid2pid[fid] = attrs.get('protein_id', None)
+            elif f[2] == "CDS":
                 parentid = attrs['Parent'][0]
-                parentid = idMap.get(parentid, parentid)
-                attrs['Parent'] = [parentid]
-                if f[2] == "CDS":
-                    protid = tid2pid.get(parentid, None)
-                    if protid:
-                        attrs['ID'] = protid
+                if parentid in badMrnas:
+                    attrs['DELETE_ME'] = "true"
+                protid = tid2pid.get(parentid, None)
+                if protid:
+                    attrs['protein_id'] = curie_ize(protid)
+            elif f[2] == "transcript_region":
+                f[2] = "transcript"
+
+        model = list(filter(lambda f: 'DELETE_ME' not in f[8], model))
         return AllianceGff.processModel(self, model)
-
-#
-class FlyBaseGff (AllianceGff) :
-    def processFeature (self, f) :
-        AllianceGff.processFeature(self, f)
-        attrs = f[8]
-        if f[2] == "CDS" and attrs['ID'].startswith('CDS:'):
-            attrs['ID'] = attrs['ID'][4:]
-        return f
-
-#
-class WormBaseGff (AllianceGff) :
-    def processFeature (self, f) :
-        AllianceGff.processFeature(self, f)
-        attrs = f[8]
-        if f[2] == "CDS" :
-            if 'protein_id' in attrs:
-                attrs['ID'] = attrs['protein_id']
-            elif attrs['ID'].startswith('CDS:'):
-                attrs['ID'] = attrs['ID'][4:]
-        elif 'ID' in attrs and attrs['ID'].startswith('Transcript:'):
-            attrs['ID'] = attrs['ID'][11:]
-        if 'Parent' in attrs:
-            ps = [p[11:] if p.startswith('Transcript:') else p for p in attrs['Parent']]
-            attrs['Parent'] = ps
-        return f
 
 #
 class ZfinGff (AllianceGff) :
     def processFeature (self, f) :
         AllianceGff.processFeature(self, f)
         attrs = f[8]
+        if "curie" in attrs and "Parent" in attrs:
+            attrs["transcript_id"] = attrs.pop("curie")
         if f[2] == "CDS" and attrs['ID'].startswith('CDS:'):
-            attrs['ID'] = attrs['ID'][4:]
+            attrs['protein_id'] = curie_ize(attrs['ID'][4:])
+        return f
+
+#
+class FlyBaseGff (AllianceGff) :
+    def processFeature (self, f) :
+        # Actually nothing to do. FB transcripts already have both a curie and transcript_id.
+        # The GFF does not provide protein ids.
+        return AllianceGff.processFeature(self, f)
+
+#
+class WormBaseGff (AllianceGff) :
+    def processFeature (self, f) :
+        AllianceGff.processFeature(self, f)
+        attrs = f[8]
+        if 'ID' in attrs and attrs['ID'].startswith('Transcript:'):
+            attrs['transcript_id'] = 'WB:' + attrs['ID'][11:]
         return f
 
 #
