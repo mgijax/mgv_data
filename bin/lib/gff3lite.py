@@ -52,50 +52,104 @@ class Gff3Parser :
     if type(self.source) is str:
       sfd.close()
 
-  def iterate (self):
+  # In nature, one gene can be inside another, e.g., gene A might exist in an intron of gene B.
+  # Some providers of GFF3 files segregate each model into its own contiguous set of lines, while
+  # others will interleave the lines for gene A within the lines of gene B. Downstream code
+  # assumes segregated, so this routine exists to convert an interleaved stream of features
+  # into a (segregated) stream of models (lists of features).
+  #
+  # If the data are already segregated, using this method is safe.
+  #
+  # Each call passes the next feature in the input (or None to terminate, see below), and returns 
+  # a list of zero or more models that have been flushed from the internal buffer and should be output.
+  # After the last feature in the input stream, this method should be called one more time
+  # with f == None to return the any models remaining in the buffer.
+  #
+  def deInterleaveNext(self, f):
+    #
+    if f is None:
+        # signals the end of the input. Return anything left in the buffer/
+        ret = self.buffer
+        self.buffer = []
+        self.id2group = {}
+        return ret
+    #
+    attrs = f[8]
+    if 'Parent' not in attrs:
+        # top level feature.
+        # 1. flush items from buffer. Must be careful to preserve ordering of top level features
+        flushed = []
+        for grp in self.buffer:
+            tlf = grp[0]
+            # Flush a group if the current feature shows we've moved beyond its top level feature or
+            # moved to a different chromosome.
+            if tlf[0] != f[0] or tlf[4] < f[3]:
+                for g in grp:
+                    self.id2group.pop(g[8].get('ID',None), None)
+                flushed.append(grp)
+            else:
+                # don't check the rest of the buffer, or we lose
+                # input ordering
+                break
+        # remove flushed items from the buffer
+        self.buffer = self.buffer[len(flushed):]
+        # start new group and add to buffer
+        grp = [f]
+        self.buffer.append(grp)
+        if 'ID' in attrs:
+            self.id2group[attrs['ID']] = grp
+        return flushed
+    else:
+        # subfeature 
+        for p in attrs['Parent']:
+            grp = self.id2group.get(p, None)
+            if not grp:
+                self.pending.setdefault(p,[]).append(f)
+            else:
+                grp.append(f)
+                if 'ID' in attrs:
+                    self.id2group[attrs['ID']] = grp
+                    grp += self.pending.pop(attrs['ID'],[])
+        return []
+
+  #
+  def iterate (self) :
     self.open()
     header = []
     group = []
     currSeqid = None
-    inSeqs = False
+    self.buffer = []
+    self.pending = {}
+    self.id2group = {}
     for line in self.sfd:
-      if inSeqs:
-          continue
+      # detect start of sequence section. Exit loop if found.
       if line.startswith(GT):
-          inSeqs = True
-          continue
+          break
       # Comment line
       if line.startswith(HASH):
-        if self.returnGroups and line.strip() == GROUPSEPARATOR:
-          # User wants groups and line is a "###" separator
-          if group: yield group
-          group = []
-        elif header != None:
+        if header != None and line.strip() != GROUPSEPARATOR:
           header.append(line)
         continue
-      # Feature line
-      if header != None and self.returnHeader:
+      # Non-header line. If this is the first time, yield the header
+      if header != None:
         # User wants header and this is the first feature. 
         # Yield the header then remember that we did so.
         yield ''.join(header)
         header = None
-      #
-      record = list([self.convertDots if a == '.' else a for a in parseLine(line)])
-      if self.returnGroups:
-        if record[0] != currSeqid or "Parent" not in record[8]:
-          # if chromosome changes or the feature is top-level (has no parent), start a new group
-          if group: yield group
-          group = []
-        group.append(record)
-      else:
-        yield record
-      currSeqid = record[0]
-    # end for loop
-    if self.returnGroups and group:
-      yield group
+      # Feature line. Parse it.
+      f = list([self.convertDots if a == '.' else a for a in parseLine(line)])
+      # Add feature to buffer. If anything gets flushed, yield it.
+      flushed = self.deInterleaveNext(f)
+      for grp in flushed:
+        yield grp
+    # End of input. Yield whatever is left in the buffer/
+    for grp in self.deInterleaveNext(None):
+        yield grp
     #
-    self.close()
+    if len(self.pending) > 0 :
+        sys.stderr.write("Orphan records detected. " + str(self.pending) + "\n")
 
+  #
   def sortIterate (self) :
     # 
     origRH = self.returnHeader
@@ -194,6 +248,10 @@ def formatLine (row):
 
 if __name__ == "__main__":
   for r in Gff3Parser(sys.stdin,returnGroups=True, returnHeader=True).iterate():
-    print(r)
-    print("###")
+    if type(r) is str:
+        print(r)
+    else:
+        for f in r:
+            print(formatLine(f), end = '')
+        print("###")
 
