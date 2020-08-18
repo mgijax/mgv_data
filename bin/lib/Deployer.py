@@ -61,7 +61,7 @@ class Deployer:
         fname = os.path.join(self.cgi_dir, "fetch.cgi")
         self.log("Generating CGI wrapper: " + fname) 
         if not self.debug:
-            self.log("Opening " + fname)
+            self.log("Writing " + fname)
             with open(fname, 'w') as ofd:
                 ofd.write(cgi)
             self.log("Setting permissions on CGI.")

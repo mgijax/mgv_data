@@ -92,8 +92,10 @@ class GffImporter (Importer) :
     def filterDownloadedFile (self) :
         for obj in Importer.filterDownloadedFile(self):
             if type(obj) is str:
+                # yield the header
                 yield obj
             else:
+                # yield features on matching chromosomes
                 for f in obj:
                     if self.chr_re.match(f[0]):
                         yield formatLine(f)
