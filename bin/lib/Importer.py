@@ -54,7 +54,6 @@ class Importer :
         for line in self.filterDownloadedFile():
             self.processLine(line)
 
-from .FastaImporter import split
 class FastaImporter (Importer) :
     def go (self) :
         lfunc = lambda s: self.log(s, newline='')
@@ -62,7 +61,35 @@ class FastaImporter (Importer) :
         self.log("Importing Fasta: %s -> %s/assembly" % (self.fpath, odir))
         if not self.debug:
             self.builder.ensureDirectory(odir, empty=True)
-            split(self.filterDownloadedFile(), odir, self.chr_re, lfunc)
+            self.split(self.filterDownloadedFile(), odir, self.chr_re, lfunc)
+
+    def split (self, ifd, odir, chr_re, logFcn):
+      ofd = None
+      writing = False
+      lcount = 0
+      try:
+          line = next(ifd)
+          while line:
+              lcount += 1
+              if line.startswith('>'):
+                  seqid = line.split()[0][1:]
+                  writing = chr_re.match(seqid)
+                  if writing:
+                      # output is plain text, not Fasta
+                      ofile = os.path.join(odir, seqid + '.txt')
+                      if ofd: ofd.close()
+                      ofd = open(ofile, 'w')
+                      logFcn(line)
+                  else:
+                      logFcn("Skipping: " + line)
+                  line = next(ifd)
+              else:
+                  if writing:
+                      ofd.write(line[:-1])
+                  line = next(ifd)
+      except StopIteration:
+          pass
+      if ofd: ofd.close()
 
 class GffImporter (Importer) :
     def __init__ (self, *args):
