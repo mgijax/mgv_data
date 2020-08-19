@@ -128,8 +128,8 @@ class Gff3Importer:
   def writeGene(self, f):
     self.tlFile.write(self.formatFeature(f))
 
-  # Processes a gene model group. For top level features, adds a tCount attribute that contains the
-  # number of transcripts for that gene. For transcripts, adds an exons attribute whose value is a list 
+  # Processes a gene model group.
+  # For transcripts, adds an exons attribute whose value is a list 
   # of exon coordinates. Each exon is encoded as 'offset_length', where offset is equal to
   # exon.start - transcript.start, and length is equal to exon.end - exon.start + 1.
   # Also keeps track of all chromosomes seen in the file and the max coordinate seen on each.
@@ -148,14 +148,12 @@ class Gff3Importer:
       c['length'] = max(c['length'], f[4])
       for pid in f[8].get('Parent',[]):
         pid2kids.setdefault(pid, []).append(f)
-    # For genes, count transcripts and store in tCount attribute.
     # For transcripts, encode exon coordinates and store in exons attribute
     transcripts = []
     for f in grp:
       fid = f[8].get('ID', None)
       if 'Parent' not in f[8]:
         # top level feature
-        f[8]['tCount'] = len(pid2kids.get(fid,[]))
         self.writeGene(f)
       elif fid in pid2kids:
         # mid level feature
