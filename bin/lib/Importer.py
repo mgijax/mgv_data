@@ -1,9 +1,12 @@
 import re
 import os
+import os.path
+import json
 import sys
 import gzip
 from .Filter import filterNameMap
 from .gff3lite import Gff3Parser, parseLine, formatLine
+
 
 class Importer :
     def __init__ (self, builder, type, cfg, output_dir, debug) :
@@ -263,12 +266,6 @@ class GffImporter (Importer) :
                 if type(grp) is not str:
                     self.processGrp(grp)
 ##
-
-import sys
-import os.path
-import argparse
-import json
-
 class OrthologyImporter (Importer) :
 
     def __init__(self, *args):
