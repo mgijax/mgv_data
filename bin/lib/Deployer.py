@@ -140,6 +140,11 @@ class Deployer:
         chrs.sort(key = romanSortKey if csort == "roman" else standardSortKey)
         return chrs
 
+    # Checks whether the genome has variants data or not
+    def checkVariants (self) :
+        directory = os.path.join(self.web_rootdir, self.cfg['name'], 'variants')
+        return os.path.isdir(directory) and os.path.exists(os.path.join(directory, "variants.vcf"))
+
     def deployGenomeIndexFile (self) : 
         timestamp = self.getMostRecentUpdate(self.output_dir)
         self.log(timestamp, self.output_dir)
@@ -176,6 +181,13 @@ class Deployer:
               "annotationRelease" : c["models"]["release"],
           }
         }
+        #
+        if self.checkVariants():
+            info["tracks"].append({
+                "name" : "variants",
+                "type", "Vcf"
+            })
+        #
         with open(ixfile, 'w') as fd:
             s = json.dumps(info, indent = 2)
             fd.write(s)

@@ -126,7 +126,7 @@ class AllianceDownloader (Downloader) :
     SNAPSHOT_URL="https://fms.alliancegenome.org/api/snapshot/release/" 
     DOWNLOAD_URL="https://download.alliancegenome.org/"
     def init (self) :
-        if self.type not in ["models","orthologs"] :
+        if self.type not in ["models","orthologs","variants"] :
             raise RuntimeError("Don't know this type:" + self.type)
         dtype = self.cfg[self.type]["allianceDataType"]
         self.cfg[self.type]["url"] = self.getUrl(dtype)

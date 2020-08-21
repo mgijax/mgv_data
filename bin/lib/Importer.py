@@ -265,16 +265,28 @@ class GffImporter (Importer) :
             for grp in self.filterDownloadedFile():
                 if type(grp) is not str:
                     self.processGrp(grp)
+
+##
+class VcfImporter (Importer) :
+    def __init__(self, *args):
+        Importer.__init__(self, *args)
+        self.vOutputDir = os.path.join(self.output_dir, self.cfg["name"], "variants")
+        self.builder.ensureDirectory(self.vOutputDir)
+        self.vcfName = os.path.join(self.vOutputDir, "variants.vcf")
+        self.vcfFd = open(self.vcfName, "w")
+
+    def processLine(self, line):
+        self.vcfFd.write(line)
+
 ##
 class OrthologyImporter (Importer) :
-
+    #
     def __init__(self, *args):
         Importer.__init__(self, *args)
         self.taxon2file = {}
         self.inCount = 0
         self.output_dir = os.path.join(self.output_dir, self.cfg["name"], "orthology")
         self.builder.ensureDirectory(self.output_dir)
-
     #
     def getFile (self, taxonid) :
       fname = os.path.join(self.output_dir, taxonid + '.json')
@@ -327,5 +339,6 @@ class OrthologyImporter (Importer) :
 importerNameMap = {
     "models" : GffImporter,
     "assembly" : FastaImporter,
+    "variants" : VcfImporter,
     "orthologs" : OrthologyImporter,
 }

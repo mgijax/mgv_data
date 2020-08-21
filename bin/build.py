@@ -20,7 +20,7 @@ from lib.Deployer import Deployer
 
 ### ------------------------------------------------------------------
 class MgvDataBuilder :
-    VALID_TYPES = ["assembly", "models", "orthologs"]
+    VALID_TYPES = ["assembly", "models", "variants", "orthologs"]
     VALID_PHASES = ["download", "import", "deploy"]
     def __init__ (self) :
         self.logfile = sys.stderr
