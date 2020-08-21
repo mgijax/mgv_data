@@ -38,7 +38,7 @@ class MgvDataBuilder :
         parser = ArgumentParser("Builds the backend for MGV based on a config file.")
         parser.add_argument(
             "-c", "--config-file",
-            default = "./genomes.json",
+            default = "./config.json",
             help = "Build config file. Default = %(default)s.")
         parser.add_argument(
             "-g", "--genome",
