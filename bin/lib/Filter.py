@@ -288,7 +288,7 @@ class SgdGff (AllianceGff) :
                 cid = pid.replace("mRNA", "CDS")
                 if cid == pid:
                     cid = pid + "_CDS"
-                f[8]["ID"] = [cid]
+                f[8]["ID"] = cid
         model = model + exons
         return AllianceGff.processModel(self, model)
 
@@ -297,6 +297,8 @@ class SgdGff (AllianceGff) :
         attrs = f[8]
         if f[0].startswith("chr") :
             f[0] = f[0][3:]
+            if f[0] == "mt":
+                f[0] = "Mito"
         if f[2] == "gene":
             if self.hasCDS:
                 f[2] = "protein_coding_gene"
@@ -326,7 +328,7 @@ class NcbiMouseAssemblyFilter (Filter) :
             return ">%s %s" % (c, line[1:])
         return line
 
-#
+# This maps filter names used in the config.json file to classes that implement the filters
 filterNameMap = {
   "ensemblMouseFilter" : EnsemblMouseFilter,
   "ensemblNonMouseFilter" : EnsemblNonMouseFilter,
