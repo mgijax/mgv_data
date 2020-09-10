@@ -94,11 +94,72 @@ class FastaImporter (Importer) :
           pass
       if ofd: ofd.close()
 
-class GffImporter (Importer) :
-    def __init__ (self, *args):
+class ChunkedFileImporter (Importer) :
+    def __init__ (self, *args) :
         Importer.__init__(self, *args)
+        self.extension = ""
+        self.chunkSize = int(self.cfg[self.type]["chunkSize"])
+        self.currFileName = None
+        self.currFile = None
+        self.outputFiles = {}
+
+    def getFileName(self, track, chr, blk):
+        if chr:
+            return os.path.join(self.mOutputDir, track, chr, str(blk) + self.extension)
+        else:
+            return os.path.join(self.mOutputDir, track, str(blk) + self.extension)
+
+    def getFileHandle(self, fname):
+        if fname == self.currFileName:
+            # currently open file
+            return self.currFile
+        elif fname in self.outputFiles:
+            # different from current but seen before, reopen in append mode
+            self.currFile.close()
+            self.currFileName = fname
+            self.currFile = open(fname, 'a')
+            return self.currFile
+        else:
+            # first time seeing this fname
+            self.builder.ensureDirectory(os.path.dirname(fname))
+            self.currFile and self.currFile.close()
+            self.currFileName = fname
+            self.currFile = open(fname, 'w')
+            self.outputFiles[fname] = 0
+
+            fn = os.path.basename(fname)
+            dn = os.path.basename(os.path.dirname(fname))
+            self.log('%s/%s ' % (dn, fn), newline=' ', timestamp=False)
+            return self.currFile
+
+    def writeGrpToBlk(self, grp, track, chr, blk):
+        fname = self.getFileName(track, chr, blk)
+        fd = self.getFileHandle(fname)
+        for f in grp:
+            fd.write(self.formatFeature(f))
+            self.outputFiles[fname] += 1
+
+    def writeGrp (self, track, grp) :
+        if len(grp) == 0: return
+        chr = self.getFeatureCoords(grp[0])[0]
+        if self.chunkSize == 0 :
+            self.writeGrpToBlk(grp, track, None, 0)
+        elif self.chunkSize == 1:
+            self.writeGrpToBlk(grp, track, chr, 0)
+        else:
+            coords = list(map(self.getFeatureCoords, grp))
+            gStart = min([c[1] for c in coords])
+            gEnd = max([c[2] for c in coords])
+            startBlk = gStart // self.chunkSize
+            endBlk = gEnd // self.chunkSize
+            for blk in range(startBlk, endBlk+1):
+                self.writeGrpToBlk(grp, track, chr, blk)
+
+class GffImporter (ChunkedFileImporter) :
+    def __init__ (self, *args):
+        ChunkedFileImporter.__init__(self, *args)
         self.doSort = self.cfg[self.type].get("doSort", False)
-        self.transcriptChunkSize = int(self.cfg[self.type]["transcriptChunkSize"])
+        self.extension = ".gff3"
 
     def streamDownloadedFile (self) :
         # GffImporter streams the file a gene model at a time.
@@ -128,60 +189,11 @@ class GffImporter (Importer) :
                     if self.chr_re.match(obj[0][0]):
                         yield obj
 
-    def getFileName(self, track, chr, blk):
-        if chr:
-            return os.path.join(self.mOutputDir, track, chr, str(blk) + '.gff3')
-        else:
-            return os.path.join(self.mOutputDir, track, str(blk), '.gff3')
-
-    def getFileHandle(self, fname):
-        if fname == self.currFileName:
-            # currently open file
-            return self.currFile
-        elif fname in self.outputFiles:
-            # different from current but seen before, reopen in append mode
-            self.currFile.close()
-            self.currFileName = fname
-            self.currFile = open(fname, 'a')
-            return self.currFile
-        else:
-            # first time seeing this fname
-            self.builder.ensureDirectory(os.path.dirname(fname))
-            self.currFile and self.currFile.close()
-            self.currFileName = fname
-            self.currFile = open(fname, 'w')
-            self.outputFiles[fname] = 0
-
-            fn = os.path.basename(fname)
-            dn = os.path.basename(os.path.dirname(fname))
-            self.log('%s/%s ' % (dn, fn), newline=' ', timestamp=False)
-            return self.currFile
+    def getFeatureCoords(self, f) :
+        return (f[0], f[3], f[4])
 
     def formatFeature(self, f):
         return formatLine(f)
-
-    def writeGrpToBlk(self, grp, track, chr, blk):
-        fname = self.getFileName(track, chr, blk)
-        fd = self.getFileHandle(fname)
-        for f in grp:
-            if 'exons' in f[8]:
-                fd.write(self.formatFeature(f))
-                self.outputFiles[fname] += 1
-
-    def writeGrp (self, track, grp) :
-        if len(grp) == 0: return
-        chr = grp[0][0]
-        if self.transcriptChunkSize == 0 :
-            self.writeGrpToBlk(grp, track, None, 0)
-        elif self.transcriptChunkSize == 1:
-            self.writeGrpToBlk(grp, track, chr, 0)
-        else:
-            gStart = min([f[3] for f in grp])
-            gEnd = max([f[4] for f in grp])
-            startBlk = gStart // self.transcriptChunkSize
-            endBlk = gEnd // self.transcriptChunkSize
-            for blk in range(startBlk, endBlk+1):
-                self.writeGrpToBlk(grp, track, chr, blk)
 
     def writeGene(self, f):
         self.tlFile.write(self.formatFeature(f))
@@ -256,9 +268,6 @@ class GffImporter (Importer) :
         self.tlFileName = os.path.join(self.gOutputDir, '0.gff3')
         self.tlFile = open(self.tlFileName, 'w')
         self.log("Writing genes to: " + self.tlFileName)
-        self.currFileName = None
-        self.currFile = None
-        self.outputFiles = {}
         #
         self.log("Importing GFF: %s -> %s" % (self.fpath, self.mOutputDir))
         if not self.debug:
@@ -267,16 +276,26 @@ class GffImporter (Importer) :
                     self.processGrp(grp)
 
 ##
-class VcfImporter (Importer) :
+class VcfImporter (ChunkedFileImporter) :
     def __init__(self, *args):
-        Importer.__init__(self, *args)
-        self.vOutputDir = os.path.join(self.output_dir, self.cfg["name"], "variants")
-        self.builder.ensureDirectory(self.vOutputDir)
-        self.vcfName = os.path.join(self.vOutputDir, "variants.vcf")
-        self.vcfFd = open(self.vcfName, "w")
+        ChunkedFileImporter.__init__(self, *args)
+        self.extension = ".vcf"
+        self.mOutputDir = os.path.join(self.output_dir, self.cfg["name"])
+        self.vOutputDir = os.path.join(self.mOutputDir, "variants")
+        self.builder.ensureDirectory(self.vOutputDir, empty = True)
+
+    def getFeatureCoords(self, f) :
+        return (f[0], f[1], f[1]+len(f[3]))
+
+    def formatFeature(self, f):
+        return '\t'.join(map(str, f))
 
     def processLine(self, line):
-        self.vcfFd.write(line)
+        if line.startswith('#'):
+            return
+        f = line.split('\t')
+        f[1] = int(f[1])
+        self.writeGrp('variants', [f])
 
 ##
 class OrthologyImporter (Importer) :
