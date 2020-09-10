@@ -113,12 +113,10 @@ class EnsemblMouseFilter (GffFilter) :
         attrs = feat[8]
         if feat[2] == "gene" and attrs.get('biotype', None) == 'protein_coding':
             feat[2] = 'protein_coding_gene'
-        '''
         if 'ID' in attrs:
             attrs['ID'] = self.stripPrefix(attrs['ID'])
         if 'Parent' in attrs:
             attrs['Parent'] = list(map(self.stripPrefix, attrs['Parent']))
-        '''
         if "projection_parent_gene" in attrs:
             eid = attrs['projection_parent_gene'].split(".")[0]
             mgi = self.getEid2MgiIndex().get(eid, None)
