@@ -143,7 +143,7 @@ class Deployer:
     # Checks whether the genome has variants data or not
     def checkVariants (self) :
         directory = os.path.join(self.web_rootdir, self.cfg['name'], 'variants')
-        return os.path.isdir(directory) and os.path.exists(os.path.join(directory, "variants.vcf"))
+        return os.path.isdir(directory)
 
     def deployGenomeIndexFile (self) : 
         timestamp = self.getMostRecentUpdate(self.output_dir)
@@ -152,7 +152,7 @@ class Deployer:
         self.log("Writing genome info to " + ixfile)
         c = self.cfg
         self.log(str(c))
-        tcs = c["models"]["transcriptChunkSize"]
+        tcs = c["models"]["chunkSize"]
         info = {
           "name" : c["label"],
           "timestamp" : timestamp,
@@ -185,7 +185,8 @@ class Deployer:
         if self.checkVariants():
             info["tracks"].append({
                 "name" : "variants",
-                "type", "Vcf"
+                "type": "ChunkedVcf",
+                "chunkSize": c["variants"]["chunkSize"]
             })
         #
         with open(ixfile, 'w') as fd:

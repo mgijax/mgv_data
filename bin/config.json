@@ -82,7 +82,7 @@
         "release" : "@ensemblRelease",
         "filters" : ["ensemblMouseFilter"],
         "exclude_types" : ["biological_region", "chromosome", "scaffold"],
-        "transcriptChunkSize" : "@transcriptChunkSize",
+        "chunkSize" : "@transcriptChunkSize",
         "linkouts" : [
             "@linkMgiByID",
             "@linkMouseMineByID",
@@ -95,7 +95,7 @@
         "release": "@ensemblRelease",
         "filters": [ "ensemblNonMouseFilter" ],
         "exclude_types" : ["biological_region", "chromosome", "scaffold"],
-        "transcriptChunkSize" : "4000000",
+        "chunkSize" : "4000000",
         "linkouts" : [
             "@linkAllianceByCid",
             "@linkEnsemblByID"
@@ -108,14 +108,14 @@
         "allianceDataType" : "GFF",
         "doSort" : true,
         "exclude_types" : ["region", "chromosome", "scaffold"],
-        "transcriptChunkSize" : "@transcriptChunkSize",
+        "chunkSize" : "@transcriptChunkSize",
         "linkouts" : ["@linkAllianceByCid"]
       },
       "mgiGff" : {
         "source" : "mgi",
         "filters" : ["mgiGff"],
         "release" : "",
-        "transcriptChunkSize" : "@transcriptChunkSize",
+        "chunkSize" : "@transcriptChunkSize",
         "linkouts" : [
             "@linkMgiByID",
             "@linkMouseMineByID",
@@ -125,7 +125,8 @@
       "allianceVcf" : {
         "source": "alliance",
         "release" : "@allianceRelease",
-        "allianceDataType" : "VCF"
+        "allianceDataType" : "VCF",
+        "chunkSize" : 1000000
       },
       "allianceOrthology" : {
         "source" : "alliance",
@@ -404,7 +405,7 @@
     ,"models" : {
         "@":"@allianceGff",
         "provider" : "WB",
-        "transcriptChunkSize" : "500000",
+        "chunkSize" : "500000",
         "filters" : ["wormbaseGff"],
         "linkouts" : [
             "@linkWbByCid",
