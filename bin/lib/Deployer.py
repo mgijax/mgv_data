@@ -155,6 +155,7 @@ class Deployer:
         tcs = c["models"]["chunkSize"]
         info = {
           "name" : c["label"],
+          "pathname" : c["name"],
           "timestamp" : timestamp,
           "chromosomes" : self.getChromsomesAndLengths(),
           "tracks": [
@@ -175,6 +176,8 @@ class Deployer:
           ],  
           "linkouts" : c["models"].get("linkouts",[]),
           "metadata" : {
+              "name" : c["label"],
+              "pathname" : c["name"],
               "taxonid" : c["taxonid"],
               "assemblyBuild" : c["build"],
               "annotationSource" : c["models"]["source"],
