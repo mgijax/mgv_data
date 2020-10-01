@@ -104,36 +104,36 @@ class MgvDataBuilder :
             self.log(cmd)
             os.system(cmd)
 
-    def process(self, gg) :
-        self.log("Processing cfg: " + str(gg))
-        gn = gg["name"]
+    def process(self, g) :
+        self.log("Processing cfg: " + str(g))
+        gn = g["name"]
         for t in self.VALID_TYPES:
             if self.args.type in [t, None] :
-                if not t in gg:
+                if not t in g:
                     continue
                 #
-                if type(gg[t]) is str and gg[t].startswith("="):
+                if type(g[t]) is str and g[t].startswith("="):
                     if "deploy" in self.args.phase:
-                        ggg = self.getCfg(gg[t][1:])
-                        tgtPath = os.path.join(self.args.web_dir, ggg["name"], t)
-                        lnkPath = os.path.join(self.args.web_dir, gg["name"], t)
+                        gg = self.getCfg(g[t][1:])
+                        tgtPath = os.path.join(self.args.web_dir, gg["name"], t)
+                        lnkPath = os.path.join(self.args.web_dir, g["name"], t)
                         cmd = 'ln -s %s %s' % (tgtPath, lnkPath)
                         self.log("Creating symlink: " + cmd)
                     continue
-                sname = gg[t].get("source","UrlDownloader")
+                sname = g[t].get("source","UrlDownloader")
                 cls = downloaderNameMap[sname]
-                downloader = cls(self, gg, t, self.args.debug)
+                downloader = cls(self, g, t, self.args.debug)
                 # Download data
                 if "download" in self.args.phase:
                     downloader.go()
                 # Import data
                 if "import" in self.args.phase:
                     icls = importerNameMap[t]
-                    importer = icls(self, t, gg, self.args.output_dir, self.args.debug)
+                    importer = icls(self, t, g, self.args.output_dir, self.args.debug)
                     importer.go()
                 # Deploy
                 if "deploy" in self.args.phase:
-                    deployer = Deployer(self, t, gg, self.args.output_dir, self.args.web_dir, self.args.cgi_dir, debug=self.args.debug)
+                    deployer = Deployer(self, t, g, self.args.output_dir, self.args.web_dir, self.args.cgi_dir, debug=self.args.debug)
                     deployer.go()
 
     def getCfg (self, name = None) :
