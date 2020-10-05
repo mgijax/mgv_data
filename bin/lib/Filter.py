@@ -164,6 +164,7 @@ class MgiGff (GffFilter) :
         if f[2] in ["gene","pseudogene"]:
             f[2] = attrs['so_term_name']
             attrs['cID'] = attrs['curie']
+            attrs['long_name'] = attrs.pop('description')
         if 'transcript_id' in attrs:
             attrs['transcript_id'] = curie_ize(attrs['transcript_id'])
         if 'protein_id' in attrs:
@@ -204,7 +205,9 @@ class RgdGff (AllianceGff) :
         for f in model:
             attrs = f[8]
             fid = attrs.get('ID', None)
-            if f[2] == "mRNA":
+            if f[2] == "gene":
+                attrs['long_name'] = attrs.pop('Note')
+            elif f[2] == "mRNA":
                 if attrs.get('biotype', None) != 'protein_coding':
                     f[2] = 'transcript'
                     badMrnas.add(fid)
@@ -231,6 +234,8 @@ class ZfinGff (AllianceGff) :
         attrs = f[8]
         if "curie" in attrs and "Parent" in attrs:
             attrs["transcript_id"] = attrs.pop("curie")
+        if "full_name" in attrs:
+            attrs["long_name"] = attrs.pop("full_name")
         if f[2] == "CDS" and attrs['ID'].startswith('CDS:'):
             attrs['protein_id'] = curie_ize(attrs['ID'][4:])
         return f
@@ -302,6 +307,7 @@ class SgdGff (AllianceGff) :
                 f[2] = "protein_coding_gene"
             if "gene" in attrs:
                 attrs["Name"] = attrs.pop("gene")
+                attrs["long_name"] = attrs.pop("display")
         return f
 
 class NcbiMouseAssemblyFilter (Filter) :
