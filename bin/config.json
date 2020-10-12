@@ -67,7 +67,7 @@
            "attr": "ID"
         },
        "chr_re" : "^..?$",
-       "ensemblRelease" : "99",
+       "ensemblRelease" : "101",
        "allianceRelease" : "3.1.1",
         "transcriptChunkSize" : "4000000",
         "ncbiAssembly" : {
