@@ -186,10 +186,6 @@
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblAssembly"
     ,"models" : "@mgiGff"
-    ,"variants" : {
-        "@" : "@allianceVcf",
-        "provider" : "GRCm38"
-    }
   }, {
     "name" : "mus_musculus_GRCm39"
     ,"disabled" : true
@@ -338,10 +334,6 @@
             "@linkAllianceByCid"
         ]
     }
-    ,"variants" : {
-        "@" : "@allianceVcf",
-        "provider" : "Rnor60"
-    }
   }, {
     "name" : "danio_rerio"
     ,"label" : "D. rerio"
@@ -357,10 +349,6 @@
             "@linkZfinByCid",
             "@linkAllianceByCid"
         ]
-    }
-    ,"variants" : {
-        "@" : "@allianceVcf",
-        "provider" : "GRCz11"
     }
   }, {
     "name" : "danio_rerio_ensembl"
@@ -390,10 +378,6 @@
             "@linkAllianceByCid"
         ]
     }
-    ,"variants" : {
-        "@" : "@allianceVcf",
-        "provider" : "R6"
-    }
   }, {
     "name" : "caenorhabditis_elegans"
     ,"label" : "C. elegans"
@@ -411,10 +395,6 @@
             "@linkWbByCid",
             "@linkAllianceByCid"
         ]
-    }
-    ,"variants" : {
-        "@" : "@allianceVcf",
-        "provider" : "WBcel235"
     }
   }, {
     "name" : "saccharomyces_cerevisiae"
