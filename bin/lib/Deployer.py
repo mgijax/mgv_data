@@ -46,6 +46,16 @@ class Deployer:
             if not self.debug:
                 os.system(cmd)
 
+    def deployInfoDoc (self):
+        # copy info.html file
+        binDir = os.path.dirname(os.path.dirname(__file__))
+        infoFile = os.path.join(binDir, 'www', 'info.html')
+        cmd = "cp -f %s %s" % (infoFile, self.web_rootdir)
+        self.log("Copying info file: " + cmd)
+        if not self.debug:
+            #os.system(cmd)
+            pass
+
     def deployCgi (self):
         # copy python script
         myDir = os.path.dirname(__file__)
@@ -203,7 +213,7 @@ class Deployer:
             self.deployGenomeIndexFile()
         self.deployIndex()
         self.deployCgi()
-
+        self.deployInfoDoc()
 
 def standardSortKey (c) :
     c = c['name'].upper()
