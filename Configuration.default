@@ -1,0 +1,11 @@
+if [ "${MGICONFIG}" = "" ]
+then
+    MGICONFIG=/usr/local/mgi/live/mgiconfig
+    export MGICONFIG
+fi
+. ${MGICONFIG}/master.config.sh
+
+export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export PYTHONPATH="${SCRIPT_DIR}/bin/lib"
+export DDIR=${DATALOADSOUTPUT}/mgi/mgv_data/downloads
+export ODIR=${DATALOADSOUTPUT}/mgi/mgv_data/output

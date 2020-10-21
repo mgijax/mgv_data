@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+CONFIGFILE="Configuration"
+source ${CONFIGFILE}
+cd ${SCRIPT_DIR}/bin
+${PYTHON} ./build.py -d ${DDIR} -o ${ODIR} $*
