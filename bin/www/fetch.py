@@ -30,6 +30,8 @@ import cgitb
 # -----------------------------------------
 DEFAULT_LINE_LEN = 60
 DATA_DIR="."
+MAX_DESCRIPTORS=4000
+MAX_LENGTH=100000000
 
 # -----------------------------------------
 def chunkString (s, n) :
@@ -105,8 +107,7 @@ def getSequenceFromSeqfetch (desc) :
     # Note that ensembl_mus_cdna and ensembl_mus_prot are really the same thing and actually implement
     # generic Ensembl sequence retrieval. Here we'll use ensembl_mus_cdna.
     #
-    #seqfetchBaseUrl = "http://www.informatics.jax.org/seqfetch/tofasta.cgi"
-    seqfetchBaseUrl = "http://bluebob.informatics.jax.org/seqfetch/tofasta.cgi"
+    seqfetchBaseUrl = "http://www.informatics.jax.org/seqfetch/tofasta.cgi"
     # maps curie prefix to name to use in seqfetch requests
     PREFIXMAP = {
         "ensembl" : "ensembl_mus_cdna",
@@ -155,6 +156,31 @@ def getFormParameters (opts) :
   return opts
 
 # -----------------------------------------
+def error (message) : 
+  print ('Content-Type: text/plain')
+  print ('')
+  print ('ERROR: ' + message)
+  sys.exit(1)
+
+# -----------------------------------------
+def validateOptions (opts) :
+  ndescs = len(opts.descriptors)
+  if ndescs == 0:
+      error("No descriptors.")
+  if ndescs > MAX_DESCRIPTORS:
+      error("Too many descriptors: %d" % ndescs)
+  tLength = 0
+  for d in opts.descriptors:
+      if "length" in d:
+          if type(d["length"]) is list:
+              tLength += sum(d["length"])
+          else:
+              tLength += d["length"]
+  if tLength > MAX_LENGTH:
+      error("Total length too big: %d" % tLength)
+  
+
+# -----------------------------------------
 def getOptions () :
   parser = argparse.ArgumentParser(description="Get sequence slices from genome assembly sequences.")
   #
@@ -182,6 +208,9 @@ def getOptions () :
     opts = getFormParameters(opts)
   if not opts.descriptors:
     opts.descriptors = TESTDATA
+  #
+  validateOptions(opts)
+  #
   return opts
 
 # -----------------------------------------
