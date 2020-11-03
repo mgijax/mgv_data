@@ -1,6 +1,14 @@
 #!/usr/bin/bash
+#
+# Wrapper script to launch the Python builder, which does the heavy lifting.
+# 
 
-CONFIGFILE="Configuration"
-source ${CONFIGFILE}
-cd ${SCRIPT_DIR}/bin
-${PYTHON} ./build.py -d ${DDIR} -o ${ODIR} $*
+# Discover my installation directory. Taken from:
+#  https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+#
+export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+source ${SCRIPT_DIR}/wrapperConfig.sh
+
+export PYTHONPATH="${SCRIPT_DIR}/bin/lib"
+${PYTHON} ${SCRIPT_DIR}/bin/build.py -b ${BCONFIG} -d ${DDIR} -o ${ODIR} -w ${WDIR} --cgi ${CDIR} $*

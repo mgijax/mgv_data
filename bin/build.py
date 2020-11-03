@@ -37,9 +37,9 @@ class MgvDataBuilder :
     def getArgs (self) :
         parser = ArgumentParser("Builds the backend for MGV based on a config file.")
         parser.add_argument(
-            "-c", "--config-file",
-            default = "./config.json",
-            help = "Build config file. Default = %(default)s.")
+            "-b", "--build-config",
+            required=True,
+            help = "Build config file. Required.")
         parser.add_argument(
             "-g", "--genome",
             default = ".*",
@@ -151,7 +151,7 @@ class MgvDataBuilder :
         self.log("Arguments: " + str(self.args))
         self.genome_re = re.compile('^' + self.args.genome + '$')
         #
-        self.cfg = ConfigFileReader(self.args.config_file).read()
+        self.cfg = ConfigFileReader(self.args.build_config).read()
         if self.args.debug:
             self.log("Running in DEBUG mode. No commands will be executed.")
         #
