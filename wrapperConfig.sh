@@ -1,7 +1,9 @@
-# Set-and-forget parameters for the build. 
+#
+# Set-and-forget parameters for an installation. 
+# Mainly directories. Edit as needed. 
 #
 
-# BCONFIG: Build config. Configures the actual build steps, data sources, etc.
+# BCONFIG: Build config file. Configures the actual build steps, data sources, etc.
 export BCONFIG=${SCRIPT_DIR}/buildConfig.json
 
 # DDIR: Downloads directory. 
