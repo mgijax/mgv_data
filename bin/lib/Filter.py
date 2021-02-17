@@ -205,7 +205,7 @@ class RgdGff (AllianceGff) :
         for f in model:
             attrs = f[8]
             fid = attrs.get('ID', None)
-            if f[2] == "gene":
+            if f[2] == "gene" and "Note" in attrs:
                 attrs['long_name'] = attrs.pop('Note')
             elif f[2] == "mRNA":
                 if attrs.get('biotype', None) != 'protein_coding':
