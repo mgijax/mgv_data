@@ -158,6 +158,17 @@ class EnsemblNonMouseFilter (GffFilter) :
 class MgiGff (GffFilter) :
     def __init__ (self, impobj) :
         Filter.__init__(self, impobj)
+        self.cfg = self.importer.cfg
+
+    # To allow build 38 and 39 to coexist in the viewer, need to modify the feature IDs so they're unique.
+    def processModel (self, model) :
+        mid = model[0][8]['ID']
+        newMid = mid + '_' + self.cfg['build']
+        model[0][8]['ID'] = newMid
+        for f in model[1:]:
+            if mid in f[8].get('Parent', []):
+                f[8]['Parent'] = [newMid]
+        return GffFilter.processModel(self, model)
 
     def processFeature(self, f):
         attrs = f[8]
@@ -195,38 +206,16 @@ class AllianceGff (GffFilter) :
 #
 class RgdGff (AllianceGff) :
     def processModel (self, model) :
-        # Propagates the protein_id that RGD puts in the mRNA's attributes into to
-        # CDSs' attributes
-        # Changes mRNA IDs to the curie's base
-        # Changes CDS IDs to the protain id
-        # Removes CDSs from non-protein coding genes (why are they there in the first place??)
-        tid2pid = {}
-        badMrnas = set()
-        for f in model:
-            attrs = f[8]
-            fid = attrs.get('ID', None)
-            if f[2] == "gene" and "Note" in attrs:
-                attrs['long_name'] = attrs.pop('Note')
-            elif f[2] == "mRNA":
-                if attrs.get('biotype', None) != 'protein_coding':
-                    f[2] = 'transcript'
-                    badMrnas.add(fid)
-                if 'curie' in attrs:
-                    attrs["transcript_id"] = attrs.pop('curie')
-                tid2pid[fid] = attrs.get('protein_id', None)
-            elif f[2] == "CDS":
-                parentid = attrs['Parent'][0]
-                if parentid in badMrnas:
-                    attrs['DELETE_ME'] = "true"
-                protid = tid2pid.get(parentid, None)
-                if protid:
-                    attrs['protein_id'] = curie_ize(protid)
-            elif f[2] == "transcript_region":
-                f[2] = "transcript"
+        # Starting with Alliance 3.2.0, RGD GFF3 files (for rat and human) fixed the issues we previously had to correct for.
+        # However, they also now have multiple providers of gene models (NCBI and Ensembl), but they do not merge them like we do.
+        # Also, there appears to be duplication of some of the ENSEMBL models. (E.g. for PAX2).
+        # As a quick solution, just pick the NCBI models. If a gene does not have an NCBI model, it gets filtered out
+        # FIXME: Could/should merge the models. Or maybe get RGD to do that.
 
-        model = list(filter(lambda f: 'DELETE_ME' not in f[8], model))
-        return AllianceGff.processModel(self, model)
-
+        if len(list(filter(lambda f: f[1] == "NCBI", model))) > 0:
+            return AllianceGff.processModel(self, model)
+        else:
+            return None
 #
 class ZfinGff (AllianceGff) :
     def processFeature (self, f) :
