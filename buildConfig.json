@@ -67,8 +67,8 @@
            "attr": "ID"
         },
        "chr_re" : "^..?$",
-       "ensemblRelease" : "101",
-       "allianceRelease" : "3.1.1",
+       "ensemblRelease" : "103",
+       "allianceRelease" : "3.2.0",
         "transcriptChunkSize" : "4000000",
         "ncbiAssembly" : {
           "source" : "ncbi"
@@ -116,6 +116,7 @@
         "filters" : ["mgiGff"],
         "release" : "",
         "chunkSize" : "@transcriptChunkSize",
+        "url" : "http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz",
         "linkouts" : [
             "@linkMgiByID",
             "@linkMouseMineByID",
@@ -179,25 +180,51 @@
     ,"assembly" : "@ensemblAssembly"
     ,"models" : "@ensemblMouseGff"
   }, {
-    "name" : "mus_musculus"
-    ,"label" : "C57BL/6J"
+    "name" : "mus_musculus_grcm38"
+    ,"label" : "C57BL/6J (GRCm38)"
     ,"taxonid" : "10090"
     ,"build" : "GRCm38"
     ,"chr_re" : "@chr_re"
-    ,"assembly" : "@ensemblAssembly"
-    ,"models" : "@mgiGff"
+    ,"assembly" : {
+      "source" : "ensembl",
+      "release" : "101",
+      "remotePath" : "mus_musculus"
+    },
+    "models" : {
+        "source" : "mgi",
+        "filters" : ["mgiGff"],
+        "release" : "",
+        "chunkSize" : "@transcriptChunkSize",
+        "url" : "http://www.informatics.jax.org/downloads/mgigff3/archive/annual/MGI.2020.gff3.gz",
+        "linkouts" : [
+            "@linkMgiByID",
+            "@linkMouseMineByID",
+            "@linkAllianceByCid"
+        ]
+      }
   }, {
-    "name" : "mus_musculus_GRCm39"
-    ,"disabled" : true
-    ,"label" : "C57BL/6J (build 39)"
+    "name" : "mus_musculus_grcm39"
+    ,"label" : "C57BL/6J (GRCm39)"
     ,"taxonid" : "10090"
     ,"build" : "GRCm39"
     ,"chr_re" : "@chr_re"
     ,"assembly" : {
-        "@" : "@ncbiAssembly",
-        "assemblyId" : "GCA_000001635.9_GRCm39",
-        "filters" : [ "ncbiMouseAssemblyFilter" ]
-    }
+        "@" : "@ensemblAssembly",
+        "remotePath" : "mus_musculus"
+    },
+    "models" : {
+        "source" : "mgi",
+        "filters" : ["mgiGff"],
+        "release" : "",
+        "chunkSize" : "@transcriptChunkSize",
+        "xrl" : "http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz",
+        "url" : "file:///export/rohan/ftp/pub/mgigff3/MGI.gff3.gz",
+        "linkouts" : [
+            "@linkMgiByID",
+            "@linkMouseMineByID",
+            "@linkAllianceByCid"
+        ]
+      }
   }, {
     "name" : "mus_musculus_c57bl6nj"
     ,"label" : "C57BL/6NJ"
@@ -366,7 +393,7 @@
     "name" : "drosophila_melanogaster"
     ,"label" : "D. melanogaster"
     ,"taxonid" : "7227"
-    ,"build" : "BDGP6.28"
+    ,"build" : "BDGP6.32"
     ,"chr_re" : "@chr_re"
     ,"assembly" : "@ensemblAssembly"
     ,"models" : {
