@@ -123,12 +123,12 @@ class NcbiDownloader (Downloader) :
 # Gets gene models from the Alliance for non-mouse organisms
 class AllianceDownloader (Downloader) :
     SNAPSHOT_CACHE = {}
-    SNAPSHOT_URL="https://fms.alliancegenome.org/api/snapshot/release/" 
-    DOWNLOAD_URL="https://download.alliancegenome.org/"
     def init (self) :
         if self.type not in ["models","orthologs","variants"] :
             raise RuntimeError("Don't know this type:" + self.type)
         dtype = self.cfg[self.type]["allianceDataType"]
+        self.snapshotUrl = self.cfg[self.type]["allianceSnapshotUrl"]
+        self.downloadUrl = self.cfg[self.type]["allianceDownloadUrl"]
         self.cfg[self.type]["url"] = self.getUrl(dtype)
         self.log("URL: " + self.cfg[self.type]["url"])
 
@@ -142,8 +142,8 @@ class AllianceDownloader (Downloader) :
                 self.log("Getting snapshot file at: " + self.builder.args.snapshot_file)
                 fd = open(self.builder.args.snapshot_file, 'r')
             else:
-                self.log("Getting snapshot file at: " + self.SNAPSHOT_URL+rel)
-                fd = urlopen(self.SNAPSHOT_URL+rel)
+                self.log("Getting snapshot file at: " + self.snapshotUrl + rel)
+                fd = urlopen(self.snapshotUrl+rel)
             snapshot = json.loads(fd.read())
             fd.close()
             self.SNAPSHOT_CACHE[rel] = snapshot
@@ -159,7 +159,7 @@ class AllianceDownloader (Downloader) :
         elif len(fList) > 1:
             raise RuntimeError("File specification is not unique.")
         f = fList[0]
-        return self.DOWNLOAD_URL + f["s3Path"]
+        return self.downloadUrl + f["s3Path"]
 
 ### ------------------------------------------------------------------
 # Gets gene models for C57BL/6J mouse strain
@@ -167,7 +167,6 @@ class MgiDownloader (Downloader) :
     def init (self) :
         if self.type != "models" :
             raise RuntimeError("Don't know this type:" + self.type)
-        self.cfg[self.type]["url"] = "http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz"
 
 ### ------------------------------------------------------------------
 downloaderNameMap = {

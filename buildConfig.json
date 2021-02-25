@@ -10,6 +10,8 @@
         "fbAccessionUrl" : "https://flybase.org/reports/",
         "wbAccessionUrl" : "https://wormbase.org/species/c_elegans/gene/",
         "sgdAccessionUrl" : "http://www.yeastgenome.org/locus/",
+        "allianceSnapshotUrl" : "https://fms.alliancegenome.org/api/snapshot/release/",
+        "allianceDownloadUrl" : "https://download.alliancegenome.org/",
 
         "linkSgdByCid" : {
             "text": "SGD",
@@ -101,16 +103,6 @@
             "@linkEnsemblByID"
         ]
       },
-      "allianceGff" : {
-        "source": "alliance",
-        "release" : "@allianceRelease",
-        "filters" : ["allianceGff"],
-        "allianceDataType" : "GFF",
-        "doSort" : true,
-        "exclude_types" : ["region", "chromosome", "scaffold"],
-        "chunkSize" : "@transcriptChunkSize",
-        "linkouts" : ["@linkAllianceByCid"]
-      },
       "mgiGff" : {
         "source" : "mgi",
         "filters" : ["mgiGff"],
@@ -123,17 +115,33 @@
             "@linkAllianceByCid"
         ]
       },
+      "allianceGff" : {
+        "source": "alliance",
+        "release" : "@allianceRelease",
+        "filters" : ["allianceGff"],
+        "allianceDataType" : "GFF",
+        "doSort" : true,
+        "exclude_types" : ["region", "chromosome", "scaffold"],
+        "chunkSize" : "@transcriptChunkSize",
+        "linkouts" : ["@linkAllianceByCid"],
+        "allianceSnapshotUrl" : "@allianceSnapshotUrl",
+        "allianceDownloadUrl" : "@allianceDownloadUrl"
+      },
       "allianceVcf" : {
         "source": "alliance",
         "release" : "@allianceRelease",
         "allianceDataType" : "VCF",
-        "chunkSize" : 1000000
+        "chunkSize" : 1000000,
+        "allianceSnapshotUrl" : "@allianceSnapshotUrl",
+        "allianceDownloadUrl" : "@allianceDownloadUrl"
       },
       "allianceOrthology" : {
         "source" : "alliance",
         "release" : "@allianceRelease",
         "allianceDataType" : "ORTHOLOGY-ALLIANCE",
-        "provider" : "COMBINED"
+        "provider" : "COMBINED",
+        "allianceSnapshotUrl" : "@allianceSnapshotUrl",
+        "allianceDownloadUrl" : "@allianceDownloadUrl"
       }
   },
   "data" : [{
