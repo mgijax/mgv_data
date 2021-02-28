@@ -103,18 +103,6 @@
             "@linkEnsemblByID"
         ]
       },
-      "mgiGff" : {
-        "source" : "mgi",
-        "filters" : ["mgiGff"],
-        "release" : "",
-        "chunkSize" : "@transcriptChunkSize",
-        "url" : "http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz",
-        "linkouts" : [
-            "@linkMgiByID",
-            "@linkMouseMineByID",
-            "@linkAllianceByCid"
-        ]
-      },
       "allianceGff" : {
         "source": "alliance",
         "release" : "@allianceRelease",
