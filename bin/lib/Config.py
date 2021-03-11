@@ -1,5 +1,6 @@
 import sys
 import json
+from datetime import date
 
 class ConfigFileReader (dict) :
     def __init__(self, fname):
@@ -12,6 +13,9 @@ class ConfigFileReader (dict) :
 
     def expand(self, cfg) :
         self.vars = cfg.get("vars",{})
+        # inject special var with today's date
+        self.vars['@today'] = date.today().strftime('%d %b %Y')
+        #
         self._expand(self.vars)
         self.defaults = cfg.get("defaults", {})
         self._expand(self.defaults)
