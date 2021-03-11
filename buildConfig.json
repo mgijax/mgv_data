@@ -189,9 +189,9 @@
     "models" : {
         "source" : "mgi",
         "filters" : ["mgiGff"],
-        "release" : "",
+        "release" : "4 Jan 2021",
         "chunkSize" : "@transcriptChunkSize",
-        "url" : "http://www.informatics.jax.org/downloads/mgigff3/archive/annual/MGI.2020.gff3.gz",
+        "url" : "http://www.informatics.jax.org/downloads/mgigff3/archive/annual/MGI.2021.gff3.gz",
         "linkouts" : [
             "@linkMgiByID",
             "@linkMouseMineByID",
@@ -200,7 +200,7 @@
       }
   }, {
     "name" : "mus_musculus_grcm39"
-    ,"label" : "C57BL/6J (GRCm39)"
+    ,"label" : "C57BL/6J"
     ,"taxonid" : "10090"
     ,"build" : "GRCm39"
     ,"chr_re" : "@chr_re"
@@ -211,10 +211,10 @@
     "models" : {
         "source" : "mgi",
         "filters" : ["mgiGff"],
-        "release" : "",
+        "release" : "@@today",
         "chunkSize" : "@transcriptChunkSize",
         "xrl" : "http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz",
-        "url" : "file:///export/rohan/ftp/pub/mgigff3/MGI.gff3.gz",
+        "url" : "https://mgitest.jax.org/downloads/mgigff3/MGI.gff3.gz",
         "linkouts" : [
             "@linkMgiByID",
             "@linkMouseMineByID",
