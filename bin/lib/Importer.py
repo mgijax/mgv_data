@@ -85,6 +85,8 @@ class FastaImporter (Importer) :
                       logFcn(line)
                   else:
                       logFcn("Skipping: " + line)
+                      logFcn("Exiting loop!\n")
+                      break
                   line = next(ifd)
               else:
                   if writing:
