@@ -47,6 +47,11 @@
             "url" : "@mgiAccessionUrl",
             "attr": "ID"
         },
+        "linkMgiByCid" : {
+            "text": "MGI",
+            "url" : "@mgiAccessionUrl",
+            "attr": "cID"
+        },
         "linkRgdByCid" : {
            "text" : "RGD",
            "url" : "@rgdAccessionUrl",
@@ -193,7 +198,7 @@
         "chunkSize" : "@transcriptChunkSize",
         "url" : "http://www.informatics.jax.org/downloads/mgigff3/archive/annual/MGI.2021.gff3.gz",
         "linkouts" : [
-            "@linkMgiByID",
+            "@linkMgiByCid",
             "@linkMouseMineByID",
             "@linkAllianceByCid"
         ]
@@ -216,7 +221,7 @@
         "xrl" : "http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz",
         "url" : "https://mgitest.jax.org/downloads/mgigff3/MGI.gff3.gz",
         "linkouts" : [
-            "@linkMgiByID",
+            "@linkMgiByCid",
             "@linkMouseMineByID",
             "@linkAllianceByCid"
         ]
