@@ -53,7 +53,7 @@ class Deployer:
         cmd = "cp -f %s %s" % (infoFile, self.web_rootdir)
         self.log("Copying info file: " + cmd)
         if not self.debug:
-            #os.system(cmd)
+            os.system(cmd)
             pass
 
     def deployCgi (self):
