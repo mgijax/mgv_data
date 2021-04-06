@@ -75,7 +75,7 @@
         },
        "chr_re" : "^..?$",
        "ensemblRelease" : "103",
-       "allianceRelease" : "3.2.0",
+       "allianceRelease" : "4.0.0",
         "transcriptChunkSize" : "4000000",
         "ncbiAssembly" : {
           "source" : "ncbi"
