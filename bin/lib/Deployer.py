@@ -165,6 +165,7 @@ class Deployer:
         tcs = c["models"]["chunkSize"]
         info = {
           "name" : c["label"],
+          "shortname" : c.get("shortname", None),
           "pathname" : c["name"],
           "timestamp" : timestamp,
           "chromosomes" : self.getChromsomesAndLengths(),

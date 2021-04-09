@@ -205,7 +205,8 @@
       }
   }, {
     "name" : "mus_musculus_grcm39"
-    ,"label" : "C57BL/6J"
+    ,"label" : "C57BL/6J (GRCm39)"
+    ,"shortname" : "C57BL/6J"
     ,"taxonid" : "10090"
     ,"build" : "GRCm39"
     ,"chr_re" : "@chr_re"
