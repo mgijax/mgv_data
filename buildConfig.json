@@ -113,7 +113,6 @@
         "release" : "@allianceRelease",
         "filters" : ["allianceGff"],
         "allianceDataType" : "GFF",
-        "doSort" : true,
         "exclude_types" : ["region", "chromosome", "scaffold"],
         "chunkSize" : "@transcriptChunkSize",
         "linkouts" : ["@linkAllianceByCid"],
