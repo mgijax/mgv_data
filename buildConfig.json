@@ -218,8 +218,7 @@
         "filters" : ["mgiGff"],
         "release" : "@@today",
         "chunkSize" : "@transcriptChunkSize",
-        "xrl" : "http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz",
-        "url" : "https://mgitest.jax.org/downloads/mgigff3/MGI.gff3.gz",
+        "url" : "http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz",
         "linkouts" : [
             "@linkMgiByCid",
             "@linkMouseMineByID",
