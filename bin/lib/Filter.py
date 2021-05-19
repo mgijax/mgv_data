@@ -123,6 +123,9 @@ class EnsemblMouseFilter (GffFilter) :
             if mgi:
                 attrs['cID'] = mgi[0]
                 attrs['Name'] = mgi[1]
+            else:
+                attrs['cID'] = eid
+                attrs['Name'] = eid
         if "transcript_id" in attrs:
             attrs["transcript_id"] = "ENSEMBL:" + attrs["transcript_id"]
         if "protein_id" in attrs:
