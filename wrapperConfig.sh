@@ -26,3 +26,7 @@ export CDIR=${WDIR}
 
 # Python 3 executable
 export PYTHON="python3"
+
+# MouseMine URL - used by some filters
+#export MOUSEMINE_URL="http://www.mousemine.org"
+export MOUSEMINE_URL="http://bhmgimm-dev:8080"
