@@ -532,7 +532,7 @@ def translate (cds) :
   cds = cds.upper().replace('T', 'U')
   codons = [ cds[i:i+3] for i in range(0, len(cds),3) ]
   residues = ''.join([aaShort2Letter.get(genetic_code.get(c, ''), '') for c in codons])
-  return residues
+  return residues.split('X')[0] #truncate at first stop codon if there is one
 
 def complement (dna) :
   return ''.join([base_complement.get(b, b) for b in dna])
