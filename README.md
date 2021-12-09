@@ -108,47 +108,47 @@ Using data NOT from Ensembl:
 # Internal data format
 ## File structure.
 * Genomes are served to MGV from a static file directory.
-** To specify this directory, set WDIR in wrapperConfig.sh
-** Gene models are transferred by direct file requests.
-** Sequences are served by a CGI that reads genome sequence files.
+  * TO specify this directory, set WDIR in wrapperConfig.sh
+  * Gene models are transferred by direct file requests.
+  * Sequences are served by a CGI that reads genome sequence files.
 * Each genome is a subdirectory of a common root data directory.
-** The root directory contains an info file (index.json) naming the available genomes.
-** Each genome directory also contains an index.json, providing metadata on that genome.
-** Gene models and genome assemblies hang off the genomes' root directories.
+  * The root directory contains an info file (index.json) naming the available genomes.
+  * Each genome directory also contains an index.json, providing metadata on that genome.
+  * Gene models and genome assemblies hang off the genomes' root directories.
 
 ## General flow of requests from MGV to the back end (helps explain the file structures):
 * When viewer loads:
-** reads the index.json file at the configured location (see mgv/public/runtimeConfig.json)
-** reads the index.json file for each genome configured in the root index.json
+  * reads the index.json file at the configured location (see mgv/public/runtimeConfig.json)
+  * reads the index.json file for each genome configured in the root index.json
 * When a genome is first selected for display, reads the genes gff file (see below) for that genome
 * As user navigates to different regions, reads transcript chunk files (see below)
 * When the user zooms in far enoughs and when the user downloads a sequences, invokes the fetch CGI script (see below)
 
 ## Root info file (index.json):
 * simply a list of subdirectory names (genomes) to serve
-** all must end with "/"
+  * all must end with "/"
 * subdirectories not listed here are not visible to MGV
 * example: ["mus_caroli/", "mus_musculus_129s1svimj/" ]
 
 ## Genome info file (<genome>/index.json):
 * Metadata for this genome contained in a json object. Fields:
-** name - the name of the genome (displayed to the user)
-** shortname - (deprecated) allows a shorter version of the name in URLs 
-** pathname - the name of the subdirectory containing this genome
-** timestamp - when this genome's data was last updated. The browser caches data on a per genome basis, and uses the timestamp to know when to flush the cache.
-** chromosomes - list of chromosomes for this genome.
-*** each chromosome has a name and a length
-*** the name is the same as that used for naming chromosome files and directories
-*** the order of the list is the order the browser presents them
-** tracks - configures the data types and access for this genome. (At this point, the tracks concept is more vision that reality, and the configuration reflects this!) Each track descriptor has a name and a type, and may have additional parameters
-*** name: one of: genes, transcripts, sequences
-*** type: one of: PlainSequence, ChunkedGff3
-*** chunkSize (if type = ChunkedGFF3) - size of one chunk. 
-** linkouts - used by viewer to display links in a feature's popup. Each linkout spec has:
-*** attr - which attribute to use for linking
-*** url - link url prefix. The linking attr is appended to form the complete URL
-*** text - the link text to display
-** metadata - the metadata values to be displayed for a genome (Nothing listed above is displayed automatically. If you want it visible, include it here.)
+  * name - the name of the genome (displayed to the user)
+  * shortname - (deprecated) allows a shorter version of the name in URLs 
+  * pathname - the name of the subdirectory containing this genome
+  * timestamp - when this genome's data was last updated. The browser caches data on a per genome basis, and uses the timestamp to know when to flush the cache.
+  * chromosomes - list of chromosomes for this genome.
+    * each chromosome has a name and a length
+    * the name is the same as that used for naming chromosome files and directories
+    * the order of the list is the order the browser presents them
+  * tracks - configures the data types and access for this genome. (At this point, the tracks concept is more vision that reality, and the configuration reflects this!) Each track descriptor has a name and a type, and may have additional parameters
+    * name: one of: genes, transcripts, sequences
+    * type: one of: PlainSequence, ChunkedGff3
+    * chunkSize (if type = ChunkedGFF3) - size of one chunk. 
+  * linkouts - used by viewer to display links in a feature's popup. Each linkout spec has:
+    * attr - which attribute to use for linking
+    * url - link url prefix. The linking attr is appended to form the complete URL
+    * text - the link text to display
+  * metadata - the metadata values to be displayed for a genome (Nothing listed above is displayed automatically. If you want it visible, include it here.)
 * Example:
 ```javascript
         {
@@ -226,18 +226,18 @@ Using data NOT from Ensembl:
 
 ### Transcripts. 
 * Transcripts are stored files with names of the form: <genome>/models/transcripts/<chr>/<chunk_num>.gff3
-** there is a chunk size defined for the genome
-** if a transcript crosses a chunk boundary, it appears in both chunk files
+  * there is a chunk size defined for the genome
+  * if a transcript crosses a chunk boundary, it appears in both chunk files
 * Files are GFF-like:
-** same line format 
-** but the Parent for a transcript refers to a top level feature in the genes file.
-** subfeatures (exons/CDSs) encoded into column 9 of the transcript
+  * same line format 
+  * but the Parent for a transcript refers to a top level feature in the genes file.
+  * subfeatures (exons/CDSs) encoded into column 9 of the transcript
 * Exon coodinates are encoded as an "exons" attribute in colummn 9 of the transcript feature.
-** formatted as a (comma-separated) list of (underscore-separated) integer pairs specifying delta (from the start of the transcript) and length of each exon. 
-** for example: exons=0_422,7218_150,9607_95
+  * formatted as a (comma-separated) list of (underscore-separated) integer pairs specifying delta (from the start of the transcript) and length of each exon. 
+  * for example: exons=0_422,7218_150,9607_95
 * CDS coodinates are encoded as a "cds" attribute in column 9 of the transcript feature
-** formatted as a pipe separated list of four values: ID of CDS from imported file, protein id, start of first piece of CDS, end of last piece of CDS (these coordinates are absolute, not deltas)
-** for example: cds=MGI_C57BL6J_1915252_cds_2|RefSeq:NP_080779.2|23996251|24005600
+  * formatted as a pipe separated list of four values: ID of CDS from imported file, protein id, start of first piece of CDS, end of last piece of CDS (these coordinates are absolute, not deltas)
+  * for example: cds=MGI_C57BL6J_1915252_cds_2|RefSeq:NP_080779.2|23996251|24005600
 * Example:
 ```
 1       NCBI    mRNA    3269956 3741733 .       -       .       ID=MGI_C57BL6J_3528744_transcript_7;Name=XM_006495550.5;Parent=MGI_C57BL6J_3528744_GRCm39;transcript_id=RefSeq:XM_006495550.5;gene_id=MGI:3528744;exons=0_7585,13706_3530,221969_200,470819_959;cds=MGI_C57BL6J_3528744_cds_5|RefSeq:XP_006495613.1|3286245|3741571
@@ -245,25 +245,25 @@ Using data NOT from Ensembl:
 
 ## CGI script.
 * Requests for sequences are served by a CGI script:
-** fetch.cgi is a wrapper shell script; fetch.py does the heavy lifting
-** Both scripts live in the data root directory by default. You can change this by setting CDIR in wrapperConfig.sh
+  * fetch.cgi is a wrapper shell script; fetch.py does the heavy lifting
+  * Both scripts live in the data root directory by default. You can change this by setting CDIR in wrapperConfig.sh
 * Request format is documented in fetch.py
 * Return format is FASTA
 
 ## Homologies
 * Homology data live in a "homologies" directory under the data root.
-** Orthology data stored in files named homologies/orthology/<taxonid>.json
-** (eventually) Paralogy data will go under homologies/paralogy
+  * Orthology data stored in files named homologies/orthology/<taxonid>.json
+  * (eventually) Paralogy data will go under homologies/paralogy
 * An orthology data file is a list of ID pairs containing all orthology assertions for one taxon.
-** Each list item has the form: [id1, taxon1, td2, taxon2, flags]. (flags is not currently used by the viewer)
-** Each list item is an assertion that id2/taxon2 is an orthlog of id1/taxon1
-** No inverse relationship is assumed; the inverse must be explicitly provided in taxon2's othology file.
-** Example: the first few lines of homologies/orthology/10090.json
+  * Each list item has the form: [id1, taxon1, td2, taxon2, flags]. (flags is not currently used by the viewer)
+  * Each list item is an assertion that id2/taxon2 is an orthlog of id1/taxon1
+  * No inverse relationship is assumed; the inverse must be explicitly provided in taxon2's othology file.
+  * Example: the first few lines of homologies/orthology/10090.json
 ```
 [["MGI:1917606", "10090", "FB:FBgn0260484", "7227", "YY"]
 ,["MGI:1923224", "10090", "FB:FBgn0260486", "7227", "YN"]
 ,["MGI:106321", "10090", "FB:FBgn0260486", "7227", "YN"]
 ...
 ```
-** The file homologies/orthology/7227.json has the inverse relationships, e.g. ["FB:FBgn0260484", "7227", "MGI:1917606", "10090", "YY"]
-** This model derives directly from the Alliance of Genome Resources, strict orthology set.
+  * The file homologies/orthology/7227.json has the inverse relationships, e.g. ["FB:FBgn0260484", "7227", "MGI:1917606", "10090", "YY"]
+  * This model derives directly from the Alliance of Genome Resources, strict orthology set.
