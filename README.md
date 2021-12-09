@@ -84,56 +84,186 @@ $ ./build
   Alternatively, you can create another config file and change the BCONFIG variable in wrapperConfig.sh to point to it.
   See below for details on configuing builds.
 
-
 ## Serving data to MGV
 
 The data that serves MGV is a directory hierarchy of static files, organized by genome.
 The data comprise genome features, stored as GFF3 and served as static files and genome assemblies, 
 stored as plain strings and served by a CGI script.
 
-Note that these file are NOT compressed.
-
-For example, to configure Apache, you could add a .htaccess file with the following:
+Note that these files are stored uncompressed, and we use server compression instead.
+The following Apache .htaccess file is included in the www directory and is copied to the data root directory during deployment.
 ```
 AddType application/json .json
 AddType text/tab-separated-values .gff3
 AddOutputFilterByType DEFLATE application/json text/tab-separated-values
 ```
-
-The CGI is a Python script, fetch.py, which is invoked by a shell wrapper, fetch.cgi. The deploy script copies both pieces to the deployment directory and makes the wrapper executable. You may have to adjust this step, depending on your local environment. 
+The CGI is a Python 3 script, fetch.py, which is invoked by a shell wrapper, fetch.cgi. Deployment copies both pieces to the deployment directory and makes the wrapper executable. You may have to adjust this step, depending on your local environment. 
 
 ## Customizing a build
 
 If you're using data from Ensembl:
-1. Edit build.sh to call getGenome.sh for the organisms you want. Optionally change the default version number (in config.sh).
-2. If you need to do custom translations on the GFF3, supply/write the appropriate Python modules, and specify them to getGenome.sh (see -m command line option).
-3. One primary purpose of a custom translation is setting the cID ("canonical" or "class" ID) attribute on the genes. Generally, this is the official/MOD ID of the gene (eg, MGI id for mouse genes, HGNC id for human, FlyBase for drosophila, etc. The cID is the determinant of equivalence between genomes in the same species. It is also the basis for homology relationships across species. For a custom build, you'll need to figure out how to tag gene features with appropriate cID values, and write appropriate translators to do it.
-
-The existing build script (build.sh) and custom translations should provide sufficient examples to go by.
 
 Using data NOT from Ensembl:
 
-The data files need not come from Ensembl, provided they are in the same format as those provided by Ensembl.
-1. Use the --gff-url argument to directly specify the location of the compressed GFF3 (.gff3.gz) file containing the genome annotations.
-2. Use the --fasta-url argument to directly specify the location of the compressed Fasta (.fa.gz) file containing the genome assembly.
+# Internal data format
+## File structure.
+* Genomes are served to MGV from a static file directory.
+** To specify this directory, set WDIR in wrapperConfig.sh
+** Gene models are transferred by direct file requests.
+** Sequences are served by a CGI that reads genome sequence files.
+* Each genome is a subdirectory of a common root data directory.
+** The root directory contains an info file (index.json) naming the available genomes.
+** Each genome directory also contains an index.json, providing metadata on that genome.
+** Gene models and genome assemblies hang off the genomes' root directories.
 
-## Directory and file structure
+## General flow of requests from MGV to the back end (helps explain the file structures):
+* When viewer loads:
+** reads the index.json file at the configured location (see mgv/public/runtimeConfig.json)
+** reads the index.json file for each genome configured in the root index.json
+* When a genome is first selected for display, reads the genes gff file (see below) for that genome
+* As user navigates to different regions, reads transcript chunk files (see below)
+* When the user zooms in far enoughs and when the user downloads a sequences, invokes the fetch CGI script (see below)
 
-Where the generated output goes, i.e., the directory that will be served to MGV. Each genome to be served is a separate subdirectory under this one. 
-* ./index.json A json-formatted list of the subdirectories (genomes) to be served. MGV does not attempt to determine automatically what genomes are available. Instead, it reads this file to find out. The contents is a single list of subdirectory names followed by "/", e.g. `[ "mus_musculus_aj/", "mus_musculus_dba2j/", ...]`
-* ./fetch.cgi A CGI wrapper script that invokes `./fetch.py`
-* ./fetch.py The actual CGI. Its job is to extract subsequences from the genome assemblies, possibly doing reverse complementation or protein translation, and return the results as Fasta.
-* ./mus_musculus_aj/ (et. al.) The data for each genome is stored in its own subdirectory
-** ./mus_musculus_aj/index.json A json formatted object describing the genome
-** ./mus_musculus_aj/genes/ Contains a single file, named '0.gff3' which is a GFF3 file containing just the top level gene features for the genome.
-** ./mus_musculus_aj/transcripts/ Contains all the transcripts, exons, and CDSs. These are divided into subdirectories by chromosome, and the data for each chromosome is divided into 4MB chunks, each named simply by its chunk number. So for example, the file ./mus_musculus_aj/transcripts/12/8.gff3 refers to the 8th chunk (which covers 32-36 Mbp) of chromosome 12 of the A/J strain.
-** ./mus_musculus_aj/sequences/ Contains the genome assembly, one file per chromosome, named by that chromsome. E.g., ./mus_musculus_aj/sequences/10.txt is the file containing the sequence for chromosome 10 of A/J. The sequence files are not
-Fasta, but simply the linearized sequence. (No header line, no line breaks.)
+## Root info file (index.json):
+* simply a list of subdirectory names (genomes) to serve
+** all must end with "/"
+* subdirectories not listed here are not visible to MGV
+* example: ["mus_caroli/", "mus_musculus_129s1svimj/" ]
 
-Gene models are stored as modified GFF3 as follows:
-* all genes (top level features) for the genome are in a single file
-* transcripts, exons, and CDSs are stored in specialized GFF3 files:
- * organized by chromosome and divided into 4MB chunks
- * 
+## Genome info file (<genome>/index.json):
+* Metadata for this genome contained in a json object. Fields:
+** name - the name of the genome (displayed to the user)
+** shortname - (deprecated) allows a shorter version of the name in URLs 
+** pathname - the name of the subdirectory containing this genome
+** timestamp - when this genome's data was last updated. The browser caches data on a per genome basis, and uses the timestamp to know when to flush the cache.
+** chromosomes - list of chromosomes for this genome.
+*** each chromosome has a name and a length
+*** the name is the same as that used for naming chromosome files and directories
+*** the order of the list is the order the browser presents them
+** tracks - configures the data types and access for this genome. (At this point, the tracks concept is more vision that reality, and the configuration reflects this!) Each track descriptor has a name and a type, and may have additional parameters
+*** name: one of: genes, transcripts, sequences
+*** type: one of: PlainSequence, ChunkedGff3
+*** chunkSize (if type = ChunkedGFF3) - size of one chunk. 
+** linkouts - used by viewer to display links in a feature's popup. Each linkout spec has:
+*** attr - which attribute to use for linking
+*** url - link url prefix. The linking attr is appended to form the complete URL
+*** text - the link text to display
+** metadata - the metadata values to be displayed for a genome (Nothing listed above is displayed automatically. If you want it visible, include it here.)
+* Example:
+```javascript
+        {
+          "name": "C57BL/6J (GRCm38)",
+          "shortname": null,
+          "pathname": "mus_musculus_grcm38",
+          "timestamp": "Mon Apr  5 14:54:13 2021",
+          "chromosomes": [
+            {
+              "name": "1",
+              "length": 195471971
+            },
 
+            {
+              "name": "Y",
+              "length": 91744698
+            } 
+          ],
+          "tracks": [
+            { 
+              "name": "genes",
+              "type": "ChunkedGff3",
+              "chunkSize": 0
+            },
+            { 
+              "name": "transcripts",
+              "type": "ChunkedGff3",
+              "chunkSize": "4000000"
+            },
+            {
+              "name": "sequences",
+              "type": "PlainSequence"
+            } 
+          ],
+          "linkouts": [
+            { 
+              "text": "MGI",
+              "url": "http://www.informatics.jax.org/accession/",
+              "attr": "cID"
+            }
+          ],
+          "metadata": {
+            "name": "C57BL/6J (GRCm38)",
+            "pathname": "mus_musculus_grcm38",
+            "taxonid": "10090",
+            "assemblyBuild": "GRCm38",
+            "annotationSource": "mgi",
+            "annotationRelease": "4 Jan 2021"
+          }
+        }
+```
 
+## Genome assemblies.
+* In a genome's assembly directory, there is one file per chromosome, named <chr>.txt, e.g., 11.txt for chromosome 11.
+* The file contains the forward stand of that chromosome as a single string with no header and no line breaks. 
+* The "PlainSequence" type in the track descriptor referes to this format
+
+## Gene models. Gene models are partitioned in the internal format. 
+* Top-level features are split off to a separate file
+* Transcripts features hierarchies are compressed and partitioned into fixed-size chunks
+* The fame format ("ChunkedGFF3") is used for both genes and transcripts. For the gene track, chunkSize=0, which means everything going in a single file; for transcripts, the chunkSize is 4Mb. For genomes with higher or lower feature densities, may want to adjust this number.
+
+### Genes (et al). 
+* All the top level features for a genome (and only the top level features) are stored in the file <genome>/models/genes/0.gff3
+* The file is in GFF3 format.
+* It is sorted by chromosome and start position.
+* The file should not contain very large features (like chromosomes). 
+* The ID of each feature must be universally unique (e.g., Pax6 in genome A must have a different ID than Pax6 in genome B).
+* The canonical id for each feature (for a mouse gene, this would be the MGI id) should be attached via a "cID" attribute in column 9.
+* The only column 9 attributes used by the viewer are ID, cID, and name. Other attributes are fine, but currently ignored.
+* Example:
+```
+1       MGI     protein_coding_gene     3269956 3741733 .       -       .       ID=MGI_C57BL6J_3528744_GRCm39;Name=Xkr4;gene_id=MGI:3528744;curie=MGI:3528744;Dbxref=ENSEMBL:ENSMUSG00000051951,NCBI_Gene:497097;mgi_type=protein coding gene;so_term_name=protein_coding_gene;cID=MGI:3528744;long_name=X-linked Kx blood group related 4
+```
+
+### Transcripts. 
+* Transcripts are stored files with names of the form: <genome>/models/transcripts/<chr>/<chunk_num>.gff3
+** there is a chunk size defined for the genome
+** if a transcript crosses a chunk boundary, it appears in both chunk files
+* Files are GFF-like:
+** same line format 
+** but the Parent for a transcript refers to a top level feature in the genes file.
+** subfeatures (exons/CDSs) encoded into column 9 of the transcript
+* Exon coodinates are encoded as an "exons" attribute in colummn 9 of the transcript feature.
+** formatted as a (comma-separated) list of (underscore-separated) integer pairs specifying delta (from the start of the transcript) and length of each exon. 
+** for example: exons=0_422,7218_150,9607_95
+* CDS coodinates are encoded as a "cds" attribute in column 9 of the transcript feature
+** formatted as a pipe separated list of four values: ID of CDS from imported file, protein id, start of first piece of CDS, end of last piece of CDS (these coordinates are absolute, not deltas)
+** for example: cds=MGI_C57BL6J_1915252_cds_2|RefSeq:NP_080779.2|23996251|24005600
+* Example:
+```
+1       NCBI    mRNA    3269956 3741733 .       -       .       ID=MGI_C57BL6J_3528744_transcript_7;Name=XM_006495550.5;Parent=MGI_C57BL6J_3528744_GRCm39;transcript_id=RefSeq:XM_006495550.5;gene_id=MGI:3528744;exons=0_7585,13706_3530,221969_200,470819_959;cds=MGI_C57BL6J_3528744_cds_5|RefSeq:XP_006495613.1|3286245|3741571
+```
+
+## CGI script.
+* Requests for sequences are served by a CGI script:
+** fetch.cgi is a wrapper shell script; fetch.py does the heavy lifting
+** Both scripts live in the data root directory by default. You can change this by setting CDIR in wrapperConfig.sh
+* Request format is documented in fetch.py
+* Return format is FASTA
+
+## Homologies
+* Homology data live in a "homologies" directory under the data root.
+** Orthology data stored in files named homologies/orthology/<taxonid>.json
+** (eventually) Paralogy data will go under homologies/paralogy
+* An orthology data file is a list of ID pairs containing all orthology assertions for one taxon.
+** Each list item has the form: [id1, taxon1, td2, taxon2, flags]. (flags is not currently used by the viewer)
+** Each list item is an assertion that id2/taxon2 is an orthlog of id1/taxon1
+** No inverse relationship is assumed; the inverse must be explicitly provided in taxon2's othology file.
+** Example: the first few lines of homologies/orthology/10090.json
+```
+[["MGI:1917606", "10090", "FB:FBgn0260484", "7227", "YY"]
+,["MGI:1923224", "10090", "FB:FBgn0260486", "7227", "YN"]
+,["MGI:106321", "10090", "FB:FBgn0260486", "7227", "YN"]
+...
+```
+** The file homologies/orthology/7227.json has the inverse relationships, e.g. ["FB:FBgn0260484", "7227", "MGI:1917606", "10090", "YY"]
+** This model derives directly from the Alliance of Genome Resources, strict orthology set.
