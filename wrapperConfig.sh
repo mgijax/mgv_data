@@ -4,7 +4,7 @@
 #
 
 # BCONFIG: Build config file. Configures the actual build steps, data sources, etc.
-export BCONFIG=${SCRIPT_DIR}/buildConfig.json
+export BCONFIG=${SCRIPT_DIR}/buildConfig.yaml
 
 # DDIR: Downloads directory. 
 # Where files downloaded from external sources will go.
@@ -28,5 +28,4 @@ export CDIR=${WDIR}
 export PYTHON="python3"
 
 # MouseMine URL - used by some filters
-#export MOUSEMINE_URL="http://bhmgimm-dev:8080"
-export MOUSEMINE_URL="http://www.mousemine.org"
+export MOUSEMINE_URL="https://www.mousemine.org"

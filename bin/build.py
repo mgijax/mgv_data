@@ -8,12 +8,12 @@ import os
 import sys
 import time
 import json
+import yaml
 from argparse import ArgumentParser
 import re
 from urllib.request import urlopen
 import gzip
 
-from lib.Config import ConfigFileReader
 from lib.Downloader import downloaderNameMap
 from lib.Importer import importerNameMap
 from lib.Deployer import Deployer
@@ -151,7 +151,11 @@ class MgvDataBuilder :
         self.log("Arguments: " + str(self.args))
         self.genome_re = re.compile('^' + self.args.genome + '$')
         #
-        self.cfg = ConfigFileReader(self.args.build_config).read()
+        self.log("Reading config file: " + self.args.build_config)
+        with open(self.args.build_config, 'r') as cfile:
+            self.cfg = yaml.safe_load(cfile)["genomes"]
+        #self.log(json.dumps(self.cfg, indent=2))
+        #
         if self.args.debug:
             self.log("Running in DEBUG mode. No commands will be executed.")
         #
