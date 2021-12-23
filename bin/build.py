@@ -158,6 +158,8 @@ class MgvDataBuilder :
         #
         if self.args.debug:
             self.log("Running in DEBUG mode. No commands will be executed.")
+            self.log("Fully expanded build configuration:")
+            self.log(yaml.safe_dump(self.cfg))
         #
         self.name2cfg = {}
         for g in self.cfg:

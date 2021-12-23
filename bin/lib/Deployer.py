@@ -70,11 +70,12 @@ class Deployer:
         cgi = FETCH_CGI % (sys.executable, self.cgi_dir, self.web_rootdir)
         fname = os.path.join(self.cgi_dir, "fetch.cgi")
         self.log("Generating CGI wrapper: " + fname) 
+        self.log("Writing " + fname)
         if not self.debug:
-            self.log("Writing " + fname)
             with open(fname, 'w') as ofd:
                 ofd.write(cgi)
-            self.log("Setting permissions on CGI.")
+        self.log("Setting permissions on CGI.")
+        if not self.debug:    
             os.chmod(fname, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IXOTH | stat.S_IROTH)
 
         # copy .htaccess file
@@ -97,7 +98,7 @@ class Deployer:
         jsubdirs = json.dumps(subdirs)
         ifn = os.path.join(self.web_rootdir, "index.json")
         self.log("Generating index file: " + ifn)
-        self.log(jsubdirs)
+        self.log("Including these subdirectories: " + jsubdirs)
         if not self.debug:
             with open(ifn, 'w') as ifd:
                 ifd.write(jsubdirs + "\n")
@@ -105,7 +106,12 @@ class Deployer:
     def getChromsomesAndLengthsFromModels (self) :
         # scan the genes file. For each chroosome, keep the max end coordinate
         fpath = os.path.join(self.web_rootdir, self.cfg['name'], 'models', 'genes', '0.gff3')
+        self.log("Getting chromosomes and lengths from: " + fpath)
         if not os.path.isfile(fpath):
+            self.log("No such file. Returning empty list.")
+            return []
+        if self.debug:
+            self.log("Debug mode on. Returning empty list.")
             return []
         chroms = {}
         with open(fpath, 'r') as fd:
@@ -121,7 +127,12 @@ class Deployer:
 
     def getChromsomesAndLengthsFromAssembly (self):
         directory = os.path.join(self.web_rootdir, self.cfg['name'], 'assembly')
+        self.log("Getting chromosomes and lengths from assembly directory: " + directory)
         if not os.path.isdir(directory):
+            self.log("No such directory. Returning empty list.")
+            return []
+        if self.debug:
+            self.log("Debug mode on. Returning empty list.")
             return []
         chrs = []
         for f in os.listdir(directory):
@@ -203,9 +214,10 @@ class Deployer:
                 "chunkSize": c["variants"]["chunkSize"]
             })
         #
-        with open(ixfile, 'w') as fd:
-            s = json.dumps(info, indent = 2)
-            fd.write(s)
+        if not self.debug:
+            with open(ixfile, 'w') as fd:
+                s = json.dumps(info, indent = 2)
+                fd.write(s)
 
 
     def go (self) :
