@@ -74,14 +74,20 @@ To run a full build, invoke the script with no arguments
 $ ./build
 ```
 
+To run a build with a custom config file:
+```bash
+$ ./build -b myConfig.yaml
+```
+
 2. The top level directory contains:
   * build: a wrapper script for running builds.
   * wrapperConfig.sh: used by the build script, mainly defines various directories 
   By default, everything will be output to a subdirectory of there mgv_data is installed.
   This is fine for testing purposes, but you'll probably want to change that for a production setting.
-  * buildConfig.json: defines the actual build details, data sources, etc.
-  To customize a build, you will need to edit this file.
-  Alternatively, you can create another config file and change the BCONFIG variable in wrapperConfig.sh to point to it.
+  * buildConfig.yaml: defines the actual build details, data sources, etc.
+  To customize a build, you will need to edit this file or create your own.
+  To run the build using your config file, use the -b option.
+  Alternatively, you can change the BCONFIG variable in wrapperConfig.sh.
   See below for details on configuing builds.
 
 ## Serving data to MGV

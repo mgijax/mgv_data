@@ -127,16 +127,16 @@ modelSources:
     allianceSnapshotUrl: *allianceSnapshotUrl
     allianceDownloadUrl: *allianceDownloadUrl
 
-homologies:
-    orthologies:
+buildList:
+  -
+    name: homologies
+    orthologs:
       source: alliance
       release: *allianceRelease
       allianceDataType: ORTHOLOGY-ALLIANCE
       provider: COMBINED
       allianceSnapshotUrl: *allianceSnapshotUrl
       allianceDownloadUrl: *allianceDownloadUrl
-
-genomes:
   -
     name: mus_musculus_grcm39
     label: C57BL/6J (GRCm39)
@@ -312,7 +312,7 @@ genomes:
     name: mus_spretus
     label: SPRETUS/EiJ
     build: SPRET_EiJ_v1
-    taxonid: "10090"
+    taxonid: "10096"
     chr_re: *chr_re
     assembly: *ensemblAssembly
     models: *ensemblMouseGff

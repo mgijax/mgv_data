@@ -153,7 +153,7 @@ class MgvDataBuilder :
         #
         self.log("Reading config file: " + self.args.build_config)
         with open(self.args.build_config, 'r') as cfile:
-            self.cfg = yaml.safe_load(cfile)["genomes"]
+            self.cfg = yaml.safe_load(cfile)["buildList"]
         #self.log(json.dumps(self.cfg, indent=2))
         #
         if self.args.debug:
