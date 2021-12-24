@@ -112,14 +112,6 @@ class MgvDataBuilder :
                 if not t in g:
                     continue
                 #
-                if type(g[t]) is str and g[t].startswith("="):
-                    if "deploy" in self.args.phase:
-                        gg = self.getCfg(g[t][1:])
-                        tgtPath = os.path.join(self.args.web_dir, gg["name"], t)
-                        lnkPath = os.path.join(self.args.web_dir, g["name"], t)
-                        cmd = 'ln -s %s %s' % (tgtPath, lnkPath)
-                        self.log("Creating symlink: " + cmd)
-                    continue
                 sname = g[t].get("source","UrlDownloader")
                 cls = downloaderNameMap[sname]
                 downloader = cls(self, g, t, self.args.debug)
