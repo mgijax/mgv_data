@@ -64,19 +64,18 @@ class UrlDownloader (Downloader) :
 class EnsemblDownloader (Downloader) :
     #
     # Was using happily rsync but recently it's been hanging.
-    # BASEURL = "rsync://ftp.ensembl.org/ensembl/pub"
+    # "rsync://ftp.ensembl.org/ensembl/pub"
     #
     # Using ftp is reliable and actually pretty fast
-    BASEURL= "ftp://ftp.ensembl.org/pub"
     def init (self) :
         c = self.cfg
         t = self.cfg[self.type]
         pth = t.get("remotePath", c["name"])
         if self.type == "assembly":
-            t["url"] = self.BASEURL + "/release-%s/fasta/%s/dna/%s.%s.dna.toplevel.fa.gz" % \
+            t["url"] = t["baseUrl"] + "/release-%s/fasta/%s/dna/%s.%s.dna.toplevel.fa.gz" % \
                                       (t["release"], pth, pth.capitalize(), c["build"])
         elif self.type == "models":
-            t["url"] = self.BASEURL + "/release-%s/gff3/%s/%s.%s.%s.gff3.gz" % \
+            t["url"] = t["baseUrl"] + "/release-%s/gff3/%s/%s.%s.%s.gff3.gz" % \
                                       (t["release"], pth, pth.capitalize(), c["build"], t["release"])
         else:
             raise RuntimeError("Don't know this type: " + self.type)
@@ -90,14 +89,13 @@ class EnsemblDownloader (Downloader) :
 #  GCF_000001635.25_GRCm38.p5 ->
 #    ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/635/GCF_000001635.25_GRCm38.p5/GCF_000001635.25_GRCm38.p5_genomic.fna.gz
 class NcbiDownloader (Downloader) :
-    BASEURL = "ftp://ftp.ncbi.nlm.nih.gov/genomes/all/"
     def init (self) :
         c = self.cfg
         t = self.cfg[self.type]
         if self.type == "assembly":
             ident = t["assemblyId"]
             (prefix, triples, version, name) = self.parseAssemblyId(ident)
-            t["url"] = self.BASEURL + ("%s/%s/%s/%s_genomic.fna.gz" % (prefix, "/".join(triples), ident, ident))
+            t["url"] = t["baseUrl"] + ("%s/%s/%s/%s_genomic.fna.gz" % (prefix, "/".join(triples), ident, ident))
             self.log("URL: " + t["url"])
         else:
             raise RuntimeError("Don't know this type: " + self.type)
