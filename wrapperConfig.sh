@@ -11,6 +11,9 @@ export BCONFIG=${SCRIPT_DIR}/buildConfig.yaml
 # Default is under the installation directory.
 export DDIR=${SCRIPT_DIR}/mgv_data_files/downloads
 
+# TDIR: Temp directory / work area
+export TDIR=/tmp
+
 # ODIR: Output directory. This is where the transformed/internalized results of the import phase go.
 # Default is under the installation directory, next to the downloads directory.
 export ODIR=${SCRIPT_DIR}/mgv_data_files/output
@@ -29,3 +32,14 @@ export PYTHON="python3"
 
 # MouseMine URL - used by some filters
 export MOUSEMINE_URL="https://www.mousemine.org"
+
+#
+export SAMTOOLSBIN="/home/jer/samtools/build/bin"
+export SAMTOOLS="${SAMTOOLSBIN}/samtools"
+export TABIX="${SAMTOOLSBIN}/tabix"
+export FAIDX="${SAMTOOLS} faidx"
+export BGZIP="${SAMTOOLSBIN}/bgzip"
+export CURL="curl"
+export GUNZIP="gunzip"
+export PYTHONPATH="${SCRIPT_DIR}/bin/lib"
+
