@@ -147,7 +147,7 @@ buildList:
     name: mus_musculus_grcm39
     label: C57BL/6J (GRCm39)
     shortname: C57BL/6J
-    build: GRCm38
+    build: GRCm39
     taxonid: "10090"
     chr_re: *chr_re
     assembly:
