@@ -232,9 +232,9 @@ import () {
       fi
   elif [ $FTYPE == "fa" ] ; then
       logit "Filtering and compressing..."
-      logit "$stream $ifile | ${filter} | ${BGZIP} > ${ofile}"
+      logit "$stream $ifile | ${FILTER} | ${BGZIP} > ${ofile}"
       if [[ $DEBUG == "" ]] ; then
-          $stream $ifile | ${filter} | ${BGZIP} > ${ofile}
+          $stream $ifile | ${FILTER} | ${BGZIP} > ${ofile}
           checkexit
       fi
 
