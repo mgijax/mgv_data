@@ -340,3 +340,9 @@ filterNameMap = {
   "wormbaseGff" : WormBaseGff,
   "ncbiMouseAssemblyFilter" : NcbiMouseAssemblyFilter,
 }
+
+def main () :
+    gp = gff3lite.Gff3Parser(sys.stdin, returnGroups=True, returnHeader=True)
+
+if __name__ == "__main__":
+    main()

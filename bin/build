@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+source build1
+main $*

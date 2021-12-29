@@ -140,11 +140,21 @@ class Gff3Parser :
       f = list([self.convertDots if a == '.' else a for a in parseLine(line)])
       # Add feature to buffer. If anything gets flushed, yield it.
       flushed = self.deInterleaveNext(f)
-      for grp in flushed:
-        yield grp
+      if self.returnGroups:
+          for grp in flushed:
+            yield grp
+      else:
+          for grp in flushed:
+            for f in grp:
+                yield f
     # End of input. Yield whatever is left in the buffer/
-    for grp in self.deInterleaveNext(None):
-        yield grp
+    if self.returnGroups:
+        for grp in self.deInterleaveNext(None):
+            yield grp
+    else:
+        for grp in self.deInterleaveNext(None):
+            for f in grp:
+                yield f
     #
     if len(self.pending) > 0 :
         sys.stderr.write("Orphan records detected. " + str(self.pending) + "\n")

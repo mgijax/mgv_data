@@ -11,6 +11,8 @@ source ${SCRIPT_DIR}/wrapperConfig.sh
 
 # ---------------------
 # 
+MATCHPAT="*"
+CMDLINE="$*"
 PHASE=""
 DEBUG=""
 LOGFILE=""
@@ -29,23 +31,33 @@ function usage {
 Usage: $0 
 
 Parameters:
--h Print this help and exit.
--g GENOME Genome path/output directory (e.g. mus_musculus_grcm39), under ODIR (specified in wrapperConfig.sh).
--t TYPE Specifies the data type being imported, either GFF or FA.
--p PHASE Optional. Specifies which phase to run. (Default is to run all phases.) One of: download, import, deploy
--u URL Required. Specifies the external URL for the GFF or FA file. May be compressed or uncompressed. 
-   For local files, use URL beginning with file://
--l NAME Specify a local name for the file. Default is the basename from the URL.
--f COMMAND Filter command. Before import, file is piped through COMMAND to apply any needed transformations/filters.
--D Don't actually do anything - just print log messages of what would be done.
--L FILE Specifies a log file. By default, log messages are sent to stdout.
+-h 
+    Print this help and exit.
+-g GENOME
+    Required. Genome path/output directory (e.g. mus_musculus_grcm39), under ODIR (specified in wrapperConfig.sh).
+-m PATTERN
+    Only do anything if GENOME matches PATTERN.
+-t TYPE
+    Required. Specifies the data type being imported, either gff or fa.
+-p PHASE
+    Optional. Specifies which build phase to run. Default runs all phases. One of: download, import, deploy
+-u URL
+    Required. Specifies the external URL for the GFF or FA file. May be compressed or uncompressed. 
+    For local files, use URL beginning with file://
+-l NAME
+    Optional. Specify a local name for the file. Default is the basename from the URL.
+-f COMMAND
+    Optional. Filter command. Before import, file is piped through COMMAND to apply any
+    needed transformations/filters.
+-D
+    Don't actually do anything - just print log messages of what would be done.
+-L FILE
+    Specifies a log file. By default, log messages are sent to stdout.
 "
 }
 
 # ---------------------
 function parseCommandLine {
-    # Save command line for later reporting
-    CMDLINE="$*"
     # Process command line args
     until [ -z "$1" ] 
     do
@@ -70,13 +82,18 @@ function parseCommandLine {
             shift
             GDIR="$1"
             ;;
+        -m)
+            # genome path/subdir name
+            shift
+            MATCHPAT="$1"
+            ;;
         -t)
             # file type (gff or fa)
             shift
             FTYPE="$1"
             ;;
         -p)
-            # filter command 
+            # build phase
             shift
             PHASE="$1"
             ;;
@@ -100,8 +117,6 @@ function parseCommandLine {
         esac
         shift
     done
-
-    logit "${CMDLINE}"
 
     if [[ $FURL == "" ]] ; then
         die "No URL. Please specify -u."
@@ -151,12 +166,17 @@ checkexit () {
 }
 
 # ---------------------
+# Logs a command, performs it, and checks the error code.
+# E.g.:
+#        simpleCommand mkdir -p foo/bar
+# Or
+#        python prog.py -a foo -b bar
 simpleCommand () {
     logit "$*"
     if [[ $DEBUG == "" ]] ; then
         $*
+        checkexit
     fi
-    checkexit
 }
 
 # ---------------------
@@ -205,7 +225,7 @@ import () {
   #
   if [ $FTYPE == "gff" ] ; then
       logit "Filtering..."
-      tmpFile=`mktemp ${TDIR}/mgv.tmpXXXX`
+      tmpFile=`mktemp ${TDIR}/mgvtmpXXXX`
       checkexit
       logit "$stream $ifile | ${FILTER} > ${tmpFile}"
       if [[ $DEBUG == "" ]] ; then
@@ -270,6 +290,9 @@ function main {
     STAGE="start"
     #
     parseCommandLine $*
+    if [[  $GDIR != $MATCHPAT ]] ; then
+        return
+    fi
     if [[ $PHASE == "" || $PHASE == "download" ]] ; then
         download
     fi
@@ -282,4 +305,5 @@ function main {
 }
 
 # ---------------------
-main $*
+# ---------------------
+# ---------------------
