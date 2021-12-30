@@ -9,21 +9,6 @@
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${SCRIPT_DIR}/wrapperConfig.sh
 
-# ---------------------
-# 
-MATCHPAT="*"
-CMDLINE="$*"
-PHASE=""
-DEBUG=""
-LOGFILE=""
-FLOCAL=""
-FTYPE=""
-FURL=""
-FILTER="cat"
-GDIR=""
-
-TIMESTAMP=`date`
-STAGE=""
 
 # ---------------------
 function usage {
@@ -38,7 +23,7 @@ Parameters:
 -m PATTERN
     Only do anything if GENOME matches PATTERN.
 -t TYPE
-    Required. Specifies the data type being imported, either gff or fa.
+    Required. Specifies the data type being imported, either models or assembly
 -p PHASE
     Optional. Specifies which build phase to run. Default runs all phases. One of: download, import, deploy
 -u URL
@@ -58,6 +43,18 @@ Parameters:
 
 # ---------------------
 function parseCommandLine {
+# ---------------------
+# 
+    MATCHPAT="*"
+    CMDLINE="$*"
+    PHASE=""
+    DEBUG=""
+    LOGFILE=""
+    FLOCAL=""
+    FTYPE=""
+    FURL=""
+    FILTER="cat"
+    GDIR=""
     # Process command line args
     until [ -z "$1" ] 
     do
@@ -88,7 +85,7 @@ function parseCommandLine {
             MATCHPAT="$1"
             ;;
         -t)
-            # file type (gff or fa)
+            # file type (models or assembly)
             shift
             FTYPE="$1"
             ;;
@@ -223,7 +220,7 @@ import () {
   #
   makedirectory ${ODIR}/${GDIR}
   #
-  if [ $FTYPE == "gff" ] ; then
+  if [ $FTYPE == "models" ] ; then
       logit "Filtering..."
       tmpFile=`mktemp ${TDIR}/mgvtmpXXXX`
       checkexit
@@ -234,7 +231,7 @@ import () {
       fi
 
       logit "Compressing..."
-      logit "(grep '^#' ${tmpFile} ; grep -v '^#' ${tmpFile} | sort -k1,1 -k4,4n)  | ${BGZIP} > ${ofile}"
+      logit "(grep '^#' ${tmpFile} | grep -v '^###'; grep -v '^#' ${tmpFile} | sort -k1,1 -k4,4n)  | ${BGZIP} > ${ofile}"
       if [[ $DEBUG == "" ]] ; then
           (grep "^#" ${tmpFile} ; grep -v "^#" ${tmpFile} | sort -k1,1 -k4,4n)  | ${BGZIP} > ${ofile}
           checkexit
@@ -250,7 +247,7 @@ import () {
           ${TABIX} -p gff ${ofile}
           checkexit
       fi
-  elif [ $FTYPE == "fa" ] ; then
+  elif [ $FTYPE == "assembly" ] ; then
       logit "Filtering and compressing..."
       logit "$stream $ifile | ${FILTER} | ${BGZIP} > ${ofile}"
       if [[ $DEBUG == "" ]] ; then
@@ -287,12 +284,12 @@ deploy () {
 
 # ---------------------
 function main {
-    STAGE="start"
     #
     parseCommandLine $*
     if [[  $GDIR != $MATCHPAT ]] ; then
         return
     fi
+    logit "Command line: $*"
     if [[ $PHASE == "" || $PHASE == "download" ]] ; then
         download
     fi

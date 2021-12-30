@@ -138,7 +138,7 @@ buildList:
   -
     type: homology
     path: homologies
-    data:
+    tracks:
       -
         type: orthologs
         source: alliance
@@ -155,7 +155,7 @@ buildList:
     build: GRCm39
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       -
         << : *ensemblAssembly
         remotePath: mus_musculus
@@ -175,7 +175,7 @@ buildList:
     build: GRCm38
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       -
         << : *ensemblAssembly
         release: "101"
@@ -197,7 +197,7 @@ buildList:
     build: 129S1_SvImJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -207,7 +207,7 @@ buildList:
     build: A_J_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -217,7 +217,7 @@ buildList:
     build: AKR_J_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -227,7 +227,7 @@ buildList:
     build: BALB_cJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -237,7 +237,7 @@ buildList:
     build: C3H_HeJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -247,7 +247,7 @@ buildList:
     build: C57BL_6NJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -257,7 +257,7 @@ buildList:
     build: CAROLI_EIJ_v1.1
     taxonid: "10089"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -267,7 +267,7 @@ buildList:
     build: CAST_EiJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -277,7 +277,7 @@ buildList:
     build: CBA_J_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -287,7 +287,7 @@ buildList:
     build: DBA_2J_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -297,7 +297,7 @@ buildList:
     build: FVB_NJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -307,7 +307,7 @@ buildList:
     build: LP_J_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -317,7 +317,7 @@ buildList:
     build: NOD_ShiLtJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -327,7 +327,7 @@ buildList:
     build: NZO_HlLtJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -337,7 +337,7 @@ buildList:
     build: PAHARI_EIJ_v1.1
     taxonid: "10093"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -347,7 +347,7 @@ buildList:
     build: PWK_PhJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -357,7 +357,7 @@ buildList:
     build: SPRET_EiJ_v1
     taxonid: "10096"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -367,7 +367,7 @@ buildList:
     build: WSB_EiJ_v1
     taxonid: "10090"
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
   -
@@ -377,7 +377,7 @@ buildList:
     taxonid: "9606"
     build: GRCh38
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
@@ -393,7 +393,7 @@ buildList:
     taxonid: "10116"
     build: Rnor_6.0
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
@@ -409,7 +409,7 @@ buildList:
     taxonid: "7955"
     build: GRCz11
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
@@ -425,7 +425,7 @@ buildList:
     taxonid: "7227"
     build: BDGP6.32
     chr_re: *chr_re
-    data:
+    tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
@@ -442,7 +442,7 @@ buildList:
     build: WBcel235
     chr_re: ".*"
     chr_sort: roman
-    data:
+    tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
@@ -459,7 +459,7 @@ buildList:
     build: R64-1-1
     chr_re: ".*"
     chr_sort: roman
-    data:
+    tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
