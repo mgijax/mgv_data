@@ -173,12 +173,11 @@ import () {
   ifile="${DDIR}/${GDIR}/${FLOCAL}"
   #
   odir="${ODIR}/${GDIR}"
+  ofile="${ODIR}/${TTYPE}.${FTYPE}.gz"
   if [[ $FLOCAL == *.gz ]] ; then
     stream="${GUNZIP} -c"
-    ofile="${odir}/${FLOCAL}"
   else
     stream="cat"
-    ofile="${odir}/${FLOCAL}".gz
   fi
   #
   if [[ ${FILTER} == "" ]] ; then
