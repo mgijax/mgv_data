@@ -26,35 +26,13 @@ from .gff3lite import parseLine, formatLine, Gff3Parser
 import json
 from urllib.request import urlopen
 
-GCONFIG = json.loads(os.environ.get("GCONFIG", "{}"))
-DCONFIG = json.loads(os.environ.get("DCONFIG", "{}"))
-sys.stderr.write('GCONFIG=' + str(GCONFIG) + '\n')
-sys.stderr.write('DCONFIG=' + str(DCONFIG) + '\n')
-
-CHR_RE = re.compile(DCONFIG.get("chr_re", ".*"))
-
-CURIE_INFO = [{
-  "prefix" : "ENSEMBL",
-  "baseRegex" : re.compile(r'ENS[A-Z]+[GTP]+\d+'),
-}, {
-  "prefix" : "ENSEMBL",
-  "baseRegex" : re.compile(r'MGP_[A-Z0-9]+_[GTP]\d+'),
-}, {
-  "prefix" : "RefSeq",
-  "baseRegex" : re.compile(r'[NX][RMP]_\d+')
-}]
-def curie_ize (ident) :
-    i = ident.find(":")
-    if i >= 0:
-        return ident
-    for info in CURIE_INFO:
-        if info["baseRegex"].match(ident):
-            return "%s:%s" % (info["prefix"], ident)
-    return None
 
 class Filter:
-    def __init__ (self, src):
+    def __init__ (self, src, gcfg, dcfg):
         self.src = src
+        self.gcfg = gcfg
+        self.dcfg = dcfg
+        self.chr_re = re.compile(self.dcfg.get("chr_re", ".*"))
 
     def log (self, s) :
         sys.stderr.write(s)

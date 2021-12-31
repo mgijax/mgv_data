@@ -1,7 +1,9 @@
 from .Filter import Filter
+
 class GffFilter (Filter) :
-    def __init__(self, src):
-        Filter.__init__(self, Gff3Parser(src, returnHeader=True, returnGroups=True).iterate())
+    def __init__(self, src, gcfg, dcfg):
+        src = Gff3Parser(src, returnHeader=True, returnGroups=True).iterate()
+        Filter.__init__(self, src, gcfg, dcfg)
 
     def processNext (self, obj) :
         if type(obj) is str:
@@ -24,12 +26,32 @@ class GffFilter (Filter) :
 
     def _processFeature (self, f):
         # universal transform: filter out features on non-matching chromosome 
-        if not CHR_RE.match(f[0]):
+        if not self.chr_re.match(f[0]):
             return None
         # universal transform: filter out features with excluded types
-        if 'include_types' in DCONFIG and f[2] not in DCONFIG['include_types']:
+        if 'include_types' in self.dcfg and f[2] not in self.dcfg['include_types']:
             return None
-        if 'exclude_types' in DCONFIG and f[2] in DCONFIG['exclude_types']:
+        if 'exclude_types' in self.dcfg and f[2] in self.dcfg['exclude_types']:
             return None
         return formatLine(self.processFeature(f))
+
+CURIE_INFO = [{
+  "prefix" : "ENSEMBL",
+  "baseRegex" : re.compile(r'ENS[A-Z]+[GTP]+\d+'),
+}, {
+  "prefix" : "ENSEMBL",
+  "baseRegex" : re.compile(r'MGP_[A-Z0-9]+_[GTP]\d+'),
+}, {
+  "prefix" : "RefSeq",
+  "baseRegex" : re.compile(r'[NX][RMP]_\d+')
+}]
+
+def curie_ize (ident) :
+    i = ident.find(":")
+    if i >= 0:
+        return ident
+    for info in CURIE_INFO:
+        if info["baseRegex"].match(ident):
+            return "%s:%s" % (info["prefix"], ident)
+    return None
 

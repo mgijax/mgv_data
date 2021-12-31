@@ -1,12 +1,9 @@
-from .GffFilter import GffFilter
+from .GffFilter import GffFilter, curie_ize
 class MgiGffFilter (GffFilter) :
-    def __init__ (self, impobj) :
-        GffFilter.__init__(self, impobj)
-
     # To allow build 38 and 39 to coexist in the viewer, need to modify the feature IDs so they're unique.
     def processModel (self, model) :
         mid = model[0][8]['ID']
-        newMid = mid + '_' + GCONFIG['build']
+        newMid = mid + '_' + self.gcfg['build']
         model[0][8]['ID'] = newMid
         for f in model[1:]:
             if mid in f[8].get('Parent', []):

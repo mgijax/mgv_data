@@ -1,4 +1,4 @@
-from .GffFilter import GffFilter
+from .GffFilter import GffFilter, curie_ize
 class ZfinGffFilter (AllianceGff) :
     def processFeature (self, f) :
         AllianceGff.processFeature(self, f)

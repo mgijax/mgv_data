@@ -13,7 +13,7 @@ class EnsemblNonMouseFilter (GffFilter) :
     }
     def __init__(self, *args):
         GffFilter.__init__(self, *args)
-        self.attrName, self.id_re, self.id_prefix = self.taxon2re[GCONFIG["taxonid"]]
+        self.attrName, self.id_re, self.id_prefix = self.taxon2re[self.gcfg["taxonid"]]
 
     def processFeature (self, f) :
         attrs = f[8]
