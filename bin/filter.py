@@ -1,5 +1,12 @@
 import sys
-from lib.Filter import getFilter
+import importlib
 
-for line in getFilter(sys.argv[1], sys.stdin):
+farg = sys.argv[1]
+clsname = farg[0].capitalize() + farg[1:] + "Filter"
+modname = "lib.%s" % clsname
+mod = importlib.import_module(modname)
+fcls = getattr(mod, clsname)
+filt = fcls(sys.stdin)
+
+for line in filt:
     sys.stdout.write(line)
