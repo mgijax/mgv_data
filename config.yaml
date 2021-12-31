@@ -90,20 +90,26 @@ assemblySources:
   - &ncbiAssembly
     source: ncbi
     type: assembly
+    filetype: fasta
     baseUrl: *ncbiFtpBaseUrl
+    chr_re: *chr_re
   - &ensemblAssembly
     source: ensembl
     type: assembly
+    filetype: fasta
     release: *ensemblRelease
     baseUrl: *ensemblFtpBaseUrl
+    chr_re: *chr_re
 
 modelSources:
   - &ensemblMouseGff
     source: ensembl
     type: models
+    chr_re: *chr_re
+    filetype: gff
     baseUrl: *ensemblFtpBaseUrl
     release: *ensemblRelease
-    filters: [ ensemblMouseFilter ]
+    filter: ensemblMouseFilter
     exclude_types: ["biological_region", "chromosome", "scaffold"]
     linkouts:
       - *linkMgiByID
@@ -114,9 +120,11 @@ modelSources:
   - &ensemblNonMouseGff
     source: ensembl
     type: models
+    filetype: gff
+    chr_re: *chr_re
     baseUrl: *ensemblFtpBaseUrl
     release: *ensemblRelease
-    filters: [ ensemblNonMouseFilter ]
+    filter: ensemblNonMouseFilter
     exclude_types: ["biological_region", "chromosome", "scaffold"]
     linkouts:
       - *linkAllianceByCid
@@ -125,16 +133,18 @@ modelSources:
   - &allianceGff
     source: alliance
     type: models
+    filetype: gff
+    chr_re: *chr_re
     release: *allianceRelease
     allianceDataType: GFF
-    filters: [ allianceGff ]
-    exclude_types: ["biological_region", "chromosome", "scaffold"]
+    filter: allianceGff
+    include_types: ["gene","mRNA","transcript","exon","CDS"]
     linkouts:
       - *linkAllianceByCid
     allianceSnapshotUrl: *allianceSnapshotUrl
     allianceDownloadUrl: *allianceDownloadUrl
 
-buildList:
+homologyData:
   -
     type: homology
     path: homologies
@@ -147,6 +157,8 @@ buildList:
         provider: COMBINED
         allianceSnapshotUrl: *allianceSnapshotUrl
         allianceDownloadUrl: *allianceDownloadUrl
+
+buildList:
   -
     type: genome
     path: mus_musculus_grcm39
@@ -154,15 +166,16 @@ buildList:
     shortname: C57BL/6J
     build: GRCm39
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       -
         << : *ensemblAssembly
         remotePath: mus_musculus
       -
         type: models 
+        filetype: gff
         url: *mgiCurrentModelsUrl
-        filters: [ mgiGff ]
+        chr_re: *chr_re
+        filter: mgiGff
         release: "@@today"
         linkouts:
           - *linkMgiByCid
@@ -174,7 +187,6 @@ buildList:
     name: C57BL/6J (GRCm38)
     build: GRCm38
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       -
         << : *ensemblAssembly
@@ -183,7 +195,9 @@ buildList:
       -
         type: models
         source: mgi
-        filters: [ mgiGff ]
+        filetype: gff
+        filter: mgiGff
+        chr_re: *chr_re
         release: "4 Jan 2021"
         url: *mgiBuild38ModelsUrl
         linkouts:
@@ -196,7 +210,6 @@ buildList:
     name: 129S1/SvImJ
     build: 129S1_SvImJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -206,7 +219,6 @@ buildList:
     name: A/J
     build: A_J_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -216,7 +228,6 @@ buildList:
     name: AKR/J
     build: AKR_J_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -226,7 +237,6 @@ buildList:
     name: BALB/cJ
     build: BALB_cJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -236,7 +246,6 @@ buildList:
     name: C3H/HeJ
     build: C3H_HeJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -246,7 +255,6 @@ buildList:
     name: C57BL/6NJ
     build: C57BL_6NJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -256,7 +264,6 @@ buildList:
     name: CAROLI/EiJ
     build: CAROLI_EIJ_v1.1
     taxonid: "10089"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -266,7 +273,6 @@ buildList:
     name: CAST/EiJ
     build: CAST_EiJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -276,7 +282,6 @@ buildList:
     name: CBA/J
     build: CBA_J_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -286,7 +291,6 @@ buildList:
     name: DBA/2J
     build: DBA_2J_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -296,7 +300,6 @@ buildList:
     name: FVB/NJ
     build: FVB_NJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -306,7 +309,6 @@ buildList:
     name: LP/J
     build: LP_J_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -316,7 +318,6 @@ buildList:
     name: NOD/ShiLtJ
     build: NOD_ShiLtJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -326,7 +327,6 @@ buildList:
     name: NZO/HlLtJ
     build: NZO_HlLtJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -336,7 +336,6 @@ buildList:
     name: PAHARI/EiJ
     build: PAHARI_EIJ_v1.1
     taxonid: "10093"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -346,7 +345,6 @@ buildList:
     name: PWK/PhJ
     build: PWK_PhJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -356,7 +354,6 @@ buildList:
     name: SPRETUS/EiJ
     build: SPRET_EiJ_v1
     taxonid: "10096"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -366,7 +363,6 @@ buildList:
     name: WSB/EiJ
     build: WSB_EiJ_v1
     taxonid: "10090"
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
@@ -376,13 +372,12 @@ buildList:
     name: H. sapiens
     taxonid: "9606"
     build: GRCh38
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
         provider: HUMAN
-        filters: [ rgdGff ]
+        filter: rgdGff
         linkouts:
           - *linkHgncByCid
           - *linkAllianceByCid
@@ -392,13 +387,12 @@ buildList:
     name: R. norvegicus
     taxonid: "10116"
     build: Rnor_6.0
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
         provider: RGD
-        filters: [ rgdGff ]
+        filter: rgdGff
         linkouts:
           - *linkRgdByCid
           - *linkAllianceByCid
@@ -408,13 +402,12 @@ buildList:
     name: D. rerio
     taxonid: "7955"
     build: GRCz11
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
         provider: ZFIN
-        filters: [ zfinGff ]
+        filter: zfinGff
         linkouts:
           - *linkZfinByCid
           - *linkAllianceByCid
@@ -424,13 +417,12 @@ buildList:
     name: D. melanogaster
     taxonid: "7227"
     build: BDGP6.32
-    chr_re: *chr_re
     tracks:
       - << : *ensemblAssembly
       -
         << : *allianceGff
         provider: FB
-        filters: [ flybaseGff ]
+        filter: flybaseGff
         linkouts:
           - *linkFbByCid
           - *linkAllianceByCid
@@ -440,14 +432,16 @@ buildList:
     name: C. elegans
     taxonid: "6239"
     build: WBcel235
-    chr_re: ".*"
     chr_sort: roman
     tracks:
-      - << : *ensemblAssembly
+      -
+        << : *ensemblAssembly
+        chr_re: ".*"
       -
         << : *allianceGff
+        chr_re: ".*"
         provider: WB
-        filters: [ wormbaseGff ]
+        filter: wormbaseGff
         linkouts:
           - *linkWbByCid
           - *linkAllianceByCid
@@ -457,14 +451,17 @@ buildList:
     name: S. cerevisiae
     taxonid: "559292"
     build: R64-1-1
-    chr_re: ".*"
     chr_sort: roman
     tracks:
-      - << : *ensemblAssembly
+      -
+        << : *ensemblAssembly
+        chr_re: ".*"
+        filter: assemblyFilter
       -
         << : *allianceGff
+        chr_re: ".*"
         provider: SGD
-        filters: [ sgdGff ]
+        filter:  sgdGff
         linkouts:
           - *linkSgdByCid
           - *linkAllianceByCid

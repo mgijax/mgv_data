@@ -9,7 +9,7 @@
 export DDIR=${SCRIPT_DIR}/../mgv_data_files/downloads
 
 # TDIR: Temp directory / work area
-export TDIR=/tmp
+export TDIR=${SCRIPT_DIR}/../mgv_data_files/work
 
 # ODIR: Output directory. This is where the transformed/internalized results of the import phase go.
 # Default is under the installation directory, next to the downloads directory.

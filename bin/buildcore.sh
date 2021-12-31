@@ -6,9 +6,22 @@
 # Discover my installation directory. Taken from:
 #  https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 #
+set -o pipefail
+
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${SCRIPT_DIR}/wrapperConfig.sh
 
+CMDLINE="$*"    # save for future reference
+MATCHPAT="*"    # genomes must match pattern to be processed
+GDIR=""         # path name for genome dir
+PHASE="all"     # which phase to run: download, import, deploy, all
+FLOCAL=""       # local name for downloaded file (= basename of the url)
+TRACK="all"     # one of: models, assembly, all
+FTYPE=""        # one of: gff or fasta
+FURL=""         # URL of the file to import
+FILTER=""       # filter program
+DEBUG=""        # debug mode
+LOGFILE=""      # log file
 
 # ---------------------
 function usage {
@@ -18,22 +31,12 @@ Usage: $0
 Parameters:
 -h 
     Print this help and exit.
--g GENOME
-    Required. Genome path/output directory (e.g. mus_musculus_grcm39), under ODIR (specified in wrapperConfig.sh).
--m PATTERN
-    Only do anything if GENOME matches PATTERN.
--t TYPE
+-g PATTERN
+    Optional. Only do anything if genome's path name matches PATTERN.
+-t TRACK
     Required. Specifies the data type being imported, either models or assembly
 -p PHASE
     Optional. Specifies which build phase to run. Default runs all phases. One of: download, import, deploy
--u URL
-    Required. Specifies the external URL for the GFF or FA file. May be compressed or uncompressed. 
-    For local files, use URL beginning with file://
--l NAME
-    Optional. Specify a local name for the file. Default is the basename from the URL.
--f COMMAND
-    Optional. Filter command. Before import, file is piped through COMMAND to apply any
-    needed transformations/filters.
 -D
     Don't actually do anything - just print log messages of what would be done.
 -L FILE
@@ -45,16 +48,6 @@ Parameters:
 function parseCommandLine {
 # ---------------------
 # 
-    MATCHPAT="*"
-    CMDLINE="$*"
-    PHASE=""
-    DEBUG=""
-    LOGFILE=""
-    FLOCAL=""
-    FTYPE=""
-    FURL=""
-    FILTER="cat"
-    GDIR=""
     # Process command line args
     until [ -z "$1" ] 
     do
@@ -64,22 +57,7 @@ function parseCommandLine {
             usage
             exit 0
             ;;  
-        -u)
-            # specify resource URL
-            shift
-            FURL="$1"
-            ;;
-        -l)
-            # specify local file name (optional; default is the basename from $FURL
-            shift
-            FLOCAL="$1"
-            ;;
         -g)
-            # genome path/subdir name
-            shift
-            GDIR="$1"
-            ;;
-        -m)
             # genome path/subdir name
             shift
             MATCHPAT="$1"
@@ -87,17 +65,12 @@ function parseCommandLine {
         -t)
             # file type (models or assembly)
             shift
-            FTYPE="$1"
+            TRACK="$1"
             ;;
         -p)
             # build phase
             shift
             PHASE="$1"
-            ;;
-        -f)
-            # filter command 
-            shift
-            FILTER="$1"
             ;;
         -D)
             # debug mode. Just logging (no changes).
@@ -115,12 +88,6 @@ function parseCommandLine {
         shift
     done
 
-    if [[ $FURL == "" ]] ; then
-        die "No URL. Please specify -u."
-    fi
-    if [[ $FLOCAL == "" ]] ; then
-        FLOCAL=`basename $FURL`
-    fi
 }
 
 # ---------------------
@@ -132,9 +99,9 @@ logit () {
     D=""
   fi
   if [[ ${LOGFILE} ]] ; then
-      echo `date` $D $STAGE "$*" >> ${LOGFILE}
+      echo `date` $D $STAGE $FTYPE "$*" >> ${LOGFILE}
   else
-      echo `date` $D $STAGE "$*"
+      echo `date` $D $STAGE $FTYPE "$*"
   fi
 }
 
@@ -220,7 +187,7 @@ import () {
   #
   makedirectory ${ODIR}/${GDIR}
   #
-  if [ $FTYPE == "models" ] ; then
+  if [ $FTYPE == "gff" ] ; then
       logit "Filtering..."
       tmpFile=`mktemp ${TDIR}/mgvtmpXXXX`
       checkexit
@@ -247,7 +214,7 @@ import () {
           ${TABIX} -p gff ${ofile}
           checkexit
       fi
-  elif [ $FTYPE == "assembly" ] ; then
+  elif [ $FTYPE == "fasta" ] ; then
       logit "Filtering and compressing..."
       logit "$stream $ifile | ${FILTER} | ${BGZIP} > ${ofile}"
       if [[ $DEBUG == "" ]] ; then
@@ -283,24 +250,29 @@ deploy () {
 }
 
 # ---------------------
-function main {
-    #
-    parseCommandLine $*
-    if [[  $GDIR != $MATCHPAT ]] ; then
-        return
+function importData {
+    if [[ $FURL == "" ]] ; then
+        die "No URL."
     fi
-    logit "Command line: $*"
-    if [[ $PHASE == "" || $PHASE == "download" ]] ; then
+
+    makedirectory $TDIR
+
+    FLOCAL=`basename $FURL`
+    if [[ $PHASE == "all" || $PHASE == "download" ]] ; then
         download
     fi
-    if [[ $PHASE == "" || $PHASE == "import" ]] ; then
+    if [[ $PHASE == "all" || $PHASE == "import" ]] ; then
         import
     fi
-    if [[ $PHASE == "" || $PHASE == "deploy" ]] ; then
+    if [[ $PHASE == "all" || $PHASE == "deploy" ]] ; then
         deploy
     fi     
 }
 
 # ---------------------
+
+parseCommandLine $*
+logit "Command line: $CMDLINE"
+
 # ---------------------
 # ---------------------

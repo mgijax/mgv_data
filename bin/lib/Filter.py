@@ -22,10 +22,18 @@
 import sys
 import os
 import re
-from .gff3lite import parseLine, formatLine
+from .gff3lite import parseLine, formatLine, Gff3Parser
+import json
 from urllib.request import urlopen
 
 MOUSEMINE_URL=os.environ["MOUSEMINE_URL"]
+GCONFIG = json.loads(os.environ.get("GCONFIG", "{}"))
+DCONFIG = json.loads(os.environ.get("DCONFIG", "{}"))
+sys.stderr.write('GCONFIG=' + str(GCONFIG) + '\n')
+sys.stderr.write('DCONFIG=' + str(DCONFIG) + '\n')
+
+CHR_RE = re.compile(DCONFIG.get("chr_re", ".*"))
+
 CURIE_INFO = [{
   "prefix" : "ENSEMBL",
   "baseRegex" : re.compile(r'ENS[A-Z]+[GTP]+\d+'),
@@ -45,48 +53,60 @@ def curie_ize (ident) :
             return "%s:%s" % (info["prefix"], ident)
     return None
 
-
 class Filter:
-    def __init__ (self, impobj):
-        self.importer = impobj
-        self.log = self.importer.log
+    def __init__ (self, src):
+        self.src = src
 
-    # OVERRIDE me
-    def processObj(self, obj):
+    def log (self, s) :
+        sys.stderr.write(s)
+        sys.stderr.write('\n')
+
+    def __iter__(self):
+        return self
+
+    def __next__ (self):
+        res = None
+        while res is None:
+            obj = next(self.src)
+            res = self.processNext(obj)
+        return res
+
+    def processNext(self, obj):
         return obj
 
-    def __call__(self, src):
-        for obj in src:
-            obj = self.processObj(obj)
-            if obj:
-                yield obj
-
 class GffFilter (Filter) :
-    def processObj (self, obj) :
+    def __init__(self, src):
+        Filter.__init__(self, Gff3Parser(src, returnHeader=True, returnGroups=True).iterate())
+
+    def processNext (self, obj) :
         if type(obj) is str:
             # the header
             return obj
         else:
             # obj is a list of features
-            return self.processModel(obj)
+            return ''.join(self.processModel(obj))
 
     def processModel(self, model):
         model = list(filter(lambda x: x, [self._processFeature(f) for f in model]))
+        '''
         #universal transform: make sure top level feature's coordinates span its descendants
         if len(model) > 1:
             f = model[0] # top level feature
             f[3] = min([c[3] for c in model[1:]])
             f[4] = max([c[4] for c in model[1:]])
+        '''
         return model
 
     def _processFeature (self, f):
         # universal transform: filter out features on non-matching chromosome 
-        if not self.importer.chr_re.match(f[0]):
+        if not CHR_RE.match(f[0]):
             return None
         # universal transform: filter out features with excluded types
-        if f[2] in self.importer.exclude_types:
+        if 'include_types' in DCONFIG and f[2] not in DCONFIG['include_types']:
             return None
-        return self.processFeature(f)
+        if 'exclude_types' in DCONFIG and f[2] in DCONFIG['exclude_types']:
+            return None
+        return formatLine(self.processFeature(f))
 
 class EnsemblMouseFilter (GffFilter) :
     # index mapping ensembl IDs to MGI ids
@@ -148,8 +168,7 @@ class EnsemblNonMouseFilter (GffFilter) :
     }
     def __init__(self, *args):
         GffFilter.__init__(self, *args)
-        self.cfg = self.importer.cfg
-        self.attrName, self.id_re, self.id_prefix = self.taxon2re[self.cfg["taxonid"]]
+        self.attrName, self.id_re, self.id_prefix = self.taxon2re[GCONFIG["taxonid"]]
 
     def processFeature (self, f) :
         attrs = f[8]
@@ -163,13 +182,12 @@ class EnsemblNonMouseFilter (GffFilter) :
         
 class MgiGff (GffFilter) :
     def __init__ (self, impobj) :
-        Filter.__init__(self, impobj)
-        self.cfg = self.importer.cfg
+        GffFilter.__init__(self, impobj)
 
     # To allow build 38 and 39 to coexist in the viewer, need to modify the feature IDs so they're unique.
     def processModel (self, model) :
         mid = model[0][8]['ID']
-        newMid = mid + '_' + self.cfg['build']
+        newMid = mid + '_' + GCONFIG['build']
         model[0][8]['ID'] = newMid
         for f in model[1:]:
             if mid in f[8].get('Parent', []):
@@ -305,6 +323,21 @@ class SgdGff (AllianceGff) :
                 attrs["long_name"] = attrs.pop("display")
         return f
 
+class AssemblyFilter (Filter) :
+    def __init__ (self, src):
+        Filter.__init__(self, src)
+        self.showing = True
+
+    def processNext (self, line) :
+        if line.startswith(">") :
+            chrom = line.split()[0][1:]
+            self.showing = CHR_RE.match(chrom)
+            if self.showing:
+                self.log(line[:-1])
+                return line
+        elif self.showing:
+            return line
+
 class NcbiMouseAssemblyFilter (Filter) :
     # Looking for lines like this:
     #    >CM000994.3 Mus musculus chromosome 1, GRCm39 reference primary assembly C57BL/6J
@@ -317,7 +350,7 @@ class NcbiMouseAssemblyFilter (Filter) :
     #    >GL456233.2 Mus musculus chromosome X unlocalized genomic contig MMCHRX_RANDOM_CTG2, GRCm39 reference primary assembly C57BL/6J
     # Or
     #    >GL456378.1 Mus musculus unplaced genomic contig MSCHRUN_CTG3, GRCm39 reference primary assembly C57BL/6J
-    def processObj(self, line) :
+    def processNext(self, line) :
         if line.startswith(">") and not "contig" in line:
             if "mitochondrion" in line:
                 return ">MT " + line[1:]
@@ -339,10 +372,9 @@ filterNameMap = {
   "flybaseGff" : FlyBaseGff,
   "wormbaseGff" : WormBaseGff,
   "ncbiMouseAssemblyFilter" : NcbiMouseAssemblyFilter,
+  "assemblyFilter" : AssemblyFilter,
 }
 
-def main () :
-    gp = gff3lite.Gff3Parser(sys.stdin, returnGroups=True, returnHeader=True)
+def getFilter (name, src) :
+    return filterNameMap[name](src)
 
-if __name__ == "__main__":
-    main()
