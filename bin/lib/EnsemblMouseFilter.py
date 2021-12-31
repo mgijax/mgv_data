@@ -1,4 +1,7 @@
+import re
 from .GffFilter import GffFilter
+from urllib.request import urlopen
+
 class EnsemblMouseFilter (GffFilter) :
     # index mapping ensembl IDs to MGI ids
     # Shared by all instances. The first one to try to access the index creates it.

@@ -93,6 +93,7 @@ assemblySources:
     filetype: fasta
     baseUrl: *ncbiFtpBaseUrl
     chr_re: *chr_re
+    filter: assemblyFilter
   - &ensemblAssembly
     source: ensembl
     type: assembly
@@ -100,6 +101,7 @@ assemblySources:
     release: *ensemblRelease
     baseUrl: *ensemblFtpBaseUrl
     chr_re: *chr_re
+    filter: assemblyFilter
 
 modelSources:
   - &ensemblMouseGff
@@ -137,7 +139,7 @@ modelSources:
     chr_re: *chr_re
     release: *allianceRelease
     allianceDataType: GFF
-    filter: allianceGff
+    filter: allianceGffFilter
     include_types: ["gene","mRNA","transcript","exon","CDS"]
     linkouts:
       - *linkAllianceByCid
@@ -175,7 +177,7 @@ buildList:
         filetype: gff
         url: *mgiCurrentModelsUrl
         chr_re: *chr_re
-        filter: mgiGff
+        filter: mgiGffFilter
         release: "@@today"
         linkouts:
           - *linkMgiByCid
@@ -196,7 +198,7 @@ buildList:
         type: models
         source: mgi
         filetype: gff
-        filter: mgiGff
+        filter: mgiGffFilter
         chr_re: *chr_re
         release: "4 Jan 2021"
         url: *mgiBuild38ModelsUrl
@@ -377,7 +379,7 @@ buildList:
       -
         << : *allianceGff
         provider: HUMAN
-        filter: rgdGff
+        filter: rgdGffFilter
         linkouts:
           - *linkHgncByCid
           - *linkAllianceByCid
@@ -392,7 +394,7 @@ buildList:
       -
         << : *allianceGff
         provider: RGD
-        filter: rgdGff
+        filter: rgdGffFilter
         linkouts:
           - *linkRgdByCid
           - *linkAllianceByCid
@@ -407,7 +409,7 @@ buildList:
       -
         << : *allianceGff
         provider: ZFIN
-        filter: zfinGff
+        filter: zfinGffFilter
         linkouts:
           - *linkZfinByCid
           - *linkAllianceByCid
@@ -422,7 +424,7 @@ buildList:
       -
         << : *allianceGff
         provider: FB
-        filter: flybaseGff
+        filter: flybaseGffFilter
         linkouts:
           - *linkFbByCid
           - *linkAllianceByCid
@@ -441,7 +443,7 @@ buildList:
         << : *allianceGff
         chr_re: ".*"
         provider: WB
-        filter: wormbaseGff
+        filter: wormbaseGffFilter
         linkouts:
           - *linkWbByCid
           - *linkAllianceByCid
@@ -456,12 +458,11 @@ buildList:
       -
         << : *ensemblAssembly
         chr_re: ".*"
-        filter: assemblyFilter
       -
         << : *allianceGff
         chr_re: ".*"
         provider: SGD
-        filter:  sgdGff
+        filter:  sgdGffFilter
         linkouts:
           - *linkSgdByCid
           - *linkAllianceByCid

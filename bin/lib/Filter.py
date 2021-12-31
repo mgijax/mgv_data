@@ -22,9 +22,7 @@
 import sys
 import os
 import re
-from .gff3lite import parseLine, formatLine, Gff3Parser
 import json
-from urllib.request import urlopen
 
 
 class Filter:

@@ -1,4 +1,6 @@
+import re
 from .Filter import Filter
+from .gff3lite import parseLine, formatLine, Gff3Parser
 
 class GffFilter (Filter) :
     def __init__(self, src, gcfg, dcfg):
