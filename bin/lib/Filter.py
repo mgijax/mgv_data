@@ -144,10 +144,10 @@ class EnsemblMouseFilter (GffFilter) :
             eid = attrs['projection_parent_gene'].split(".")[0]
             mgi = self.getEid2MgiIndex().get(eid, None)
             if mgi:
-                attrs['cID'] = mgi[0]
+                attrs['curie'] = mgi[0]
                 attrs['Name'] = mgi[1]
             else:
-                attrs['cID'] = eid
+                attrs['curie'] = eid
                 attrs['Name'] = eid
         if "transcript_id" in attrs:
             attrs["transcript_id"] = "ENSEMBL:" + attrs["transcript_id"]
@@ -177,7 +177,7 @@ class EnsemblNonMouseFilter (GffFilter) :
         attrVal = attrs.get(self.attrName,'')
         m = self.id_re.search(attrVal)
         if m:
-            attrs['cID'] = self.id_prefix + m.group(1)
+            attrs['curie'] = self.id_prefix + m.group(1)
         return f
         
 class MgiGff (GffFilter) :
@@ -198,7 +198,6 @@ class MgiGff (GffFilter) :
         attrs = f[8]
         if f[2] in ["gene","pseudogene"]:
             f[2] = attrs['so_term_name']
-            attrs['cID'] = attrs['curie']
             attrs['long_name'] = attrs.pop('description')
         if 'transcript_id' in attrs:
             attrs['transcript_id'] = curie_ize(attrs['transcript_id'])
@@ -210,8 +209,6 @@ class AllianceGff (GffFilter) :
     def processFeature(self, f) :
         attrs = f[8]
         attrs.pop("description", None)
-        if "curie" in attrs and "Parent" not in attrs:
-            attrs["cID"] = attrs["curie"]
         if "so_term_name" in attrs:
             f[2] = attrs.pop("so_term_name")
         elif "Ontology_term" in attrs:

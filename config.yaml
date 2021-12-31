@@ -28,31 +28,31 @@ linkConfigs:
   - &linkSgdByCid
     text: SGD
     url: *sgdAccessionUrl
-    attr: cID
+    attr: curie
     stripPrefix: true
 
   - &linkWbByCid
     text: WormBase
     url: *wbAccessionUrl
-    attr: cID
+    attr: curie
     stripPrefix: true
 
   - &linkFbByCid
     text: FlyBase
     url: *fbAccessionUrl
-    attr: cID
+    attr: curie
     stripPrefix: true
 
   - &linkZfinByCid
     text: ZFIN
     url: *zfinAccessionUrl
-    attr: cID
+    attr: curie
     stripPrefix: true
 
   - &linkHgncByCid
     text: HGNC
     url: *hgncAccessionUrl
-    attr: cID
+    attr: curie
 
   - &linkMgiByID
     text: MGI
@@ -62,29 +62,29 @@ linkConfigs:
   - &linkMgiByCid
     text: MGI
     url: *mgiAccessionUrl
-    attr: cID
+    attr: curie
 
   - &linkRgdByCid
     text: RGD
     url: *rgdAccessionUrl
-    attr: cID
+    attr: curie
     stripPrefix: true
 
   - &linkMouseMineByID
     text: MouseMine
     url: *mousemineAccessionUrl
-    attr: cID
+    attr: curie
     stripPrefix: true
 
   - &linkAllianceByCid
     text: Alliance
     url: *allianceAccessionUrl
-    attr: cID
+    attr: curie
 
   - &linkEnsemblByID
     text: Ensembl
     url: *ensemblAccessionUrl
-    attr: cID
+    attr: curie
 
 assemblySources:
   - &ncbiAssembly
