@@ -146,20 +146,6 @@ modelSources:
     allianceSnapshotUrl: *allianceSnapshotUrl
     allianceDownloadUrl: *allianceDownloadUrl
 
-homologyData:
-  -
-    type: homology
-    path: homologies
-    tracks:
-      -
-        type: orthologs
-        source: alliance
-        release: *allianceRelease
-        allianceDataType: ORTHOLOGY-ALLIANCE
-        provider: COMBINED
-        allianceSnapshotUrl: *allianceSnapshotUrl
-        allianceDownloadUrl: *allianceDownloadUrl
-
 buildList:
   -
     type: genome
@@ -466,3 +452,17 @@ buildList:
         linkouts:
           - *linkSgdByCid
           - *linkAllianceByCid
+  -
+    type: homology
+    path: homologies
+    name: homologies
+    tracks:
+      -
+        type: orthologs
+        filetype: tsv
+        source: alliance
+        release: *allianceRelease
+        allianceDataType: ORTHOLOGY-ALLIANCE
+        provider: COMBINED
+        allianceSnapshotUrl: *allianceSnapshotUrl
+        allianceDownloadUrl: *allianceDownloadUrl

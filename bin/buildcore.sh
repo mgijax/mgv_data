@@ -234,6 +234,7 @@ import () {
 deploy () {
   STAGE="deploy"
   logit "Deploying..."
+  logit "cp -f ${ODIR}/${GDIR}/${FLOCAL}* ${WDIR}/${GDIR}"
   if [[ $ODIR == $WDIR ]] ; then
       logit "Skipped file copy because output and deployment directories are the same."
       return
@@ -241,7 +242,6 @@ deploy () {
 
   makedirectory ${WDIR}/${GDIR}
 
-  logit "cp -f ${ODIR}/${GDIR}/${FLOCAL}* ${WDIR}/${GDIR}"
   if [[ $DEBUG == "" ]] ; then
       cp -f ${ODIR}/${GDIR}/${FLOCAL}* ${WDIR}/${GDIR}
       checkexit
@@ -249,7 +249,7 @@ deploy () {
 }
 
 # ---------------------
-function importData {
+function importGenome {
     if [[ $FURL == "" ]] ; then
         die "No URL."
     fi
@@ -264,6 +264,35 @@ function importData {
         import
     fi
     if [[ $PHASE == "all" || $PHASE == "deploy" ]] ; then
+        deploy
+    fi     
+}
+
+# ---------------------
+function importHomology {
+    if [[ $FURL == "" ]] ; then
+        die "No URL."
+    fi
+
+    makedirectory $TDIR
+
+    FLOCAL=`basename $FURL`
+    ifile="${DDIR}/${GDIR}/${FLOCAL}"
+    odir="${ODIR}/${GDIR}"
+    if [[ $PHASE == "all" || $PHASE == "download" ]] ; then
+        download
+    fi
+    if [[ $PHASE == "all" || $PHASE == "import" ]] ; then
+        makedirectory ${ODIR}/${GDIR}
+        logit "gunzip -c ${ifile} | ${FILTER}"
+        if [[ $DEBUG == "" ]] ; then
+            gunzip -c ${ifile} | ${FILTER}
+            checkexit
+        fi
+
+    fi
+    if [[ $PHASE == "all" || $PHASE == "deploy" ]] ; then
+        FLOCAL=""
         deploy
     fi     
 }

@@ -29,8 +29,15 @@ for gc in config["buildList"]:
         print("\t\tFURL='%s'" % dc["url"])
         print("\t\tFTYPE='%s'" % dc["filetype"])
         print("\t\texport DCONFIG='%s'" % json.dumps(dc))
-        fcmd = 'cat' if not 'filter' in dc else ('python %s/filter.py %s' % (MY_DIR, dc["filter"]))
-        print("\t\tFILTER='%s'" % fcmd)
-        print("\t\timportData")
+        if gc["type"] == "homology" :
+            fcmd = 'python %s/importAllianceOrthology.py' % MY_DIR
+            print("\t\tFILTER='%s'" % fcmd)
+            print("\t\timportHomology")
+        elif gc["type"] == "genome":
+            fcmd = 'cat' if not 'filter' in dc else ('python %s/filter.py %s' % (MY_DIR, dc["filter"]))
+            print("\t\tFILTER='%s'" % fcmd)
+            print("\t\timportGenome")
+        else:
+            raise RuntimeError("Unknown type: " + gc["type"])
         print("\tfi")
     print("fi")
