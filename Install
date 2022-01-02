@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+#
+# Recipe:
+#   git clone git@github.com:mgijax/mgv_data.git
+#   cd mgv_data
+#   ./Install
+#
+python3 -m venv venv
+source venv/bin/activate
+pip install pyyaml
+deactivate
