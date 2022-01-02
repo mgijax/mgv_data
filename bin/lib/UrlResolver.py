@@ -11,9 +11,9 @@ class UrlResolver :
         sys.stderr.write("\n")
 
     # OVERRIDE ME.
-    # rgs:
+    # Args:
     #    gcfg - the genome's config
-    #    dcfg - the data config, i.e., 
+    #    dcfg - the data track config
     def resolve(self, gcfg, dcfg):
         return dcfg["url"]
 
@@ -72,7 +72,35 @@ class NcbiResolver (UrlResolver) :
 
         
 ### ------------------------------------------------------------------
-# Gets gene models from the Alliance for non-mouse organisms
+# Gets gene models from the Alliance for non-mouse organisms.
+# Alliance resources specified by release number, data type, and provider.
+# To resolve a URL, first get the snapshot for the release, then lookup the file by type.
+# Example snapshot entry:
+'''
+      { 
+        "id": 98618,
+        "s3Path": "4.0.0/ORTHOLOGY-ALLIANCE/COMBINED/ORTHOLOGY-ALLIANCE_COMBINED_44.tsv.gz",
+        "md5Sum": "7222c696463975aea0b60bf4c361865d",
+        "valid": true,
+        "uploadDate": "2021-03-19T19:32:27.319+0000",
+        "dataType": {
+          "id": 1166,
+          "name": "ORTHOLOGY-ALLIANCE",
+          "description": "Alliance Generated Harmonized Orthology Files",
+          "fileExtension": "tsv",
+          "dataSubTypeRequired": true,
+          "validationRequired": false
+        },
+        "dataSubType": {
+          "id": 1123,
+          "name": "COMBINED",
+          "description": "Combined Mod Files"
+        },
+        "stableURL": "https://fms.alliancegenome.org/download/ORTHOLOGY-ALLIANCE_COMBINED.tsv.gz",
+        "s3Url": "https://download.alliancegenome.org/4.0.0/ORTHOLOGY-ALLIANCE/COMBINED/ORTHOLOGY-ALLIANCE_COMBINED_44.tsv.gz"
+      },
+'''
+
 class AllianceResolver (UrlResolver) :
     SNAPSHOT_CACHE = {}
     def resolve (self, gcfg, dcfg) :
@@ -101,9 +129,9 @@ class AllianceResolver (UrlResolver) :
         fList = self.getSnapshotFileList(gcfg, dcfg) 
         fList = list(filter(lambda f: f["dataType"]["name"] == dcfg["allianceDataType"] and f["dataSubType"]["name"] == dcfg["provider"], fList))
         if len(fList) == 0:
-            raise RuntimeError("File does not exist.")
+            raise RuntimeError("File does not exist in Alliance snapshot.")
         elif len(fList) > 1:
-            raise RuntimeError("File specification is not unique.")
+            raise RuntimeError("File specification is not unique in Alliance snapshot.")
         f = fList[0]
         return dcfg["allianceDownloadUrl"] + f["s3Path"]
 
