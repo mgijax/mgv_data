@@ -13,7 +13,8 @@ class GffFilter (Filter) :
             return obj
         else:
             # obj is a list of features
-            return ''.join(self.processModel(obj))
+            m = self.processModel(obj)
+            return ''.join(m) if m else None
 
     def processModel(self, model):
         model = list(filter(lambda x: x, [self._processFeature(f) for f in model]))

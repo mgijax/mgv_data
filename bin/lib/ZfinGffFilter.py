@@ -1,7 +1,8 @@
-from .GffFilter import GffFilter, curie_ize
-class ZfinGffFilter (AllianceGff) :
+from .AllianceGffFilter import AllianceGffFilter
+from .GffFilter import curie_ize
+class ZfinGffFilter (AllianceGffFilter) :
     def processFeature (self, f) :
-        AllianceGff.processFeature(self, f)
+        AllianceGffFilter.processFeature(self, f)
         attrs = f[8]
         if "curie" in attrs and "Parent" in attrs:
             attrs["transcript_id"] = attrs.pop("curie")

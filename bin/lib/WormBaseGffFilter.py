@@ -1,7 +1,7 @@
-from .GffFilter import GffFilter
-class WormBaseGffFilter (AllianceGff) :
+from .AllianceGffFilter import AllianceGffFilter
+class WormBaseGffFilter (AllianceGffFilter) :
     def processFeature (self, f) :
-        AllianceGff.processFeature(self, f)
+        AllianceGffFilter.processFeature(self, f)
         attrs = f[8]
         if 'ID' in attrs and attrs['ID'].startswith('Transcript:'):
             attrs['transcript_id'] = 'WB:' + attrs['ID'][11:]

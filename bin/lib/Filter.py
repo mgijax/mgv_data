@@ -35,6 +35,7 @@ class Filter:
     def log (self, s) :
         sys.stderr.write(s)
         sys.stderr.write('\n')
+        sys.stderr.flush()
 
     def __iter__(self):
         return self

@@ -1,5 +1,5 @@
-from .GffFilter import GffFilter
-class RgdGffFilter (AllianceGff) :
+from .AllianceGffFilter import AllianceGffFilter
+class RgdGffFilter (AllianceGffFilter) :
     def processModel (self, model) :
         # Starting with Alliance 3.2.0, RGD GFF3 files (for rat and human) fixed the issues we previously had to correct for.
         # However, they also now have multiple providers of gene models (NCBI and Ensembl), but they do not merge them like we do.
@@ -8,6 +8,6 @@ class RgdGffFilter (AllianceGff) :
         # FIXME: Could/should merge the models. Or maybe get RGD to do that.
 
         if len(list(filter(lambda f: f[1] == "NCBI", model))) > 0:
-            return AllianceGff.processModel(self, model)
+            return AllianceGffFilter.processModel(self, model)
         else:
             return None

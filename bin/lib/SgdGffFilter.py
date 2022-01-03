@@ -1,5 +1,5 @@
-from .GffFilter import GffFilter
-class SgdGffFilter (AllianceGff) : 
+from .AllianceGffFilter import AllianceGffFilter
+class SgdGffFilter (AllianceGffFilter) : 
     # SGF gff issues:
     # Yeast transcription/translation is simpler b.c. no introns. Just an mRNA and a CDS.
     # Therefore in the GFF:
@@ -35,10 +35,10 @@ class SgdGffFilter (AllianceGff) :
                     cid = pid + "_CDS"
                 f[8]["ID"] = cid
         model = model + exons
-        return AllianceGff.processModel(self, model)
+        return AllianceGffFilter.processModel(self, model)
 
     def processFeature(self, f):
-        AllianceGff.processFeature(self, f)
+        AllianceGffFilter.processFeature(self, f)
         attrs = f[8]
         if f[0].startswith("chr") :
             f[0] = f[0][3:]
