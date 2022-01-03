@@ -29,19 +29,19 @@ LOGFILE=""      # log file
 # ---------------------
 function usage {
   logit "
-Usage: $0 
+Usage: $0 [parameters]
 
 Parameters:
 -h 
     Print this help and exit.
 -g PATTERN
-    Optional. Only do anything if genome's path name matches PATTERN.
+    Only process genomes matching the pattern. Default is to process all genomes.
 -t TRACK
-    Required. Specifies the data type being imported, either models or assembly
+    Which track to import: either models or assembly. Default processes all tracks.
 -p PHASE
-    Optional. Specifies which build phase to run. Default runs all phases. One of: download, import, deploy
+    Specifies which build phase to run. Default runs all phases. One of: download, import, deploy
 -f
-    Optional. If specified, force file downloads.
+    If specified, force file downloads (normally, only downloads if the source has a newer modification date)..
 -D
     Don't actually do anything - just print log messages of what would be done.
 -L FILE
@@ -309,20 +309,20 @@ function importHomology {
     fi     
 }
 
+
 # ---------------------
+function activateVenv {
+    if [ -d "${SCRIPT_DIR}/venv/bin" ] ; then
+        source ${SCRIPT_DIR}/venv/bin/activate
+    else
+        logit "Creating virtual environment."
+        simpleCommand ${PYTHON} -m venv "${SCRIPT_DIR}/venv"
+        source "${SCRIPT_DIR}/venv/bin/activate"
+        logit "Installing yaml"
+        simpleCommand pip install pyyaml
+    fi
+}
 
-if [ -d "${SCRIPT_DIR}/venv/bin" ] ; then
-    source ${SCRIPT_DIR}/venv/bin/activate
-else
-    logit "Creating virtual environment."
-    simpleCommand ${PYTHON} -m venv "${SCRIPT_DIR}/venv"
-    source "${SCRIPT_DIR}/venv/bin/activate"
-    logit "Installing yaml"
-    simpleCommand pip install pyyaml
-fi
-
-parseCommandLine $*
-logit "Command line: $CMDLINE"
-
+# ---------------------
 # ---------------------
 # ---------------------

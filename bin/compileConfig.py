@@ -15,6 +15,9 @@ BCORE = os.path.join(MY_DIR, "buildcore.sh")
 
 print("#!/usr/bin/bash")
 print("source %s" % BCORE)
+print("activateVenv")
+print("parseCommandLine $*")
+print('logit "Command line: $CMDLINE"')
 for gc in config["buildList"]:
     resolveAll(gc)
     print("#")

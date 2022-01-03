@@ -113,7 +113,6 @@ class AllianceResolver (UrlResolver) :
     def getSnapshotFileList(self, gcfg, dcfg):
         rel = dcfg["release"]
         if rel in self.SNAPSHOT_CACHE:
-            self.log("Reusing snapshot from cache.")
             snapshot = self.SNAPSHOT_CACHE[rel]
         else:
             self.log("Getting snapshot file at: " + dcfg["allianceSnapshotUrl"] + rel)
