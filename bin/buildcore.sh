@@ -200,8 +200,12 @@ import () {
   #
   if [ $FTYPE == "gff" ] ; then
       logit "Filtering..."
-      tmpFile=`mktemp ${TDIR}/mgvtmpXXXX`
-      checkexit
+      if [[ $DEBUG == "" ]] ; then
+          tmpFile=`mktemp ${TDIR}/mgvtmpXXXX`
+          checkexit
+      else
+          tmpFile="TMPFILE"
+      fi
       logit "$stream $ifile | ${FILTER} > ${tmpFile}"
       if [[ $DEBUG == "" ]] ; then
           $stream $ifile | ${FILTER} > ${tmpFile}
