@@ -9,6 +9,8 @@
 set -o pipefail
 
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export INSTALL_DIR=`dirname ${SCRIPT_DIR}`
+
 source ${SCRIPT_DIR}/wrapperConfig.sh
 
 CMDLINE="$*"    # save for future reference
@@ -20,6 +22,7 @@ TRACK="all"     # one of: models, assembly, all
 FTYPE=""        # one of: gff or fasta
 FURL=""         # URL of the file to import
 FILTER=""       # filter program
+FORCE=""        # if true, force downloads
 DEBUG=""        # debug mode
 LOGFILE=""      # log file
 
@@ -37,6 +40,8 @@ Parameters:
     Required. Specifies the data type being imported, either models or assembly
 -p PHASE
     Optional. Specifies which build phase to run. Default runs all phases. One of: download, import, deploy
+-f
+    Optional. If specified, force file downloads.
 -D
     Don't actually do anything - just print log messages of what would be done.
 -L FILE
@@ -71,6 +76,10 @@ function parseCommandLine {
             # build phase
             shift
             PHASE="$1"
+            ;;
+        -f)
+            # force downloads
+            FORCE="true"
             ;;
         -D)
             # debug mode. Just logging (no changes).
@@ -159,9 +168,12 @@ download () {
   simpleCommand mkdir -p ${DDIR}/${GDIR}
 
   localFile="${DDIR}/${GDIR}/${FLOCAL}"
-  logit "${CURL} -z ${localFile} -o ${localFile} ${FURL}"
+  if [[ ${FORCE} == "" ]] ; then
+      zarg="-z ${localFile}"
+  fi
+  logit "${CURL} ${zarg} -o ${localFile} ${FURL}"
   if [[ $DEBUG == "" ]] ; then
-    ${CURL} -z "${localFile}" -o "${localFile}" "${FURL}"
+    ${CURL} ${zarg} -o "${localFile}" "${FURL}"
     checkexit
   fi
 }
@@ -173,7 +185,7 @@ import () {
   ifile="${DDIR}/${GDIR}/${FLOCAL}"
   #
   odir="${ODIR}/${GDIR}"
-  ofile="${ODIR}/${TTYPE}.${FTYPE}.gz"
+  ofile="${odir}/${TTYPE}.${FTYPE}.gz"
   if [[ $FLOCAL == *.gz ]] ; then
     stream="${GUNZIP} -c"
   else
@@ -298,6 +310,16 @@ function importHomology {
 }
 
 # ---------------------
+
+if [ -d "${SCRIPT_DIR}/venv/bin" ] ; then
+    source ${SCRIPT_DIR}/venv/bin/activate
+else
+    logit "Creating virtual environment."
+    simpleCommand ${PYTHON} -m venv "${SCRIPT_DIR}/venv"
+    source "${SCRIPT_DIR}/venv/bin/activate"
+    logit "Installing yaml"
+    simpleCommand pip install pyyaml
+fi
 
 parseCommandLine $*
 logit "Command line: $CMDLINE"
