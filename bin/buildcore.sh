@@ -27,7 +27,7 @@ DEBUG=""        # debug mode
 LOGFILE=""      # log file
 
 # ---------------------
-function usage {
+usage () {
   logit "
 Usage: $0 [parameters]
 
@@ -50,7 +50,7 @@ Parameters:
 }
 
 # ---------------------
-function parseCommandLine {
+parseCommandLine () {
 # ---------------------
 # 
     # Process command line args
@@ -265,7 +265,24 @@ deploy () {
 }
 
 # ---------------------
-function importGenome {
+deployWwwContents () {
+  if [[ $PHASE == "all" || $PHASE == "deploy" ]] ; then
+      FTYPE="www"
+      simpleCommand cp ${INSTALL_DIR}/www/apache.htaccess ${WDIR}/.htaccess
+      simpleCommand cp ${INSTALL_DIR}/www/info.html ${WDIR}
+      simpleCommand cp ${INSTALL_DIR}/www/fetch.py ${CDIR}
+      cgi=${CDIR}/fetch.cgi
+      echo "#!/usr/bin/env bash" > ${cgi}
+      echo "# THIS IS A GENERATED FILE." >> ${cgi}
+      echo "export TABIX=\"${TABIX}\"" >> ${cgi}
+      echo "export SAMTOOLS=\"${SAMTOOLS}\"" >> ${cgi}
+      echo "${PYTHON} ${CDIR}/fetch.py --cgi --dir ${WDIR}" >> ${cgi}
+      chmod +x ${cgi}
+  fi
+}
+
+# ---------------------
+importGenome () {
     if [[ $FURL == "" ]] ; then
         die "No URL."
     fi
@@ -285,7 +302,7 @@ function importGenome {
 }
 
 # ---------------------
-function importHomology {
+importHomology () {
     if [[ $FURL == "" ]] ; then
         die "No URL."
     fi
@@ -315,7 +332,7 @@ function importHomology {
 
 
 # ---------------------
-function activateVenv {
+activateVenv () {
     if [ -d "${SCRIPT_DIR}/venv/bin" ] ; then
         source ${SCRIPT_DIR}/venv/bin/activate
     else

@@ -26,6 +26,11 @@ import json
 import string
 import cgi
 import cgitb
+import subprocess
+
+# -----------------------------------------
+TABIX=os.environ["TABIX"]
+SAMTOOLS=os.environ["SAMTOOLS"]
 
 # -----------------------------------------
 DEFAULT_LINE_LEN = 60
@@ -51,6 +56,23 @@ def slice (fd, start, length):
   os.lseek(fd, start, os.SEEK_SET) 
   return os.read(fd, length).decode('utf-8')
 
+# -----------------------------------------
+def getSequenceFromFaidx (desc) :
+  arrayify = lambda x : [x] if type(x) is int else x
+  gurl = desc["genomeUrl"]
+  gdir = gurl.replace("/"," ").split()[-1]
+  path = "%s/%s/assembly.fasta.gz" % (DATA_DIR, gdir)
+
+  desc["chromosome"]
+  starts = arrayify(desc["start"])
+  lengths = arrayify(desc["length"])
+  args = [ "%s:%d-%d" % (desc["chromosome"], s, s+lengths[i]-1) for i,s in enumerate(starts) ]
+  #
+  command = [SAMTOOLS, "faidx", path] + args
+  r = subprocess.check_output(command)
+  r = ''.join(filter(lambda l: not l.startswith('>'), r.decode('utf8').split('\n')))
+  return r
+  
 # -----------------------------------------
 # 
 def getSequenceFromFile (desc) :
@@ -80,7 +102,7 @@ def getSequenceFromFile (desc) :
 
 # -----------------------------------------
 def getSequenceFromAssembly(desc):
-  seq = getSequenceFromFile(desc)
+  seq = getSequenceFromFaidx(desc)
   if desc.get('reverseComplement', False):
     seq = reverseComplement(seq)
   if desc.get('translate', False):
@@ -240,8 +262,8 @@ TESTDATA = [{
 }, {
 
 "header": ">test.0",
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -251,8 +273,8 @@ TESTDATA = [{
 }, {
 
 "header": ">test.0 line length = 40",
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -263,8 +285,8 @@ TESTDATA = [{
 }, {
 
 "header": ">test.0 rc",
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -274,8 +296,8 @@ TESTDATA = [{
 }, {
 
 "header": ">test.0 xl",
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -285,8 +307,8 @@ TESTDATA = [{
 }, {
 
 "header": ">test.0 rc xl",
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": 123456790,
 "length": 100,
@@ -296,8 +318,8 @@ TESTDATA = [{
 }, {
 
 "header": ">test.1 pt1",
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": [123456790],
 "length": [100],
@@ -307,8 +329,8 @@ TESTDATA = [{
 }, {
 
 "header": ">test.1 pt2",
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": 123458101,
 "length": 102,
@@ -318,8 +340,8 @@ TESTDATA = [{
 }, {
 
 "header": ">test.1 pt3",
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": [123459222],
 "length": [88],
@@ -329,8 +351,8 @@ TESTDATA = [{
 }, {
 
 "header": ">test.1 concatenated",
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": [123456790, 123458101, 123459222],
 "length": [100, 102, 88],
@@ -342,8 +364,8 @@ TESTDATA = [{
 "header": ">ENSMUSE00000702887 1:10038217-10038344 from File",
 "reverseComplement": False,
 "translate": False,
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": 10038217,
 "length": 128,
@@ -355,8 +377,8 @@ TESTDATA = [{
 "header": ">ENSMUST00000134716 from file",
 "reverseComplement": False,
 "translate": False,
-"genome": "mus_musculus",
-"genomeUrl" : "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl" : "mus_musculus_aj",
 "chromosome": "1",
 "start": [10039823,10045076,10047424,10058720,10059824],
 "length": [57,109,103,104,168],
@@ -366,8 +388,8 @@ TESTDATA = [{
 }, {
 
 "header": ">ENSMUSE00001282101 1:10034008-10034136(-) from File",
-"genome": "mus_musculus",
-"genomeUrl": "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl": "mus_musculus_aj",
 "chromosome": "1",
 "start": 10034008,
 "length": 129,
@@ -377,8 +399,8 @@ TESTDATA = [{
 }, {
 
 "header": ">ENSMUST00000186528 from file",
-"genome": "mus_musculus",
-"genomeUrl": "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl": "mus_musculus_aj",
 "chromosome": "1",
 "start": [10027198,10030599,10032339,10033258,10034008,10034929,10037662],
 "length": [54,112,86,66,129,235,280],
@@ -389,8 +411,8 @@ TESTDATA = [{
 }, {
 
 "header": ">ENSMUSP00000000834 from file",
-"genome": "mus_musculus",
-"genomeUrl": "mus_musculus",
+"genome": "mus_musculus_aj",
+"genomeUrl": "mus_musculus_aj",
 "chromosome": "1",
 "start": [161781576,161782948,161787105,161787944],
 "length": [395,57,46,342],

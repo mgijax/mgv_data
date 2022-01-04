@@ -44,3 +44,4 @@ for gc in config["buildList"]:
             raise RuntimeError("Unknown type: " + gc["type"])
         print("\tfi")
     print("fi")
+print("deployWwwContents")
