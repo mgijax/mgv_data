@@ -28,7 +28,7 @@ export WDIR=${ODIR}
 export CDIR=${WDIR}
 
 # Python 3 executable
-export PYTHON="python3"
+export PYTHON="/opt/python3.7/bin/python3"
 export PYTHONPATH="${SCRIPT_DIR}/bin/lib"
 
 # MouseMine URL - used by some filters

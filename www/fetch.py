@@ -47,18 +47,8 @@ def defaultHeader (desc) :
   return ">default"
 
 # -----------------------------------------
-# Returns a sequence of characters from an open file
-# Args:
-#   fd - open file descriptor (as from os.open)
-#   start - zero-based character position
-#   length - number of characters to read
-def slice (fd, start, length):
-  os.lseek(fd, start, os.SEEK_SET) 
-  return os.read(fd, length).decode('utf-8')
-
-# -----------------------------------------
 def getSequenceFromFaidx (desc) :
-  arrayify = lambda x : [x] if type(x) is int else x
+  arrayify = lambda x : x if type(x) is list else [x]
   gurl = desc["genomeUrl"]
   gdir = gurl.replace("/"," ").split()[-1]
   path = "%s/%s/assembly.fasta.gz" % (DATA_DIR, gdir)
@@ -73,33 +63,6 @@ def getSequenceFromFaidx (desc) :
   r = ''.join(filter(lambda l: not l.startswith('>'), r.decode('utf8').split('\n')))
   return r
   
-# -----------------------------------------
-# 
-def getSequenceFromFile (desc) :
-  # compose name of the file containing the chromosome sequence
-  # The directory is the last component of the url:
-  gurl = desc["genomeUrl"]
-  gdir = gurl.replace("/"," ").split()[-1]
-  path = "%s/%s/assembly/%s.txt" % (DATA_DIR, gdir, desc["chromosome"])
-  # 
-  fd = os.open(path, os.O_RDONLY)
-  #
-  starts = desc["start"]
-  if type(starts) is int:
-    starts = [starts]
-  #
-  lengths = desc["length"]
-  if type(lengths) is int:
-    lengths = [lengths]
-  #
-  seqs = []
-  for i,s in enumerate(starts):
-    l = lengths[i]
-    seqs.append(slice(fd, s-1, l))
-  seq = ''.join(seqs).lower()
-  #
-  return seq
-
 # -----------------------------------------
 def getSequenceFromAssembly(desc):
   seq = getSequenceFromFaidx(desc)
@@ -169,10 +132,30 @@ def doSequences (descs) :
     sys.stdout.write('\n')
 
 # -----------------------------------------
+def getFeaturesFromTabix (desc) :
+  gurl = desc["genomeUrl"]
+  gdir = gurl.replace("/"," ").split()[-1]
+  path = "%s/%s/models.gff.gz" % (DATA_DIR, gdir)
+  arg = "%s:%d-%d" % (desc["chromosome"], desc["start"], desc["end"])
+  #
+  command = [TABIX, path, arg]
+  r = subprocess.check_output(command)
+  r = r.decode("utf8")
+  return r
+# -----------------------------------------
+def doFeatures (descs) :
+  for d in descs:
+      fs = getFeaturesFromTabix(d)
+      sys.stdout.write('#%s::%s:%d-%d\n' % (d['genomeUrl'],d['chromosome'],d['start'],d['end']))
+      sys.stdout.write(fs)
+
+# -----------------------------------------
 def getFormParameters (opts) :
   form = cgi.FieldStorage()
   if "descriptors" in form:
       opts.descriptors = json.loads(form["descriptors"].value)
+  if "datatype" in form:
+      opts.datatype = form["datatype"].value
   if "filename" in form:
       opts.filename = form["filename"].value
   return opts
@@ -207,6 +190,12 @@ def getOptions () :
   parser = argparse.ArgumentParser(description="Get sequence slices from genome assembly sequences.")
   #
   parser.add_argument(
+    "--datatype",
+    dest="datatype",
+    default="gff",
+    help="Either fasta or gff.")
+
+  parser.add_argument(
     "--descriptors",
     dest="descriptors",
     action="append",
@@ -229,7 +218,8 @@ def getOptions () :
   if opts.doCGI:
     opts = getFormParameters(opts)
   if not opts.descriptors:
-    opts.descriptors = TESTDATA
+    opts.descriptors = TEST_SEQS
+    opts.datatype = 'fasta'
   #
   validateOptions(opts)
   #
@@ -241,17 +231,35 @@ def main () :
   global DATA_DIR
   DATA_DIR = opts.dataDirectory
   print ('Content-Type: text/plain')
-  #print ('Content-Type: text/x-fasta')
   if "filename" in opts:
      print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
   print ("")
-  doSequences(opts.descriptors)
+  if opts.datatype == "fasta":
+      doSequences(opts.descriptors)
+  elif opts.datatype == "gff":
+      doFeatures(opts.descriptors)
+  else:
+      raise RuntimeError("Unknown datatype value: " + opts.datatype)
 
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------
 
-TESTDATA = [{
+TEST_FEATS = [{
+    "genome": "mus_musculus_aj",
+    "genomeUrl" : "mus_musculus_aj",
+    "chromosome": "1",
+    "start": 123456790,
+    "end": 124456790
+},{
+    "genome": "mus_musculus_grcm39",
+    "genomeUrl" : "mus_musculus_grcm39",
+    "chromosome": "1",
+    "start": 123456790,
+    "end": 124456790
+}]
+
+TEST_SEQS = [{
 
 "seqId" : [ "ENSEMBL:MGP_CASTEiJ_T0038053", "ENSEMBL:MGP_CASTEiJ_P0038053"]
 
