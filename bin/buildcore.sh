@@ -14,7 +14,7 @@ export INSTALL_DIR=`dirname ${SCRIPT_DIR}`
 source ${SCRIPT_DIR}/wrapperConfig.sh
 
 CMDLINE="$*"    # save for future reference
-MATCHPAT="*"    # genomes must match pattern to be processed
+MATCHPAT=""    # genomes must match pattern to be processed (filename pattern matching is used)
 GDIR=""         # path name for genome dir
 PHASE="all"     # which phase to run: download, import, deploy, all
 FLOCAL=""       # local name for downloaded file (= basename of the url)
@@ -35,7 +35,7 @@ Parameters:
 -h 
     Print this help and exit.
 -g PATTERN
-    Only process genomes matching the pattern. Default is to process all genomes.
+    Only process genomes matching the pattern. To process all genomes, -g all.
 -t TRACK
     Which track to import: either models or assembly. Default processes all tracks.
 -p PHASE
@@ -66,6 +66,10 @@ parseCommandLine () {
             # genome path/subdir name
             shift
             MATCHPAT="$1"
+            if [[ ${MATCHPAT} == "all" ]] ; then
+                MATCHPAT="*"
+            fi
+            echo "MATCHPAT=$MATCHPAT"
             ;;
         -t)
             # file type (models or assembly)
@@ -269,10 +273,13 @@ deploy () {
   fi
 
   registryfile=${WDIR}/index.tsv
-  touch ${registryfile}
-  echo ${GDIR} >> ${registryfile}
-  sort ${registryfile} | uniq > ${WDIR}/index.tsv2
-  mv ${WDIR}/index.tsv2 ${WDIR}/index.tsv
+  logit "Updating registry file: ${registryfile}"
+  if [[ $DEBUG == "" ]] ; then
+      touch ${registryfile}
+      echo ${GDIR} >> ${registryfile}
+      newcontents=`sort ${registryfile} | uniq`
+      echo "${newcontents}" > ${WDIR}/index.tsv
+  fi
 }
 
 # ---------------------
@@ -288,7 +295,7 @@ deployWwwContents () {
       echo "# THIS IS A GENERATED FILE." >> ${cgi}
       echo "export TABIX=\"${TABIX}\"" >> ${cgi}
       echo "export SAMTOOLS=\"${SAMTOOLS}\"" >> ${cgi}
-      echo "${PYTHON} ${CDIR}/fetch.py --cgi --dir ${WDIR}" >> ${cgi}
+      echo "${PYTHON} ${CDIR}/fetch.py --cgi --dir ${WDIR} \$*" >> ${cgi}
       chmod +x ${cgi}
       logit `cat ${cgi}`
   fi
