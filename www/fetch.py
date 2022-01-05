@@ -17,6 +17,7 @@
 # -----------------------------------------
 import sys
 import os
+import time
 import argparse
 from urllib.request import urlopen
 import json
@@ -149,16 +150,41 @@ def doFeatures (descs) :
 # -----------------------------------------
 def doMetadata () :
     metadata = {}
+
     registryfile = os.path.join(DATA_DIR, 'index.tsv')
     with open(registryfile, 'r') as fd:
         subdirs = fd.read().split('\n')[:-1]
-    print(subdirs)
-    for sd in subdirs:
-        gfile = os.path.join(DATA_DIR, sd, 'index.json')
+
+    for name in os.listdir(DATA_DIR):
+        gfile = os.path.join(DATA_DIR, name, "index.json")
+        if not os.path.exists(gfile):
+            continue
         with open(gfile, 'r') as fd:
             gcfg = json.load(fd)
-            metadata[sd] = gcfg
-    print('Content-Type: text/plain')
+        #
+        metadata[name] = gcfg
+        #
+        # Add a timestamp, set to file's modification date.
+        #
+        filestats = os.stat(gfile)
+        gcfg['timestamp'] = time.asctime(time.localtime(filestats.st_mtime))
+        if gcfg['type'] == 'genome':
+            #
+            # Initialize list of chromosome names and lengths
+            #
+            chrFile = os.path.join(DATA_DIR, name, 'assembly.fasta.gz.fai')
+            if os.path.exists(chrFile):
+                with open(chrFile, 'r') as fd:
+                    lines = fd.read().split('\n')[:-1]
+                    rows = [ line.split('\t') for line in lines ]
+                    chrs = [ { 'name':r[0], 'length':int(r[1]) } for r in rows ]
+                    gcfg['chromosomes'] = chrs
+            else:
+                # Requires an indexed assembly to initialize the chromosomes assay. FIXME ?
+                gcfg['chromosomes'] = []
+        # end if
+    # end for
+    print('Content-Type: application/json')
     print('')
     print(json.dumps(metadata,indent=2))
 
