@@ -151,10 +151,6 @@ def doFeatures (descs) :
 def doMetadata () :
     metadata = {}
 
-    registryfile = os.path.join(DATA_DIR, 'index.tsv')
-    with open(registryfile, 'r') as fd:
-        subdirs = fd.read().split('\n')[:-1]
-
     for name in os.listdir(DATA_DIR):
         gfile = os.path.join(DATA_DIR, name, "index.json")
         if not os.path.exists(gfile):

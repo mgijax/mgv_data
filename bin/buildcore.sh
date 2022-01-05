@@ -272,14 +272,6 @@ deploy () {
       checkexit
   fi
 
-  registryfile=${WDIR}/index.tsv
-  logit "Updating registry file: ${registryfile}"
-  if [[ $DEBUG == "" ]] ; then
-      touch ${registryfile}
-      echo ${GDIR} >> ${registryfile}
-      newcontents=`sort ${registryfile} | uniq`
-      echo "${newcontents}" > ${WDIR}/index.tsv
-  fi
 }
 
 # ---------------------
