@@ -21,7 +21,7 @@ vars:
   - &ensemblFtpBaseUrl ftp://ftp.ensembl.org/pub
 
   - &chr_re "^..?$"
-  - &ensemblRelease "103"
+  - &ensemblRelease "105"
   - &allianceRelease "4.0.0"
 
 linkConfigs:

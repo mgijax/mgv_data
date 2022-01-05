@@ -5,7 +5,7 @@ export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && p
 source ${SCRIPT_DIR}/buildcore.sh
 
 activateVenv
-${PYTHON} ${SCRIPT_DIR}/compileConfig.py $1 > $2
+python ${SCRIPT_DIR}/compileConfig.py $1 > $2
 chmod +x $2
 
 

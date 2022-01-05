@@ -18,10 +18,7 @@
 import sys
 import os
 import argparse
-try:
-  from urllib.request import urlopen
-except:
-  from urllib.request import urlopen
+from urllib.request import urlopen
 import json
 import string
 import cgi
@@ -40,43 +37,43 @@ MAX_LENGTH=100000000
 
 # -----------------------------------------
 def chunkString (s, n) :
-  return [s[i:i+n] for i in range(0, len(s), n)]
+    return [s[i:i+n] for i in range(0, len(s), n)]
 
 # -----------------------------------------
 def defaultHeader (desc) :
-  return ">default"
+    return ">default"
 
 # -----------------------------------------
 def getSequenceFromFaidx (desc) :
-  arrayify = lambda x : x if type(x) is list else [x]
-  gurl = desc["genomeUrl"]
-  gdir = gurl.replace("/"," ").split()[-1]
-  path = "%s/%s/assembly.fasta.gz" % (DATA_DIR, gdir)
+    arrayify = lambda x : x if type(x) is list else [x]
+    gurl = desc["genomeUrl"]
+    gdir = gurl.replace("/"," ").split()[-1]
+    path = "%s/%s/assembly.fasta.gz" % (DATA_DIR, gdir)
 
-  desc["chromosome"]
-  starts = arrayify(desc["start"])
-  lengths = arrayify(desc["length"])
-  args = [ "%s:%d-%d" % (desc["chromosome"], s, s+lengths[i]-1) for i,s in enumerate(starts) ]
-  #
-  command = [SAMTOOLS, "faidx", path] + args
-  r = subprocess.check_output(command)
-  r = ''.join(filter(lambda l: not l.startswith('>'), r.decode('utf8').split('\n')))
-  return r
+    desc["chromosome"]
+    starts = arrayify(desc["start"])
+    lengths = arrayify(desc["length"])
+    args = [ "%s:%d-%d" % (desc["chromosome"], s, s+lengths[i]-1) for i,s in enumerate(starts) ]
+    #
+    command = [SAMTOOLS, "faidx", path] + args
+    r = subprocess.check_output(command)
+    r = ''.join(filter(lambda l: not l.startswith('>'), r.decode('utf8').split('\n')))
+    return r
   
 # -----------------------------------------
 def getSequenceFromAssembly(desc):
-  seq = getSequenceFromFaidx(desc)
-  if desc.get('reverseComplement', False):
-    seq = reverseComplement(seq)
-  if desc.get('translate', False):
-    seq = translate(seq)
-  seq = '\n'.join(chunkString(seq, desc.get('lineLength', DEFAULT_LINE_LEN)))
-  hdr = desc.get('header', None)
-  if hdr is None:
-      hdr = defaultHeader(desc)
-  if not hdr.startswith('>'):
-    hdr = '>' + hdr
-  return hdr + '\n' + seq + '\n'
+    seq = getSequenceFromFaidx(desc)
+    if desc.get('reverseComplement', False):
+        seq = reverseComplement(seq)
+    if desc.get('translate', False):
+        seq = translate(seq)
+    seq = '\n'.join(chunkString(seq, desc.get('lineLength', DEFAULT_LINE_LEN)))
+    hdr = desc.get('header', None)
+    if hdr is None:
+        hdr = defaultHeader(desc)
+    if not hdr.startswith('>'):
+        hdr = '>' + hdr
+    return hdr + '\n' + seq + '\n'
 
 # -----------------------------------------
 # Args:
@@ -123,123 +120,139 @@ def getSequenceFromSeqfetch (desc) :
 
 # -----------------------------------------
 def doSequences (descs) :
-  for d in descs:
-    if "seqId" in d:
-        s = getSequenceFromSeqfetch(d)
-    else:
-        s = getSequenceFromAssembly(d)
-    sys.stdout.write(s)
-    sys.stdout.write('\n')
+    for d in descs:
+        if "seqId" in d:
+            s = getSequenceFromSeqfetch(d)
+        else:
+            s = getSequenceFromAssembly(d)
+        sys.stdout.write(s)
+        sys.stdout.write('\n')
 
 # -----------------------------------------
 def getFeaturesFromTabix (desc) :
-  gurl = desc["genomeUrl"]
-  gdir = gurl.replace("/"," ").split()[-1]
-  path = "%s/%s/models.gff.gz" % (DATA_DIR, gdir)
-  arg = "%s:%d-%d" % (desc["chromosome"], desc["start"], desc["end"])
-  #
-  command = [TABIX, path, arg]
-  r = subprocess.check_output(command)
-  r = r.decode("utf8")
-  return r
+    gurl = desc["genomeUrl"]
+    gdir = gurl.replace("/"," ").split()[-1]
+    path = "%s/%s/models.gff.gz" % (DATA_DIR, gdir)
+    arg = "%s:%d-%d" % (desc["chromosome"], desc["start"], desc["end"])
+    #
+    command = [TABIX, path, arg]
+    r = subprocess.check_output(command)
+    r = r.decode("utf8")
+    return r
 # -----------------------------------------
 def doFeatures (descs) :
-  for d in descs:
-      fs = getFeaturesFromTabix(d)
-      sys.stdout.write('#%s::%s:%d-%d\n' % (d['genomeUrl'],d['chromosome'],d['start'],d['end']))
-      sys.stdout.write(fs)
+    for d in descs:
+        fs = getFeaturesFromTabix(d)
+        sys.stdout.write('#%s::%s:%d-%d\n' % (d['genomeUrl'],d['chromosome'],d['start'],d['end']))
+        sys.stdout.write(fs)
+
+# -----------------------------------------
+def doMetadata () :
+    metadata = {}
+    registryfile = os.path.join(DATA_DIR, 'index.tsv')
+    with open(registryfile, 'r') as fd:
+        subdirs = fd.read().split('\n')[:-1]
+    print(subdirs)
+    for sd in subdirs:
+        gfile = os.path.join(DATA_DIR, sd, 'index.json')
+        with open(gfile, 'r') as fd:
+            gcfg = json.load(fd)
+            metadata[sd] = gcfg
+    print('Content-Type: text/plain')
+    print('')
+    print(json.dumps(metadata,indent=2))
 
 # -----------------------------------------
 def getFormParameters (opts) :
-  form = cgi.FieldStorage()
-  if "descriptors" in form:
-      opts.descriptors = json.loads(form["descriptors"].value)
-  if "datatype" in form:
-      opts.datatype = form["datatype"].value
-  if "filename" in form:
-      opts.filename = form["filename"].value
-  return opts
+    form = cgi.FieldStorage()
+    if "descriptors" in form:
+        opts.descriptors = json.loads(form["descriptors"].value)
+    if "datatype" in form:
+        opts.datatype = form["datatype"].value
+    if "filename" in form:
+        opts.filename = form["filename"].value
+    return opts
 
 # -----------------------------------------
 def error (message) : 
-  print ('Content-Type: text/plain')
-  print ('')
-  print ('ERROR: ' + message)
-  sys.exit(1)
+   print ('Content-Type: text/plain')
+   print ('')
+   print ('ERROR: ' + message)
+   sys.exit(1)
 
 # -----------------------------------------
 def validateOptions (opts) :
-  ndescs = len(opts.descriptors)
-  if ndescs == 0:
-      error("No descriptors.")
-  if ndescs > MAX_DESCRIPTORS:
-      error("Too many descriptors: %d" % ndescs)
-  tLength = 0
-  for d in opts.descriptors:
-      if "length" in d:
-          if type(d["length"]) is list:
-              tLength += sum(d["length"])
-          else:
-              tLength += d["length"]
-  if tLength > MAX_LENGTH:
-      error("Total length too big: %d" % tLength)
-  
+   ndescs = len(opts.descriptors)
+   if ndescs == 0:
+       error("No descriptors.")
+   if ndescs > MAX_DESCRIPTORS:
+       error("Too many descriptors: %d" % ndescs)
+   tLength = 0
+   for d in opts.descriptors:
+       if "length" in d:
+           if type(d["length"]) is list:
+               tLength += sum(d["length"])
+           else:
+               tLength += d["length"]
+   if tLength > MAX_LENGTH:
+       error("Total length too big: %d" % tLength)
 
 # -----------------------------------------
 def getOptions () :
-  parser = argparse.ArgumentParser(description="Get sequence slices from genome assembly sequences.")
-  #
-  parser.add_argument(
-    "--datatype",
-    dest="datatype",
-    default="gff",
-    help="Either fasta or gff.")
+    parser = argparse.ArgumentParser(description="Get sequence slices from genome assembly sequences.")
+    #
+    parser.add_argument(
+        "--datatype",
+        dest="datatype",
+        default="gff",
+        choices=["fasta","gff","metadata"],
+        help="What to fetch. If fasta or gff, specific regions are specified in the descriptors argument. If metadata, returns object containing metadata for each known genome (descriptors, if provided, is ignored.)")
 
-  parser.add_argument(
-    "--descriptors",
-    dest="descriptors",
-    action="append",
-    help="Descriptors.")
+    parser.add_argument(
+        "--descriptors",
+        dest="descriptors",
+        action="append",
+        help="Descriptors.")
 
-  parser.add_argument(
-    "--dir",
-    dest="dataDirectory",
-    default=".",
-    help="Path to data directory.")
+    parser.add_argument(
+        "--dir",
+        dest="dataDirectory",
+        default=".",
+        help="Path to data directory.")
 
-  parser.add_argument(
-    "--cgi",
-    dest="doCGI",
-    action="store_true",
-    default=False,
-    help="Run as a CGI script.")
+    parser.add_argument(
+        "--cgi",
+        dest="doCGI",
+        action="store_true",
+        default=False,
+        help="Run as a CGI script.")
 
-  opts = parser.parse_args()
-  if opts.doCGI:
-    opts = getFormParameters(opts)
-  if not opts.descriptors:
-    opts.descriptors = TEST_SEQS
-    opts.datatype = 'fasta'
-  #
-  validateOptions(opts)
-  #
-  return opts
+    opts = parser.parse_args()
+    if opts.doCGI:
+        opts = getFormParameters(opts)
+
+    #
+    return opts
 
 # -----------------------------------------
 def main () :
-  opts = getOptions()
-  global DATA_DIR
-  DATA_DIR = opts.dataDirectory
-  print ('Content-Type: text/plain')
-  if "filename" in opts:
-     print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
-  print ("")
-  if opts.datatype == "fasta":
-      doSequences(opts.descriptors)
-  elif opts.datatype == "gff":
-      doFeatures(opts.descriptors)
-  else:
-      raise RuntimeError("Unknown datatype value: " + opts.datatype)
+    opts = getOptions()
+    global DATA_DIR
+    DATA_DIR = opts.dataDirectory
+    if opts.datatype == "metadata":
+        doMetadata()
+        return
+    validateOptions(opts)
+    print ('Content-Type: text/plain')
+    if "filename" in opts:
+        print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
+    print ("")
+    if opts.datatype == "fasta":
+        doSequences(opts.descriptors)
+    elif opts.datatype == "gff":
+        doFeatures(opts.descriptors)
+    else:
+        raise RuntimeError("Unknown datatype value: " + opts.datatype)
 
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------

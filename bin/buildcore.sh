@@ -267,6 +267,12 @@ deploy () {
       echo $GCONFIG > ${infofile}
       checkexit
   fi
+
+  registryfile=${WDIR}/index.tsv
+  touch ${registryfile}
+  echo ${GDIR} >> ${registryfile}
+  sort ${registryfile} | uniq > ${WDIR}/index.tsv2
+  mv ${WDIR}/index.tsv2 ${WDIR}/index.tsv
 }
 
 # ---------------------
@@ -277,12 +283,14 @@ deployWwwContents () {
       simpleCommand cp ${INSTALL_DIR}/www/info.html ${WDIR}
       simpleCommand cp ${INSTALL_DIR}/www/fetch.py ${CDIR}
       cgi=${CDIR}/fetch.cgi
+      logit "Generating: ${cgi}"
       echo "#!/usr/bin/env bash" > ${cgi}
       echo "# THIS IS A GENERATED FILE." >> ${cgi}
       echo "export TABIX=\"${TABIX}\"" >> ${cgi}
       echo "export SAMTOOLS=\"${SAMTOOLS}\"" >> ${cgi}
       echo "${PYTHON} ${CDIR}/fetch.py --cgi --dir ${WDIR}" >> ${cgi}
       chmod +x ${cgi}
+      logit `cat ${cgi}`
   fi
 }
 
