@@ -1,3 +1,10 @@
+#
+# filter.py
+#
+# Reads from stdin, writes to stdout, applying the filter class specified on the command line.
+# All filter classes (and their file names) end in "Filter", e.g., "AllianceGffFilter".
+# On the command line, "Filter" is dropped and the first letter is lowercase, e.g. "allianceGff".
+#
 import sys
 import importlib
 import json

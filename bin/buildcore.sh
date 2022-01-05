@@ -250,16 +250,21 @@ import () {
 deploy () {
   STAGE="deploy"
   logit "Deploying..."
-  logit "cp -f ${ODIR}/${GDIR}/${FLOCAL}* ${WDIR}/${GDIR}"
-  if [[ $ODIR == $WDIR ]] ; then
-      logit "Skipped file copy because output and deployment directories are the same."
-      return
-  fi
 
   makedirectory ${WDIR}/${GDIR}
 
-  if [[ $DEBUG == "" ]] ; then
+  logit "cp -f ${ODIR}/${GDIR}/${FLOCAL}* ${WDIR}/${GDIR}"
+  if [[ $ODIR == $WDIR ]] ; then
+      logit "Skipped file copy because output and deployment directories are the same."
+  elif [[ $DEBUG == "" ]] ; then
       cp -f ${ODIR}/${GDIR}/${FLOCAL}* ${WDIR}/${GDIR}
+      checkexit
+  fi
+
+  infofile=${WDIR}/${GDIR}/index.json
+  logit "Writing info file: ${infofile}"
+  if [[ $DEBUG == "" ]] ; then
+      echo $GCONFIG > ${infofile}
       checkexit
   fi
 }
