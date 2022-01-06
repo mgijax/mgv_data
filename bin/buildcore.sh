@@ -36,6 +36,9 @@ Parameters:
     Print this help and exit.
 -g PATTERN
     Only process genomes matching the pattern. To process all genomes, -g all.
+-G PATTERN
+    Process all genomes, starting from the first one matching PATTERN. 
+    Useful for restarting a failed build - specify the genome that failed as the argument to -G.
 -t TRACK
     Which track to import: either models or assembly. Default processes all tracks.
 -p PHASE
@@ -66,10 +69,19 @@ parseCommandLine () {
             # genome path/subdir name
             shift
             MATCHPAT="$1"
+            ETSEQ=""
             if [[ ${MATCHPAT} == "all" ]] ; then
                 MATCHPAT="*"
             fi
-            echo "MATCHPAT=$MATCHPAT"
+            ;;
+        -G)
+            # genome path/subdir name
+            shift
+            MATCHPAT="$1"
+            ETSEQ="true"
+            if [[ ${MATCHPAT} == "all" ]] ; then
+                MATCHPAT="*"
+            fi
             ;;
         -t)
             # file type (models or assembly)
@@ -233,6 +245,16 @@ import () {
           ${TABIX} -p gff ${ofile}
           checkexit
       fi
+
+      logit "Extracting top level features..."
+      if [[ $DEBUG == "" ]] ; then
+          gfile="${odir}/genes.gff.gz"
+          ${BGZIP} -c -d ${ofile} | grep -v "^#" | grep -v "Parent=" | ${BGZIP} > ${gfile}
+          ${TABIX} -p gff ${gfile}
+          checkexit
+      fi
+
+
   elif [ $FTYPE == "fasta" ] ; then
       logit "Filtering and compressing..."
       logit "$stream $ifile | ${FILTER} | ${BGZIP} > ${ofile}"
