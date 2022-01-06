@@ -124,9 +124,9 @@ logit () {
     D=""
   fi
   if [[ ${LOGFILE} ]] ; then
-      echo `date` $D $STAGE $FTYPE "$*" >> ${LOGFILE}
+      echo `date` $D $GDIR $STAGE $FTYPE "$*" >> ${LOGFILE}
   else
-      echo `date` $D $STAGE $FTYPE "$*"
+      echo `date` $D $GDIR $STAGE $FTYPE "$*"
   fi
 }
 
@@ -135,6 +135,7 @@ logit () {
 #
 die () {
     logit "$*"
+    logit "Build FAILED. Exiting."
     exit 1
 }
 
@@ -248,7 +249,7 @@ import () {
 
       logit "Extracting top level features..."
       if [[ $DEBUG == "" ]] ; then
-          gfile="${odir}/genes.gff.gz"
+          gfile="${odir}/${TTYPE}.genes.gff.gz"
           ${BGZIP} -c -d ${ofile} | grep -v "^#" | grep -v "Parent=" | ${BGZIP} > ${gfile}
           ${TABIX} -p gff ${gfile}
           checkexit
@@ -283,7 +284,7 @@ deploy () {
   if [[ $ODIR == $WDIR ]] ; then
       logit "Skipped file copy because output and deployment directories are the same."
   elif [[ $DEBUG == "" ]] ; then
-      cp -f ${ODIR}/${GDIR}/${FLOCAL}* ${WDIR}/${GDIR}
+      cp -f ${ODIR}/${GDIR}/${TTYPE}.* ${WDIR}/${GDIR}
       checkexit
   fi
 
@@ -298,6 +299,8 @@ deploy () {
 
 # ---------------------
 deployWwwContents () {
+  GDIR=""
+  STAGE="deploy"
   if [[ $PHASE == "all" || $PHASE == "deploy" ]] ; then
       FTYPE="www"
       simpleCommand cp ${INSTALL_DIR}/www/apache.htaccess ${WDIR}/.htaccess
@@ -313,6 +316,8 @@ deployWwwContents () {
       chmod +x ${cgi}
       logit `cat ${cgi}`
   fi
+  STAGE=""
+  FTYPE=""
 }
 
 # ---------------------

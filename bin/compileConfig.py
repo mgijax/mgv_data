@@ -15,9 +15,11 @@ BCORE = os.path.join(MY_DIR, "buildcore.sh")
 
 print("#!/usr/bin/bash")
 print("source %s" % BCORE)
-print('logit "Command line: $0 $*"')
 print("activateVenv")
 print("parseCommandLine $*")
+print('logit "==============================================================="')
+print('logit "This is the mgv_data build pipeline."')
+print('logit "Command line: $0 $*"')
 print('ETSEQSTARTED=""')
 for gc in config["buildList"]:
     resolveAll(gc)
@@ -46,4 +48,6 @@ for gc in config["buildList"]:
             raise RuntimeError("Unknown type: " + gc["type"])
         print("\tfi")
     print("fi")
+#
 print("deployWwwContents")
+print("logit 'Pipeline exiting.'")
