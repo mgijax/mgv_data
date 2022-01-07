@@ -376,7 +376,9 @@ buildList:
     taxonid: "10116"
     build: Rnor_6.0
     tracks:
-      - << : *ensemblAssembly
+      -
+        << : *ensemblAssembly
+        release: 104
       -
         << : *allianceGff
         provider: RGD
