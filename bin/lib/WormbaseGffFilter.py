@@ -1,5 +1,5 @@
 from .AllianceGffFilter import AllianceGffFilter
-class WormBaseGffFilter (AllianceGffFilter) :
+class WormbaseGffFilter (AllianceGffFilter) :
     def processFeature (self, f) :
         AllianceGffFilter.processFeature(self, f)
         attrs = f[8]
