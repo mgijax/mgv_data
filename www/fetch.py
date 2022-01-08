@@ -120,8 +120,32 @@ def getSequenceFromSeqfetch (desc) :
     return seqs
 
 # -----------------------------------------
-def doSequences (descs) :
-    for d in descs:
+def validateSequenceOptions (opts) :
+    if not opts.descriptors:
+        error("No descriptors.")
+    ndescs = len(opts.descriptors)
+    if ndescs > MAX_DESCRIPTORS:
+        error("Too many descriptors: %d" % ndescs)
+    tLength = 0
+    for d in opts.descriptors:
+        if "length" in d:
+            if type(d["length"]) is list:
+                tLength += sum(d["length"])
+            else:
+                tLength += d["length"]
+    if tLength > MAX_LENGTH:
+        error("Total length too big: %d" % tLength)
+
+# -----------------------------------------
+def doSequences (opts) :
+    #
+    validateSequenceOptions(opts)
+    #
+    print ('Content-Type: text/plain')
+    if "filename" in opts:
+        print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
+    print ("")
+    for d in opts.descriptors:
         if "seqId" in d:
             s = getSequenceFromSeqfetch(d)
         else:
@@ -140,16 +164,32 @@ def getFeaturesFromTabix (desc) :
     r = subprocess.check_output(command)
     r = r.decode("utf8")
     return r
+
 # -----------------------------------------
-def doFeatures (descs) :
-    for d in descs:
+def doFeatures (opts) :
+    if not opts.descriptors:
+        error("No descriptors.")
+    print ('Content-Type: text/plain')
+    if "filename" in opts:
+        print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
+    print ("")
+    for d in opts.descriptors:
         fs = getFeaturesFromTabix(d)
         sys.stdout.write('#%s::%s:%d-%d\n' % (d['genomeUrl'],d['chromosome'],d['start'],d['end']))
         sys.stdout.write(fs)
 
 # -----------------------------------------
-def doMetadata () :
-    metadata = {}
+def doHomology (opts) :
+    print ('Content-Type: text/plain')
+    print ('')
+    txid = opts.taxonid
+    path = "%s/homologies/%s.tsv" % (DATA_DIR, txid)
+    with open(path, 'r') as fd:
+        sys.stdout.write(fd.read())
+
+# -----------------------------------------
+def doMetadata (opts) :
+    metadata = []
 
     for name in os.listdir(DATA_DIR):
         gfile = os.path.join(DATA_DIR, name, "index.json")
@@ -158,7 +198,7 @@ def doMetadata () :
         with open(gfile, 'r') as fd:
             gcfg = json.load(fd)
         #
-        metadata[name] = gcfg
+        metadata.append(gcfg)
         #
         # Add a timestamp, set to file's modification date.
         #
@@ -185,17 +225,6 @@ def doMetadata () :
     print(json.dumps(metadata,indent=2))
 
 # -----------------------------------------
-def getFormParameters (opts) :
-    form = cgi.FieldStorage()
-    if "descriptors" in form:
-        opts.descriptors = json.loads(form["descriptors"].value)
-    if "datatype" in form:
-        opts.datatype = form["datatype"].value
-    if "filename" in form:
-        opts.filename = form["filename"].value
-    return opts
-
-# -----------------------------------------
 def error (message) : 
    print ('Content-Type: text/plain')
    print ('')
@@ -203,21 +232,17 @@ def error (message) :
    sys.exit(1)
 
 # -----------------------------------------
-def validateOptions (opts) :
-   ndescs = len(opts.descriptors)
-   if ndescs == 0:
-       error("No descriptors.")
-   if ndescs > MAX_DESCRIPTORS:
-       error("Too many descriptors: %d" % ndescs)
-   tLength = 0
-   for d in opts.descriptors:
-       if "length" in d:
-           if type(d["length"]) is list:
-               tLength += sum(d["length"])
-           else:
-               tLength += d["length"]
-   if tLength > MAX_LENGTH:
-       error("Total length too big: %d" % tLength)
+def getFormParameters (opts) :
+    form = cgi.FieldStorage()
+    if "datatype" in form:
+        opts.datatype = form["datatype"].value
+    if "descriptors" in form:
+        opts.descriptors = form["descriptors"].value
+    if "taxonid" in form:
+        opts.taxonid = form["taxonid"].value
+    if "filename" in form:
+        opts.filename = form["filename"].value
+    return opts
 
 # -----------------------------------------
 def getOptions () :
@@ -227,14 +252,18 @@ def getOptions () :
         "--datatype",
         dest="datatype",
         default="gff",
-        choices=["fasta","gff","metadata"],
-        help="What to fetch. If fasta or gff, specific regions are specified in the descriptors argument. If metadata, returns object containing metadata for each known genome (descriptors, if provided, is ignored.)")
+        choices=["fasta","gff","metadata","homology"],
+        help="What to fetch. If fasta or gff, specific regions are specified in the descriptors argument. If metadata, returns object containing metadata for each known genome (descriptors, if provided, are ignored.)")
 
     parser.add_argument(
         "--descriptors",
         dest="descriptors",
-        action="append",
-        help="Descriptors.")
+        help="Descriptors, for datatype=fasta or gff.")
+
+    parser.add_argument(
+        "--taxonid",
+        dest="taxonid",
+        help="Taxon id, for datatype=homology.")
 
     parser.add_argument(
         "--dir",
@@ -252,6 +281,9 @@ def getOptions () :
     opts = parser.parse_args()
     if opts.doCGI:
         opts = getFormParameters(opts)
+    #
+    if opts.descriptors:
+        opts.descriptors = json.loads(opts.descriptors)
 
     #
     return opts
@@ -262,17 +294,13 @@ def main () :
     global DATA_DIR
     DATA_DIR = opts.dataDirectory
     if opts.datatype == "metadata":
-        doMetadata()
-        return
-    validateOptions(opts)
-    print ('Content-Type: text/plain')
-    if "filename" in opts:
-        print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
-    print ("")
-    if opts.datatype == "fasta":
-        doSequences(opts.descriptors)
+        doMetadata(opts)
+    elif opts.datatype == "homology":
+        doHomology(opts)
+    elif opts.datatype == "fasta":
+        doSequences(opts)
     elif opts.datatype == "gff":
-        doFeatures(opts.descriptors)
+        doFeatures(opts)
     else:
         raise RuntimeError("Unknown datatype value: " + opts.datatype)
 
