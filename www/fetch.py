@@ -1,18 +1,41 @@
 
 # fetch.py
 #
-# CGI for retrieving an arbitrary set of sequences from the available genomes.
+# CGI for retrieving an features, sequences, and metadata for a set of deployed genomes.
+# For retrievig deployed homology data.
 #
-# Input is a list of descriptors, one per sequence.
-# Each descriptor specifies a genome, a chromosome, and one or more start/length pairs.
+# FETCHING METADATA
+#     datatype=metadata
+#     Response is a JSON object (MIME type application/json) metadata for all deployed genomes.
 #
-# When multiple start/length pairs are specified, the pieces are concatenated.
-# A descriptor may specify that the sequence should be reverse complemented.
-# A descriptor may specify that the sequence should be translated.
-# (The order of things is: get the pieces, concatenate, reverse complement, translate.)
-# A descriptor specifies the header to be returned with the sequence.
+# FETCHING FEATURES
+#     datatype=gff
+#     track=models or models.genes
+#     descriptors=<JSON encoded list> Each list element is an object with two fields:
+#               genome=<genome> Path name for the genome e.g., mus_musculus_aj
+#               regions=<regions> Argument to pass to tabix, e.g. "1:123456789-123498765"
+#                       Specify multiple regions as space separated list. Specify whole chromosomes 
+#                       by just naming the chromosome.
+#     Response is a GFF file of features (MIME type text/plain)
+#               
+# FETCHING SEQUENCES
+#     datatype=fasta
+#     track=assembly
+#     descriptors=<JSON encoded list> Each list element describes one sequence to return.
+#     Each descriptor has these fields:
+#         genome = path name for the genome, e.g., mus_musculus_aj
+#         regions = argument to pass to faidx. One or more (space separated) regions, each of the form <chr>:<start>-<end>
+#         reverse = if ture
+#         translate
+#         header
+#     Response is a Fasta file of sequences, one per descriptor. (MIME type text/plain)
 #
-# Response is a Fasta file.
+# FETCHING HOMOLOGY DATA
+#    datatype=homology
+#    taxonid=id (the numeric part of an NBCI Taxon identifier, e.g. 9606 for human.
+#    Returns orthology data for the given taxon id. Returns a table in TSV format with four columns:
+#         geneid1, taxon1, geneid2, taxon2
+#    (In all rows, taxon1 is equal to the specified taxon) (MIME type text/plain)
 #
 # -----------------------------------------
 import sys
@@ -25,6 +48,7 @@ import string
 import cgi
 import cgitb
 import subprocess
+import re
 
 # -----------------------------------------
 TABIX=os.environ["TABIX"]
@@ -42,21 +66,22 @@ def chunkString (s, n) :
 
 # -----------------------------------------
 def defaultHeader (desc) :
-    return ">default"
+    hdr = ">%s::%s" % (desc["genome"], "+".join(desc["regions"].split()))
+    if desc.get("reverse", False):
+        hdr += ",RC"
+    if desc.get("translate", False):
+        hdr += ",M"
+    return hdr
 
 # -----------------------------------------
 def getSequenceFromFaidx (desc) :
     arrayify = lambda x : x if type(x) is list else [x]
-    gurl = desc["genomeUrl"]
-    gdir = gurl.replace("/"," ").split()[-1]
-    path = "%s/%s/assembly.fasta.gz" % (DATA_DIR, gdir)
-
-    desc["chromosome"]
-    starts = arrayify(desc["start"])
-    lengths = arrayify(desc["length"])
-    args = [ "%s:%d-%d" % (desc["chromosome"], s, s+lengths[i]-1) for i,s in enumerate(starts) ]
+    gpath = desc["genome"]
+    track = desc["track"]
+    path = "%s/%s/%s.fasta.gz" % (DATA_DIR, gpath, track)
+    regions = desc["regions"]
     #
-    command = [SAMTOOLS, "faidx", path] + args
+    command = [SAMTOOLS, "faidx", path] + regions.split()
     r = subprocess.check_output(command)
     r = ''.join(filter(lambda l: not l.startswith('>'), r.decode('utf8').split('\n')))
     return r
@@ -64,7 +89,7 @@ def getSequenceFromFaidx (desc) :
 # -----------------------------------------
 def getSequenceFromAssembly(desc):
     seq = getSequenceFromFaidx(desc)
-    if desc.get('reverseComplement', False):
+    if desc.get('reverse', False):
         seq = reverseComplement(seq)
     if desc.get('translate', False):
         seq = translate(seq)
@@ -123,18 +148,24 @@ def getSequenceFromSeqfetch (desc) :
 def validateSequenceOptions (opts) :
     if not opts.descriptors:
         error("No descriptors.")
-    ndescs = len(opts.descriptors)
-    if ndescs > MAX_DESCRIPTORS:
-        error("Too many descriptors: %d" % ndescs)
+    ndescs = 0
     tLength = 0
+    region_re = re.compile("^([^:]+):(\d+)-(\d+)$")
     for d in opts.descriptors:
-        if "length" in d:
-            if type(d["length"]) is list:
-                tLength += sum(d["length"])
-            else:
-                tLength += d["length"]
-    if tLength > MAX_LENGTH:
-        error("Total length too big: %d" % tLength)
+        rs = d["regions"].split()
+        ndescs += len(rs)
+        if ndescs > MAX_DESCRIPTORS:
+            error("Too many descriptors")
+        for r in rs:
+            m = region_re.match(r)
+            if not m:
+                error("Bad region descriptor.")
+            chrom = m.group(1)
+            start = int(m.group(2))
+            end = int(m.group(3))
+            tLength += end - start + 1
+            if tLength > MAX_LENGTH:
+                error("Total request size too big.")
 
 # -----------------------------------------
 def doSequences (opts) :
@@ -147,11 +178,11 @@ def doSequences (opts) :
     print ("")
     for d in opts.descriptors:
         if "seqId" in d:
-            s = getSequenceFromSeqfetch(d)
+            raise RuntimeError("Not implemented.")
+            #s = getSequenceFromSeqfetch(d)
         else:
             s = getSequenceFromAssembly(d)
         sys.stdout.write(s)
-        sys.stdout.write('\n')
 
 # -----------------------------------------
 def getFeaturesFromTabix (desc) :
@@ -251,14 +282,13 @@ def getOptions () :
     parser.add_argument(
         "--datatype",
         dest="datatype",
-        default="gff",
         choices=["fasta","gff","metadata","homology"],
         help="What to fetch. If fasta or gff, specific regions are specified in the descriptors argument. If metadata, returns object containing metadata for each known genome (descriptors, if provided, are ignored.)")
 
     parser.add_argument(
         "--descriptors",
         dest="descriptors",
-        help="Descriptors, for datatype=fasta or gff.")
+        help="Descriptors, for datatype=fasta or gff. Can also specify one of the test sets of descriptor by name. Choose one of: %s" % ', '.join(TESTS.keys())  )
 
     parser.add_argument(
         "--taxonid",
@@ -283,16 +313,20 @@ def getOptions () :
         opts = getFormParameters(opts)
     #
     if opts.descriptors:
-        if opts.descriptors == "TEST_FASTA":
-            opts.datatype = "fasta"
-            opts.descriptors = TEST_FASTA
-        elif opts.descriptors == "TEST_GFF":
-            opts.datatype = "gff"
-            opts.descriptors = TEST_GFF
+        if opts.descriptors.startswith("TEST_"):
+            tname = opts.descriptors
+            if tname not in TESTS:
+                error("Bad test name.")
+            opts.datatype = TESTS[tname][0]
+            opts.descriptors = TESTS[tname][1]
         else:
-            print(opts.descriptors)
-            opts.descriptors = json.loads(opts.descriptors)
-
+            try:
+                opts.descriptors = json.loads(opts.descriptors)
+            except:
+                error("Bad descriptors.")
+    #
+    if not opts.datatype:
+        parser.error("Please specify a datatype.")
     #
     return opts
 
@@ -316,25 +350,70 @@ def main () :
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------
 
-TEST_GFF = [{
-    "genome": "mus_musculus_aj",
-    "track" : "models",
-    "regions" : "1:123456790-124456790 2:223456790-224456790"
-},{
-    "genome": "mus_musculus_grcm39",
-    "track" : "models.genes",
-    "regions" : "18 19"
-}]
+TESTS = {
+    "TEST_GFF" : ("gff",[{
+        "genome": "mus_musculus_aj",
+        "track" : "models",
+        "regions" : "1:123456790-124456790 2:223456790-224456790"
+    },{
+        "genome": "mus_musculus_grcm39",
+        "track" : "models.genes",
+        "regions" : "18 19"
+    }]),
+    "TEST_FASTA_TOO_BIG" : ("fasta", [{
+        "header": "Too big.",
+        "genome": "mus_musculus_aj",
+        "track": "assembly",
+        "regions": "1:1-123456889",
+    }]),
+    "TEST_FASTA" : ("fasta", [{
+        "genome": "mus_musculus_aj",
+        "track": "assembly",
+        "regions": "1:123456790-123456889",
+    }, {
+        "header": ">retrieve 100 bp, specify header",
+        "genome": "mus_musculus_aj",
+        "track": "assembly",
+        "regions": "1:133456790-133456889",
+    }, {
+        "header": ">retrieve 200 bp, joined",
+        "genome": "mus_musculus_aj",
+        "track": "assembly",
+        "regions": "1:123456790-123456889 1:133456790-133456889",
+    }, {
+        "header": ">retrieve 200 bp, set line length",
+        "genome": "mus_musculus_aj",
+        "track": "assembly",
+        "regions": "1:123456790-123456889 1:133456790-133456889",
+        "lineLength" : 40,
+    }, {
+        "header": ">retrieve 200 bp, reverse complement",
+        "genome": "mus_musculus_aj",
+        "track": "assembly",
+        "regions": "1:123456790-123456889 1:133456790-133456889",
+        "reverse": True,
+        "translate": False,
+    }, {
+        "header": ">retrieve 200 bp, translate",
+        "genome": "mus_musculus_aj",
+        "track": "assembly",
+        "regions": "1:123456790-123456889 1:133456790-133456889",
+        "reverse": False,
+        "translate": True,
+    }, {
+        "genome": "mus_musculus_aj",
+        "track": "assembly",
+        "regions": "1:123456790-123456889 1:133456790-133456889",
+        "reverse": True,
+        "translate": True,
 
-TEST_FASTA = [{
-    "genome": "mus_musculus_aj",
-    "track": "assembly",
-    "regions": "1:123456790-123456889",
-    "header": ">test.0",
-    #"lineLength" : 40,
-    #"reverseComplement": False,
-    #"translate": False,
-}]
+    #}, {
+    #    "seqId" : [ "ENSEMBL:MGP_CASTEiJ_T0038053", "ENSEMBL:MGP_CASTEiJ_P0038053"]
+    #}, {
+    #    "seqId" : "RefSeq:NM_001145293"
+
+    }])
+}
 
 xTEST_FASTA = [{
 
