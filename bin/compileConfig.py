@@ -31,8 +31,8 @@ for gc in config["buildList"]:
     print("\tGDIR='%s'" % gc["path"])
     print('ETSEQSTARTED="true"')
     for dc in gc["tracks"]:
-        print('\tif [[ $TRACK == "%s" || $TRACK == "all" ]] ; then' % dc["type"])
-        print("\t\tTTYPE='%s'" % dc["type"])
+        print('\tif [[ $TRACK == "%s" || $TRACK == "all" ]] ; then' % dc["track"])
+        print("\t\tTTYPE='%s'" % dc["track"])
         print("\t\tFURL='%s'" % dc["url"])
         print("\t\tFTYPE='%s'" % dc["filetype"])
         print("\t\texport DCONFIG='%s'" % json.dumps(dc))

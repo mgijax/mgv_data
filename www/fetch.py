@@ -155,15 +155,16 @@ def doSequences (opts) :
 
 # -----------------------------------------
 def getFeaturesFromTabix (desc) :
-    gurl = desc["genomeUrl"]
-    gdir = gurl.replace("/"," ").split()[-1]
-    path = "%s/%s/models.gff.gz" % (DATA_DIR, gdir)
-    arg = "%s:%d-%d" % (desc["chromosome"], desc["start"], desc["end"])
+    gpath = desc["genome"]
+    track = desc["track"]
+    path = "%s/%s/%s.gff.gz" % (DATA_DIR, gpath, track)
+    regions = desc["regions"]
+    command = [TABIX, "--separate-regions", path] + regions.split()
     #
-    command = [TABIX, path, arg]
     r = subprocess.check_output(command)
     r = r.decode("utf8")
-    return r
+    h = '#genome=%s track=%s\n' % (gpath, track)
+    return h+r
 
 # -----------------------------------------
 def doFeatures (opts) :
@@ -175,7 +176,6 @@ def doFeatures (opts) :
     print ("")
     for d in opts.descriptors:
         fs = getFeaturesFromTabix(d)
-        sys.stdout.write('#%s::%s:%d-%d\n' % (d['genomeUrl'],d['chromosome'],d['start'],d['end']))
         sys.stdout.write(fs)
 
 # -----------------------------------------
@@ -283,7 +283,15 @@ def getOptions () :
         opts = getFormParameters(opts)
     #
     if opts.descriptors:
-        opts.descriptors = json.loads(opts.descriptors)
+        if opts.descriptors == "TEST_FASTA":
+            opts.datatype = "fasta"
+            opts.descriptors = TEST_FASTA
+        elif opts.descriptors == "TEST_GFF":
+            opts.datatype = "gff"
+            opts.descriptors = TEST_GFF
+        else:
+            print(opts.descriptors)
+            opts.descriptors = json.loads(opts.descriptors)
 
     #
     return opts
@@ -308,21 +316,27 @@ def main () :
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------
 
-TEST_FEATS = [{
+TEST_GFF = [{
     "genome": "mus_musculus_aj",
-    "genomeUrl" : "mus_musculus_aj",
-    "chromosome": "1",
-    "start": 123456790,
-    "end": 124456790
+    "track" : "models",
+    "regions" : "1:123456790-124456790 2:223456790-224456790"
 },{
     "genome": "mus_musculus_grcm39",
-    "genomeUrl" : "mus_musculus_grcm39",
-    "chromosome": "1",
-    "start": 123456790,
-    "end": 124456790
+    "track" : "models.genes",
+    "regions" : "18 19"
 }]
 
-TEST_SEQS = [{
+TEST_FASTA = [{
+    "genome": "mus_musculus_aj",
+    "track": "assembly",
+    "regions": "1:123456790-123456889",
+    "header": ">test.0",
+    #"lineLength" : 40,
+    #"reverseComplement": False,
+    #"translate": False,
+}]
+
+xTEST_FASTA = [{
 
 "seqId" : [ "ENSEMBL:MGP_CASTEiJ_T0038053", "ENSEMBL:MGP_CASTEiJ_P0038053"]
 

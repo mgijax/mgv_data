@@ -25,14 +25,14 @@ class UrlResolver :
 class EnsemblResolver (UrlResolver) :
     def resolve (self, gcfg, dcfg) :
         pth = dcfg.get("remotePath", gcfg["path"])
-        if dcfg["type"] == "assembly":
+        if dcfg["track"] == "assembly":
             dcfg["url"] = dcfg["baseUrl"] + "/release-%s/fasta/%s/dna/%s.%s.dna.toplevel.fa.gz" % \
                                       (dcfg["release"], pth, pth.capitalize(), gcfg["build"])
-        elif dcfg["type"] == "models":
+        elif dcfg["track"] == "models":
             dcfg["url"] = dcfg["baseUrl"] + "/release-%s/gff3/%s/%s.%s.%s.gff3.gz" % \
                                       (dcfg["release"], pth, pth.capitalize(), gcfg["build"], dcfg["release"])
         else:
-            raise RuntimeError("Don't know this type: " + dcfg["type"])
+            raise RuntimeError("Don't know this type: " + dcfg["track"])
         return dcfg["url"]
 
 ### ------------------------------------------------------------------
@@ -45,14 +45,14 @@ class EnsemblResolver (UrlResolver) :
 #    ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/635/GCF_000001635.25_GRCm38.p5/GCF_000001635.25_GRCm38.p5_genomic.fna.gz
 class NcbiResolver (UrlResolver) :
     def resolve (self, gcfg, dcfg) :
-        if dcfg["type"] == "assembly":
+        if dcfg["track"] == "assembly":
             ident = dcfg["assemblyId"]
             (prefix, triples, version, name) = self.parseAssemblyId(ident)
             dcfg["url"] = dcfg["baseUrl"] + ("%s/%s/%s/%s_genomic.fna.gz" % (prefix, "/".join(triples), ident, ident))
             self.log("URL: " + dcfg["url"])
             return dcfg["url"]
         else:
-            raise RuntimeError("Don't know this type: " + dcfg["type"])
+            raise RuntimeError("Don't know this type: " + dcfg["track"])
 
     # given "GCA_000001635.9_GRCm39", returns ("GCA", ["000","001","635"] ".9", "GRCm39")
     def parseAssemblyId (self, ident) :
@@ -104,8 +104,8 @@ class NcbiResolver (UrlResolver) :
 class AllianceResolver (UrlResolver) :
     SNAPSHOT_CACHE = {}
     def resolve (self, gcfg, dcfg) :
-        if dcfg["type"] not in ["models","orthologs","variants"] :
-            raise RuntimeError("Don't know this type:" + dcfg["type"])
+        if dcfg["track"] not in ["models","orthologs","variants"] :
+            raise RuntimeError("Don't know this type:" + dcfg["track"])
         dtype = dcfg["allianceDataType"]
         dcfg["url"] = self.getUrl(gcfg, dcfg)
         return dcfg["url"]

@@ -89,14 +89,14 @@ linkConfigs:
 assemblySources:
   - &ncbiAssembly
     source: ncbi
-    type: assembly
+    track: assembly
     filetype: fasta
     baseUrl: *ncbiFtpBaseUrl
     chr_re: *chr_re
     filter: assemblyFilter
   - &ensemblAssembly
     source: ensembl
-    type: assembly
+    track: assembly
     filetype: fasta
     release: *ensemblRelease
     baseUrl: *ensemblFtpBaseUrl
@@ -106,7 +106,7 @@ assemblySources:
 modelSources:
   - &ensemblMouseGff
     source: ensembl
-    type: models
+    track: models
     chr_re: *chr_re
     filetype: gff
     baseUrl: *ensemblFtpBaseUrl
@@ -121,7 +121,7 @@ modelSources:
 
   - &ensemblNonMouseGff
     source: ensembl
-    type: models
+    track: models
     filetype: gff
     chr_re: *chr_re
     baseUrl: *ensemblFtpBaseUrl
@@ -134,7 +134,7 @@ modelSources:
 
   - &allianceGff
     source: alliance
-    type: models
+    track: models
     filetype: gff
     chr_re: *chr_re
     release: *allianceRelease
@@ -159,7 +159,7 @@ buildList:
         << : *ensemblAssembly
         remotePath: mus_musculus
       -
-        type: models 
+        track: models 
         filetype: gff
         url: *mgiCurrentModelsUrl
         chr_re: *chr_re
@@ -181,7 +181,7 @@ buildList:
         release: "101"
         remotePath: "mus_musculus"
       -
-        type: models
+        track: models
         source: mgi
         filetype: gff
         filter: mgiGffFilter
@@ -460,7 +460,7 @@ buildList:
     name: homologies
     tracks:
       -
-        type: orthologs
+        track: orthologs
         filetype: tsv
         source: alliance
         release: *allianceRelease
