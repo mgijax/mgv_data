@@ -5,34 +5,50 @@
 # For retrievig deployed homology data.
 #
 # FETCHING METADATA
-#     datatype=metadata
-#     Response is a JSON object (MIME type application/json) metadata for all deployed genomes.
+#   Args:
+#     datatype : metadata
+#   Response:
+#     Response is a JSON object (MIME type application/json) containing metadata for all deployed genomes.
 #
 # FETCHING FEATURES
-#     datatype=gff
-#     track=models or models.genes
-#     descriptors=<JSON encoded list> Each list element is an object with two fields:
-#               genome=<genome> Path name for the genome e.g., mus_musculus_aj
-#               regions=<regions> Argument to pass to tabix, e.g. "1:123456789-123498765"
+#   Args:
+#     datatype : gff
+#     track : <trackname> E.g., models or models.genes
+#     descriptors : <JSON encoded list> Each list element is an object with two fields:
+#               genome : <genomepath> Path name for the genome e.g., mus_musculus_aj
+#               regions : <regions> Argument to pass to tabix, e.g. "1:123456789-123498765"
 #                       Specify multiple regions as space separated list. Specify whole chromosomes 
 #                       by just naming the chromosome.
+#     filename : <filename> to add as a Content-Disposition response header
+#
+#  Response:
 #     Response is a GFF file of features (MIME type text/plain)
 #               
 # FETCHING SEQUENCES
-#     datatype=fasta
-#     track=assembly
-#     descriptors=<JSON encoded list> Each list element describes one sequence to return.
-#     Each descriptor has these fields:
-#         genome = path name for the genome, e.g., mus_musculus_aj
-#         regions = argument to pass to faidx. One or more (space separated) regions, each of the form <chr>:<start>-<end>
-#         reverse = if ture
-#         translate
-#         header
+#  Args:
+#     datatype : fasta
+#     track : <trackname> E.g., assembly
+#     descriptors : <JSON encoded list> Each list element describes one sequence to return.
+#         Each descriptor has these fields:
+#             genome : <genomepath> Path name for the genome, e.g., mus_musculus_aj
+#             regions : <regions> Argument for faidx. One or more space separated regions, 
+#                       each of the form <chr>:<start>-<end>. If multiple regions are specified, the
+#                       sequences are concatenated to a single result sequence.
+#             reverse : <boolean> If true, reverse complement the sequence. Default = false
+#             translate : <boolean> If true, translate the sequence. Default = false
+#             header : <string> If provided, used as the header line for the returned sequence.
+#                       Otherwise a default header is generated.
+#     filename : <filename> to add as a Content-Disposition response header
+#
+#  Response:
 #     Response is a Fasta file of sequences, one per descriptor. (MIME type text/plain)
+#     There are hard limits on the number of descriptors and total size of the request.
 #
 # FETCHING HOMOLOGY DATA
-#    datatype=homology
-#    taxonid=id (the numeric part of an NBCI Taxon identifier, e.g. 9606 for human.
+#  Args:
+#    datatype : homology
+#    taxonid : <taxonid> (the numeric part of an NBCI Taxon identifier, e.g. 9606 for human.
+#  Response:
 #    Returns orthology data for the given taxon id. Returns a table in TSV format with four columns:
 #         geneid1, taxon1, geneid2, taxon2
 #    (In all rows, taxon1 is equal to the specified taxon) (MIME type text/plain)
