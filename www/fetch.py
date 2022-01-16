@@ -8,7 +8,8 @@
 #   Args:
 #     datatype : metadata
 #   Response:
-#     Response is a JSON object (MIME type application/json) containing metadata for all deployed genomes.
+#     Response is a JSON object containing metadata for all deployed genomes.
+#     MIME type: application/json
 #
 # FETCHING FEATURES
 #   Args:
@@ -22,7 +23,8 @@
 #     filename : <filename> to add as a Content-Disposition response header
 #
 #  Response:
-#     Response is a GFF file of features (MIME type text/plain)
+#     Response is a GFF file of features 
+#     MIME type: application/x-gff
 #               
 # FETCHING SEQUENCES
 #  Args:
@@ -41,8 +43,9 @@
 #     filename : <filename> to add as a Content-Disposition response header
 #
 #  Response:
-#     Response is a Fasta file of sequences, one per descriptor. (MIME type text/plain)
+#     Response is a Fasta file of sequences, one per descriptor. 
 #     There are hard limits on the number of descriptors and total size of the request.
+#     MIME type: application/x-fasta
 #
 # FETCHING HOMOLOGY DATA
 #  Args:
@@ -51,7 +54,8 @@
 #  Response:
 #    Returns orthology data for the given taxon id. Returns a table in TSV format with four columns:
 #         geneid1, taxon1, geneid2, taxon2
-#    (In all rows, taxon1 is equal to the specified taxon) (MIME type text/plain)
+#    In all rows, taxon1 is equal to the specified taxon
+#    MIME type: text/tab-separated-values
 #
 # -----------------------------------------
 import sys
@@ -188,7 +192,7 @@ def doSequences (opts) :
     #
     validateSequenceOptions(opts)
     #
-    print ('Content-Type: text/plain')
+    print ('Content-Type: application/x-fasta')
     if "filename" in opts:
         print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
     print ("")
@@ -217,7 +221,7 @@ def getFeaturesFromTabix (desc) :
 def doFeatures (opts) :
     if not opts.descriptors:
         error("No descriptors.")
-    print ('Content-Type: text/plain')
+    print ('Content-Type: application/x-gff')
     if "filename" in opts:
         print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
     print ("")
@@ -227,7 +231,7 @@ def doFeatures (opts) :
 
 # -----------------------------------------
 def doHomology (opts) :
-    print ('Content-Type: text/plain')
+    print ('Content-Type: text/tab-separated-values')
     print ('')
     txid = opts.taxonid
     path = "%s/homologies/%s.tsv" % (DATA_DIR, txid)
