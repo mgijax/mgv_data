@@ -74,7 +74,6 @@ linkConfigs:
     text: MouseMine
     url: *mousemineAccessionUrl
     attr: curie
-    stripPrefix: true
 
   - &linkAllianceByCid
     text: Alliance
