@@ -265,9 +265,9 @@ import () {
       fi
 
       logit "Creating faidx index..."
-      logit "${FAIDX} ${ofile}"
+      logit "${SAMTOOLS} faidx ${ofile}"
       if [[ $DEBUG == "" ]] ; then
-          ${FAIDX} ${ofile}
+          ${SAMTOOLS} faidx ${ofile}
           checkexit
       fi
   fi
