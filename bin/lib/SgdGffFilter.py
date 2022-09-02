@@ -49,6 +49,7 @@ class SgdGffFilter (AllianceGffFilter) :
                 f[2] = "protein_coding_gene"
             if "gene" in attrs:
                 attrs["Name"] = attrs.pop("gene")
+            if "long_name" in attrs:
                 attrs["long_name"] = attrs.pop("display")
         return f
 

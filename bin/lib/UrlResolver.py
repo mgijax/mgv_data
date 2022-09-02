@@ -46,7 +46,7 @@ class EnsemblResolver (UrlResolver) :
 class NcbiResolver (UrlResolver) :
     def resolve (self, gcfg, dcfg) :
         if dcfg["track"] == "assembly":
-            ident = dcfg["assemblyId"]
+            ident = gcfg["build"]
             (prefix, triples, version, name) = self.parseAssemblyId(ident)
             dcfg["url"] = dcfg["baseUrl"] + ("%s/%s/%s/%s_genomic.fna.gz" % (prefix, "/".join(triples), ident, ident))
             self.log("URL: " + dcfg["url"])
