@@ -7,13 +7,40 @@ Scripts for building and serving data for the [Multiple Genome Viewer (MGV)](htt
 See the [LICENSE](LICENSE.txt) file for license rights and limitations (MIT expat).
 
 ## Overview
-The Multiple Genome Viewer (MGV) displays gene models, genome sequences, and homology relationships for one or more configured genomes.
+The Multiple Genome Viewer (MGV) displays gene models, genome sequences, and homology relationships for one or 
+more configured genomes.
 The purpose of this repo, mgv_data, is to build the server-side data repository which comprises
-GFF3, plain text, and JSON files, organized in a directory hierarchy by genome and type.
+indexed GFF3, FASTA, and JSON files, organized in a directory hierarchy by genome.
 A "build" generally involves (1) downloading data files from various providers, (2) transforming data to the
 formats and file organization used internally by MGV, and (3) deploying data to a web-accessible location.
-At runtime, most requests by MGV are for static files in this hierarchy.
-There is one CGI script that serves requests for sequences.
+At runtime, all data requests go through a fetch CGI.
+
+
+## Installation (SECTION IN PROGRESS)
+
+Prequisites: Samtools
+The back end relies on three tools in the Samtools suite: tabix, for indexing and retrieval of GFF data; 
+faidx, for indexing/rerieval of FASTA sequences; and the compression tool, bgzip.
+Samtools is available from: http://www.htslib.org/
+
+1. Clone this repo
+```bash
+$ git clone git@github.com:mgijax/mgv_data.git
+(or git clone https://github.com/mgijax/mgv_data.git)
+$ cd mgv_data
+```
+2. Compile the build script. 
+```
+$ cd mgv_data
+$ bin/compile config.yaml build.sh
+```
+3. Run the build
+```
+$ ./build.sh
+```
+
+
+
 
 ## Building the default data set
 This repository comes preconfigured to build the data set being served at MGI (www.informatics.jax.org/mgv),
