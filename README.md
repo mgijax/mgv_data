@@ -119,11 +119,12 @@ $ ./build -b myConfig.yaml
 
 ## Serving data to MGV
 
-The data that serves MGV is a directory hierarchy of static files, organized by genome.
-The data comprise genome features, stored as GFF3 and served as static files and genome assemblies, 
-stored as plain strings and served by a CGI script.
+The data for MGV is a directory hierarchy of static files, organized by genome.
+The data comprise genome features (stored as GFF3 and served as static files), genome assemblies
+(stored as plain strings and served by a CGI script), and orthology relationships (stored as ID pairs and served
+as static files).
 
-Note that these files are stored uncompressed, and we use server compression instead.
+These files are stored uncompressed, and we use server compression instead.
 The following Apache .htaccess file is included in the www directory and is copied to the data root directory during deployment.
 ```
 AddType application/json .json
@@ -132,14 +133,34 @@ AddOutputFilterByType DEFLATE application/json text/tab-separated-values
 ```
 The CGI is a Python 3 script, fetch.py, which is invoked by a shell wrapper, fetch.cgi. Deployment copies both pieces to the deployment directory and makes the wrapper executable. You may have to adjust this step, depending on your local environment. 
 
-## Customizing a build
+## Adding your own data
+### Overview
+* Input: Each genome needs a gene model file (GFF3), a genome assembly file (FASTA), and metadata, all configured in buildConfig.json
+* Running "a build" of a genome's data involves these general steps:
+  1. Downloading gene model and genome assembly files to the downloads directory. 
+  2. Importing gene models and genome assemblies. Specific formatting requirements (beyond just being GFF3 or FASTA) are listed below. If the downloaded data do not meet the requirements, they must be suitably transformed.
+  3. During import, the data may be filtered/transformed if needed.
 
-If you're using data from Ensembl:
+### buildConfig.json
 
-Using data NOT from Ensembl:
+### Gene model file requirements
+
+1. GFF3 format. General rule of thumb is to pattern your GFF3 after way Ensembl uses it
+2. Column 1 contains common chromosome names, which should matching the names in the assembly data
+5. Column 9 of gene/pseudogene features may contain an attribute "cID" that
+6. Contains only the things you want displayed. Best to limit to genes/pseudogenes and other similarly sized features. No chromosome-size features. Also not for high volume data like SNPs. 
+7. The features comprising a gene model are grouped in a contiguous series of lines, and models are ordered by chromosome and start position.
+8. The top level feature in a model
+9. 
+
+### Genome assembly file requirements
+
+1. A single FASTA formatted file (compressed or uncompressed) contains the genome.
+2. The header line for each chromosome begins with the chromosome's common name, e.g. ">11 " for chromosome 11. This must match the names used in the the seqid field (column 1) of the gene models file.
+
 
 # Internal data format
-## File structure.
+## Directory structure.
 * Genomes are served to MGV from a static file directory.
   * TO specify this directory, set WDIR in wrapperConfig.sh
   * Gene models are transferred by direct file requests.
@@ -298,5 +319,5 @@ Using data NOT from Ensembl:
 ,["MGI:106321", "10090", "FB:FBgn0260486", "7227", "YN"]
 ...
 ```
-  * The file homologies/orthology/7227.json has the inverse relationships, e.g. ["FB:FBgn0260484", "7227", "MGI:1917606", "10090", "YY"]
+    The file homologies/orthology/7227.json has the inverse relationships, e.g. ["FB:FBgn0260484", "7227", "MGI:1917606", "10090", "YY"]
   * This model derives directly from the Alliance of Genome Resources, strict orthology set.
