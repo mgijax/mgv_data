@@ -24,6 +24,7 @@ FURL=""         # URL of the file to import
 FILTER=""       # filter program
 FORCE=""        # if true, force downloads
 DEBUG=""        # debug mode
+LIST=""         # list genomes and exit
 LOGFILE=""      # log file
 
 # ---------------------
@@ -34,6 +35,8 @@ Usage: $0 [parameters]
 Parameters:
 -h 
     Print this help and exit.
+-l
+    List available genomes and exit.
 -g PATTERN
     Only process genomes matching the pattern. To process all genomes, -g all.
 -G PATTERN
@@ -65,6 +68,10 @@ parseCommandLine () {
             usage
             exit 0
             ;;  
+        -l)
+            # List the available genomes and exit.
+            LIST="true"
+            ;;
         -g)
             # genome path/subdir name
             shift
