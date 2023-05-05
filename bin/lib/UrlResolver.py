@@ -49,14 +49,14 @@ class NcbiResolver (UrlResolver) :
             ident = gcfg["build"]
             (prefix, triples, version, name) = self.parseAssemblyId(ident)
             dcfg["url"] = dcfg["baseUrl"] + ("%s/%s/%s/%s_genomic.fna.gz" % (prefix, "/".join(triples), ident, ident))
-            self.log("URL: " + dcfg["url"])
+            #self.log("URL: " + dcfg["url"])
             return dcfg["url"]
         else:
             raise RuntimeError("Don't know this type: " + dcfg["track"])
 
     # given "GCA_000001635.9_GRCm39", returns ("GCA", ["000","001","635"] ".9", "GRCm39")
     def parseAssemblyId (self, ident) :
-        prefix,numeric,name = ident.split("_")
+        prefix,numeric,name = ident.split("_",2)
         if not prefix in ["GCA","GCF"]:
             raise RuntimeError("Invalid assembly id (bad prefix): " + ident)
         nparts = numeric.split(".")

@@ -9,6 +9,7 @@ vars:
   - &rgdAccessionUrl https://rgd.mcw.edu/rgdweb/report/gene/main.html?id=
   - &hgncAccessionUrl http://www.genenames.org/cgi-bin/gene_symbol_report?hgnc_id=
   - &zfinAccessionUrl https://zfin.org/
+  - &xenbaseAccessionUrl https://xenbase.org/entry/
   - &fbAccessionUrl https://flybase.org/reports/
   - &wbAccessionUrl https://wormbase.org/species/c_elegans/gene/
   - &sgdAccessionUrl http://www.yeastgenome.org/locus/
@@ -21,8 +22,8 @@ vars:
   - &ensemblFtpBaseUrl ftp://ftp.ensembl.org/pub
 
   - &chr_re "^..?$"
-  - &ensemblRelease "106"
-  - &allianceRelease "5.2.1"
+  - &ensemblRelease "108"
+  - &allianceRelease "5.4.0"
 
 linkConfigs:
   - &linkSgdByCid
@@ -46,6 +47,12 @@ linkConfigs:
   - &linkZfinByCid
     text: ZFIN
     url: *zfinAccessionUrl
+    attr: curie
+    stripPrefix: true
+
+  - &linkXenbaseByCid
+    text: Xenbase
+    url: *xenbaseAccessionUrl
     attr: curie
     stripPrefix: true
 
@@ -399,6 +406,58 @@ buildList:
         filter: zfinGffFilter
         linkouts:
           - *linkZfinByCid
+          - *linkAllianceByCid
+  -
+    type: genome
+    path: xenopus_laevis_l
+    name: X. laevis.L
+    taxonid: "8355"
+    build: GCA_017654675.1_Xenopus_laevis_v10.1
+    tracks:
+      - << : *ncbiAssembly
+        chr_re: ".*"
+        filter: ncbiFrogAssemblyFilter
+      -
+        << : *allianceGff
+        provider: XBXL
+        filter: xenbaseGffFilter
+        chr_re: "^chr.*$"
+        linkouts:
+          - *linkXenbaseByCid
+          - *linkAllianceByCid
+  -
+    type: genome
+    path: xenopus_laevis_s
+    name: X. laevis.S
+    taxonid: "8355"
+    build: GCA_017654675.1_Xenopus_laevis_v10.1
+    tracks:
+      - << : *ncbiAssembly
+        chr_re: ".*"
+        filter: ncbiFrogAssemblyFilter
+      -
+        << : *allianceGff
+        provider: XBXL
+        filter: xenbaseGffFilter
+        chr_re: "^chr.*$"
+        linkouts:
+          - *linkXenbaseByCid
+          - *linkAllianceByCid
+  -
+    type: genome
+    path: xenopus_tropicalis
+    name: X. tropicalis
+    taxonid: "8364"
+    build: UCB_Xtro_10.0
+    tracks:
+      - << : *ensemblAssembly
+      -
+        << : *allianceGff
+        provider: XBXT
+        filter: xenbaseGffFilter
+        chr_re: "^Chr..?$"
+        linkouts:
+          - *linkXenbaseByCid
           - *linkAllianceByCid
   -
     type: genome

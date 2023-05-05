@@ -6,6 +6,7 @@ class GffFilter (Filter) :
     def __init__(self, src, gcfg, dcfg):
         src = Gff3Parser(src, returnHeader=True, returnGroups=True).iterate()
         Filter.__init__(self, src, gcfg, dcfg)
+        self.currChr = None
 
     def processNext (self, obj) :
         if type(obj) is str:
@@ -18,13 +19,6 @@ class GffFilter (Filter) :
 
     def processModel(self, model):
         model = list(filter(lambda x: x, [self._processFeature(f) for f in model]))
-        '''
-        #universal transform: make sure top level feature's coordinates span its descendants
-        if len(model) > 1:
-            f = model[0] # top level feature
-            f[3] = min([c[3] for c in model[1:]])
-            f[4] = max([c[4] for c in model[1:]])
-        '''
         return model
 
     def _processFeature (self, f):
@@ -36,6 +30,9 @@ class GffFilter (Filter) :
             return None
         if 'exclude_types' in self.dcfg and f[2] in self.dcfg['exclude_types']:
             return None
+        if f[0] != self.currChr:
+            self.log("Chromosome " + f[0])
+            self.currChr = f[0]
         return formatLine(self.processFeature(f))
 
 CURIE_INFO = [{
