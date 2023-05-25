@@ -418,10 +418,16 @@ buildList:
         chr_re: ".*"
         filter: ncbiFrogAssemblyFilter
       -
-        << : *allianceGff
-        provider: XBXL
+        source: xenbase
+        url: https://download.xenbase.org/xenbase/Genomics/JGI/Xenla10.1/XENLA_10.1_Xenbase.gff3.gz
+        track: models
+        filetype: gff
+        chr_re: ".*"
+        release: Xenla10.1
+        include_types: ["gene","mRNA","transcript","exon","CDS"]
+        provider: XBXT
         filter: xenbaseGffFilter
-        chr_re: "^chr.*$"
+        chr_re: "Chr.*"
         linkouts:
           - *linkXenbaseByCid
           - *linkAllianceByCid
@@ -436,10 +442,16 @@ buildList:
         chr_re: ".*"
         filter: ncbiFrogAssemblyFilter
       -
-        << : *allianceGff
-        provider: XBXL
+        source: xenbase
+        url: https://download.xenbase.org/xenbase/Genomics/JGI/Xenla10.1/XENLA_10.1_Xenbase.gff3.gz
+        track: models
+        filetype: gff
+        chr_re: ".*"
+        release: Xenla10.1
+        include_types: ["gene","mRNA","transcript","exon","CDS"]
+        provider: XBXT
         filter: xenbaseGffFilter
-        chr_re: "^chr.*$"
+        chr_re: "Chr.*"
         linkouts:
           - *linkXenbaseByCid
           - *linkAllianceByCid
@@ -452,10 +464,16 @@ buildList:
     tracks:
       - << : *ensemblAssembly
       -
-        << : *allianceGff
+        source: xenbase
+        url: https://download.xenbase.org/xenbase/Genomics/JGI/Xentr10.0/XENTR_10.0_Xenbase.gff3.gz
+        track: models
+        filetype: gff
+        chr_re: *chr_re
+        release: Xentr10.0
+        include_types: ["gene","mRNA","transcript","exon","CDS"]
         provider: XBXT
         filter: xenbaseGffFilter
-        chr_re: "^Chr..?$"
+        chr_re: "Chr.*"
         linkouts:
           - *linkXenbaseByCid
           - *linkAllianceByCid

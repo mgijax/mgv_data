@@ -33,7 +33,8 @@ class GffFilter (Filter) :
         if f[0] != self.currChr:
             self.log("Chromosome " + f[0])
             self.currChr = f[0]
-        return formatLine(self.processFeature(f))
+        ff = self.processFeature(f)
+        return formatLine(ff) if ff else None
 
 CURIE_INFO = [{
   "prefix" : "ENSEMBL",
