@@ -73,6 +73,7 @@ import re
 # -----------------------------------------
 TABIX=os.environ["TABIX"]
 SAMTOOLS=os.environ["SAMTOOLS"]
+DEVMODE=os.environ["DEVMODE"]
 
 # -----------------------------------------
 DEFAULT_LINE_LEN = 60
@@ -122,49 +123,6 @@ def getSequenceFromAssembly(desc):
     return hdr + '\n' + seq + '\n'
 
 # -----------------------------------------
-# Args:
-#   seqId - string or list of strings - seqIds of desired sequences in curie format.
-#   A curie is an id with a recognized prefix such as 'ENSEMBL' or 'RefSeq'. Example curies:
-#       ENSEMBL:MGP_CASTEiJ_P0038053
-#       RefSeq:FBtr0078736
-#       RefSeq:NM_001122733
-#       UniProt:Q9D404
-def getSequenceFromSeqfetch (desc) :
-    # Source names recognized by seqfetch
-    #     swissprot trembl sptrembl genbank refseq ensembl_mus_cdna ensembl_mus_prot
-    # Note that ensembl_mus_cdna and ensembl_mus_prot are really the same thing and actually implement
-    # generic Ensembl sequence retrieval. Here we'll use ensembl_mus_cdna.
-    #
-    seqfetchBaseUrl = "http://www.informatics.jax.org/seqfetch/tofasta.cgi"
-    # maps curie prefix to name to use in seqfetch requests
-    PREFIXMAP = {
-        "ensembl" : "ensembl_mus_cdna",
-        "refseq" : "genbank",
-        "uniprot" : "swissprot",
-    }
-    if "seqId" in desc:
-        if type(desc["seqId"]) is str:
-            seqIds = [desc["seqId"]]
-        else:
-            seqIds = desc["seqId"]
-    else:
-        raise RuntimeError("No seqId ids found in descriptor: " + str(desc))
-    seqIds.sort()
-    seqfetchDescrs = []
-    for c in seqIds:
-        if not ":" in c:
-            raise RuntimeError("ID is not a curie: " + str(c))
-        prefix, base = c.split(":", 1)
-        np = PREFIXMAP[prefix.lower()]
-        seqfetchDescrs.append("%s!%s!!!!!" % (np, base))
-    seqfetchArgs = "&".join([ "seq%s=%s" % (i,d) for (i,d) in enumerate(seqfetchDescrs) ])
-    url = seqfetchBaseUrl + '?' + seqfetchArgs
-    with urlopen(url) as fd:
-        seqs = fd.read()
-        seqs = seqs.decode('utf-8')
-    return seqs
-
-# -----------------------------------------
 def validateSequenceOptions (opts) :
     if not opts.descriptors:
         error("No descriptors.")
@@ -193,13 +151,13 @@ def doSequences (opts) :
     validateSequenceOptions(opts)
     #
     print ('Content-Type: application/x-fasta')
+    printCORS()
     if "filename" in opts:
         print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
     print ("")
     for d in opts.descriptors:
         if "seqId" in d:
             raise RuntimeError("Not implemented.")
-            #s = getSequenceFromSeqfetch(d)
         else:
             s = getSequenceFromAssembly(d)
         sys.stdout.write(s)
@@ -222,6 +180,7 @@ def doFeatures (opts) :
     if not opts.descriptors:
         error("No descriptors.")
     print ('Content-Type: application/x-gff')
+    printCORS()
     if "filename" in opts:
         print(('Content-Disposition: attachment; filename = "%s"' % opts.filename))
     print ("")
@@ -232,6 +191,7 @@ def doFeatures (opts) :
 # -----------------------------------------
 def doHomology (opts) :
     print ('Content-Type: text/tab-separated-values')
+    printCORS()
     print ('')
     txid = opts.taxonid
     path = "%s/homologies/%s.tsv" % (DATA_DIR, txid)
@@ -272,15 +232,22 @@ def doMetadata (opts) :
         # end if
     # end for
     print('Content-Type: application/json')
+    printCORS()
     print('')
     print(json.dumps(metadata,indent=2))
 
 # -----------------------------------------
 def error (message) : 
    print ('Content-Type: text/plain')
+   printCORS()
    print ('')
    print ('ERROR: ' + message)
    sys.exit(1)
+
+# -----------------------------------------
+def printCORS () :
+    if DEVMODE == "true":
+        print('Access-Control-Allow-Origin: *')
 
 # -----------------------------------------
 def getFormParameters (opts) :

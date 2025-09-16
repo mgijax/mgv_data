@@ -3,6 +3,10 @@
 # Mainly directories. Edit as needed. 
 #
 
+# set to true generate development deployments.
+# Development deployments disable CORS origin restrictions.
+export DEVMODE="false"
+
 # DROOTDIR: Data root directory 
 # Default is under the installation directory.
 export OROOTDIR=${INSTALL_DIR}/mgv_data_files
@@ -27,7 +31,7 @@ export WDIR=${ODIR}
 export CDIR=${WDIR}
 
 # Python 3 executable
-export PYTHON="/opt/python3.7/bin/python3"
+export PYTHON="/opt/python/bin/python3"
 export PYTHONPATH="${SCRIPT_DIR}/bin/lib"
 
 # MouseMine URL - used by some filters

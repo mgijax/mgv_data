@@ -319,6 +319,7 @@ deployWwwContents () {
       echo "# THIS IS A GENERATED FILE." >> ${cgi}
       echo "export TABIX=\"${TABIX}\"" >> ${cgi}
       echo "export SAMTOOLS=\"${SAMTOOLS}\"" >> ${cgi}
+      echo "export DEVMODE=\"${DEVMODE}\"" >> ${cgi}
       echo "${PYTHON} ${CDIR}/fetch.py --cgi --dir ${WDIR} \$*" >> ${cgi}
       chmod +x ${cgi}
       logit `cat ${cgi}`
