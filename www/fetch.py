@@ -237,6 +237,17 @@ def doMetadata (opts) :
     print(json.dumps(metadata,indent=2))
 
 # -----------------------------------------
+def doInfo (opts) :
+    ifile = os.path.join(DATA_DIR, "info.html")
+    itext = ""
+    with open(ifile, 'r') as fd:
+        itext = fd.read()
+    print ('Content-Type: text/html')
+    printCORS()
+    print ('')
+    print(itext)
+
+# -----------------------------------------
 def error (message) : 
    print ('Content-Type: text/plain')
    printCORS()
@@ -269,7 +280,7 @@ def getOptions () :
     parser.add_argument(
         "--datatype",
         dest="datatype",
-        choices=["fasta","gff","metadata","homology"],
+        choices=["fasta","gff","metadata","homology","infotext"],
         help="What to fetch. If fasta or gff, specific regions are specified in the descriptors argument. If metadata, returns object containing metadata for each known genome (descriptors, if provided, are ignored.)")
 
     parser.add_argument(
@@ -330,6 +341,8 @@ def main () :
         doSequences(opts)
     elif opts.datatype == "gff":
         doFeatures(opts)
+    elif opts.datatype == "infotext":
+        doInfo(opts)
     else:
         raise RuntimeError("Unknown datatype value: " + opts.datatype)
 
