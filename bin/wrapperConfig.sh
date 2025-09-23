@@ -34,9 +34,6 @@ export CDIR=${WDIR}
 export PYTHON="/opt/python/bin/python3"
 export PYTHONPATH="${SCRIPT_DIR}/bin/lib"
 
-# MouseMine URL - used by some filters
-export MOUSEMINE_URL="https://www.mousemine.org"
-
 # Tabix/Samtools executables
 export TABIX="/usr/local/tabix/bin/tabix"
 export SAMTOOLS="/usr/local/tabix/bin/samtools"
