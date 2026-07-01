@@ -18,12 +18,12 @@ vars:
 
   - &mgiBuild38ModelsUrl http://www.informatics.jax.org/downloads/mgigff3/archive/annual/MGI.2021.gff3.gz
   - &mgiCurrentModelsUrl http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz
-  - &ncbiFtpBaseUrl ftp://ftp.ncbi.nlm.nih.gov/genomes/all/
-  - &ensemblFtpBaseUrl ftp://ftp.ensembl.org/pub
+  - &ncbiFtpBaseUrl https://ftp.ncbi.nlm.nih.gov/genomes/all/
+  - &ensemblFtpBaseUrl https://ftp.ensembl.org/pub
 
   - &chr_re "^..?$"
-  - &ensemblRelease "108"
-  - &allianceRelease "5.4.0"
+  - &ensemblRelease "116"
+  - &allianceRelease "9.0.0"
 
 linkConfigs:
   - &linkSgdByCid
@@ -202,7 +202,7 @@ buildList:
     type: genome
     path: mus_musculus_129s1svimj
     name: 129S1/SvImJ
-    build: 129S1_SvImJ_v1
+    build: 129S1_SvImJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -211,7 +211,7 @@ buildList:
     type: genome
     path: mus_musculus_aj
     name: A/J
-    build: A_J_v1
+    build: A_J_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -220,7 +220,7 @@ buildList:
     type: genome
     path: mus_musculus_akrj
     name: AKR/J
-    build: AKR_J_v1
+    build: AKR_J_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -229,7 +229,7 @@ buildList:
     type: genome
     path: mus_musculus_balbcj
     name: BALB/cJ
-    build: BALB_cJ_v1
+    build: BALB_cJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -238,7 +238,7 @@ buildList:
     type: genome
     path: mus_musculus_c3hhej
     name: C3H/HeJ
-    build: C3H_HeJ_v1
+    build: C3H_HeJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -247,7 +247,7 @@ buildList:
     type: genome
     path: mus_musculus_c57bl6nj
     name: C57BL/6NJ
-    build: C57BL_6NJ_v1
+    build: C57BL_6NJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -265,7 +265,7 @@ buildList:
     type: genome
     path: mus_musculus_casteij
     name: CAST/EiJ
-    build: CAST_EiJ_v1
+    build: CAST_EiJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -274,7 +274,7 @@ buildList:
     type: genome
     path: mus_musculus_cbaj
     name: CBA/J
-    build: CBA_J_v1
+    build: CBA_J_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -283,7 +283,7 @@ buildList:
     type: genome
     path: mus_musculus_dba2j
     name: DBA/2J
-    build: DBA_2J_v1
+    build: DBA_2J_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -292,7 +292,7 @@ buildList:
     type: genome
     path: mus_musculus_fvbnj
     name: FVB/NJ
-    build: FVB_NJ_v1
+    build: FVB_NJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -301,7 +301,7 @@ buildList:
     type: genome
     path: mus_musculus_lpj
     name: LP/J
-    build: LP_J_v1
+    build: LP_J_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -310,7 +310,7 @@ buildList:
     type: genome
     path: mus_musculus_nodshiltj
     name: NOD/ShiLtJ
-    build: NOD_ShiLtJ_v1
+    build: NOD_ShiLtJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -319,7 +319,7 @@ buildList:
     type: genome
     path: mus_musculus_nzohlltj
     name: NZO/HlLtJ
-    build: NZO_HlLtJ_v1
+    build: NZO_HlLtJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -337,7 +337,7 @@ buildList:
     type: genome
     path: mus_musculus_pwkphj
     name: PWK/PhJ
-    build: PWK_PhJ_v1
+    build: PWK_PhJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
@@ -346,7 +346,7 @@ buildList:
     type: genome
     path: mus_spretus
     name: SPRETUS/EiJ
-    build: SPRET_EiJ_v1
+    build: SPRET_EiJ_v3
     taxonid: "10096"
     tracks:
       - << : *ensemblAssembly
@@ -355,7 +355,7 @@ buildList:
     type: genome
     path: mus_musculus_wsbeij
     name: WSB/EiJ
-    build: WSB_EiJ_v1
+    build: WSB_EiJ_v3
     taxonid: "10090"
     tracks:
       - << : *ensemblAssembly
