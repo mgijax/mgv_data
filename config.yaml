@@ -20,7 +20,7 @@ vars:
   - &mgiCurrentModelsUrl http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz
   - &ncbiFtpBaseUrl https://ftp.ncbi.nlm.nih.gov/genomes/all/
   - &ensemblFtpBaseUrl https://ftp.ensembl.org/pub
-  - &ensemblPatchedFtpBaseUrl https://mgitest.jax.org/downloads/ensembl_patched
+  - &ensemblPatchedFtpBaseUrl https://www.informatics.jax.org/downloads/ensembl_patched
 
   - &chr_re "^..?$"
   - &ensemblRelease "116"
