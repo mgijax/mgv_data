@@ -42,14 +42,19 @@ class EnsemblMouseFilter (GffFilter) :
         if 'Parent' in attrs:
             attrs['Parent'] = list(map(self.stripPrefix, attrs['Parent']))
         if "projection_parent_gene" in attrs:
-            eid = attrs['projection_parent_gene'].split(".")[0]
-            mgi = self.getEid2MgiIndex().get(eid, None)
-            if mgi:
-                attrs['curie'] = mgi[0]
-                attrs['Name'] = mgi[1]
-            else:
-                attrs['curie'] = eid
-                attrs['Name'] = eid
+            ppgs = attrs['projection_parent_gene']
+            if type(ppgs) is str:
+                ppgs = [ppgs]
+            for ppg in ppgs:
+                eid = ppg.split(".")[0]
+                mgi = self.getEid2MgiIndex().get(eid, None)
+                if mgi:
+                    attrs['curie'] = mgi[0]
+                    attrs['Name'] = mgi[1]
+                    break
+                else:
+                    attrs['curie'] = eid
+                    attrs['Name'] = eid
         if "transcript_id" in attrs:
             attrs["transcript_id"] = "ENSEMBL:" + attrs["transcript_id"]
         if "protein_id" in attrs:

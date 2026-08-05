@@ -31,7 +31,9 @@ EQ = '='
 HASH = '#'
 GT = '>'
 
+# These col9 attributes are always returned as lists, even if there is only a single value.
 MULTIVALUED = ["Parent", "Dbxref", "Alias", "Note", "Ontology_term"]
+
 GROUPSEPARATOR = "###"
 
 class Gff3Parser :
@@ -196,23 +198,25 @@ def parseColumn9 (text) :
         continue
     n = bits[0].strip()
     v = bits[1].strip()
-    if n in MULTIVALUED:
-      c9[n] = list(map(ulib.unquote, v.split(COMMA)))
-    else:
-      c9[n] = ulib.unquote(v)
+    c9[n] = list(map(ulib.unquote, v.split(COMMA)))
+    if len(c9[n]) == 1 and not n in MULTIVALUED:
+        c9[n] = c9[n][0]
   return c9
 
+#
+def gff3Quote(s) :
+  return s.replace('%','%25').replace('&','%26').replace('\t','%09').replace(';','%3B').replace('=','%3D').replace(',','%2C')
 #
 def formatColumn9(c9):
   parts = []
   for (n,v) in list(c9.items()):
-    nn = ulib.quote(n)
+    nn = gff3Quote(n)
     if type(v) is str:
-      vv = ulib.quote(v)
+      vv = gff3Quote(v)
     elif type(v) is list:
-      vv = COMMA.join(map(ulib.quote, v))
+      vv = COMMA.join(map(gff3Quote, v))
     else:
-      vv = ulib.quote(str(v))
+      vv = gff3Quote(str(v))
     parts.append("%s=%s" % (nn, vv))
   return SEMI.join(parts)
     

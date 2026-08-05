@@ -20,6 +20,7 @@ vars:
   - &mgiCurrentModelsUrl http://www.informatics.jax.org/downloads/mgigff3/MGI.gff3.gz
   - &ncbiFtpBaseUrl https://ftp.ncbi.nlm.nih.gov/genomes/all/
   - &ensemblFtpBaseUrl https://ftp.ensembl.org/pub
+  - &ensemblPatchedFtpBaseUrl https://mgitest.jax.org/downloads/ensembl_patched
 
   - &chr_re "^..?$"
   - &ensemblRelease "116"
@@ -115,7 +116,7 @@ modelSources:
     track: models
     chr_re: *chr_re
     filetype: gff
-    baseUrl: *ensemblFtpBaseUrl
+    baseUrl: *ensemblPatchedFtpBaseUrl
     release: *ensemblRelease
     filter: ensemblMouseFilter
     exclude_types: ["biological_region", "chromosome", "scaffold"]
@@ -308,10 +309,19 @@ buildList:
       - << : *ensemblMouseGff
   -
     type: genome
+    path: mus_musculus_molossinusjf1msj
+    name: JF1/MsJ
+    build: JF1_MsJ_v3
+    taxonid: "10090"
+    tracks:
+      - << : *ensemblAssembly
+      - << : *ensemblMouseGff
+  -
+    type: genome
     path: mus_musculus_nodshiltj
     name: NOD/ShiLtJ
     build: NOD_ShiLtJ_v3
-    taxonid: "10090"
+    taxonid: "57486"
     tracks:
       - << : *ensemblAssembly
       - << : *ensemblMouseGff
