@@ -390,11 +390,12 @@ buildList:
     path: rattus_norvegicus
     name: R. norvegicus
     taxonid: "10116"
-    build: Rnor_6.0
+    build: GCF_015227675.2_mRatBN7.2
     tracks:
       -
-        << : *ensemblAssembly
-        release: 104
+        << : *ncbiAssembly
+        chr_re: ".*"
+        filter: ncbiRatAssemblyFilter
       -
         << : *allianceGff
         provider: RGD
