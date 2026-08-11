@@ -184,11 +184,11 @@ makedirectory () {
         checkexit
     fi
 }
+
 # ---------------------
 download () {
   STAGE="download"
   #
-  #makedirectory ${DDIR}/${GDIR}
   simpleCommand mkdir -p ${DDIR}/${GDIR}
 
   localFile="${DDIR}/${GDIR}/${FLOCAL}"

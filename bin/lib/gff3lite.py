@@ -54,6 +54,16 @@ class Gff3Parser :
     if type(self.source) is str:
       sfd.close()
 
+  # Adds feature f to group grp. Recursively adds anything
+  # pending on me.
+  def addToGroup (self, grp, f) :
+    grp.append(f)
+    attrs = f[8]
+    if 'ID' in attrs:
+        self.id2group[attrs['ID']] = grp
+        for f2 in self.pending.pop(attrs['ID'], []):
+            self.addToGroup(grp, f2)
+
   # In nature, one gene can be inside another, e.g., gene A might exist in an intron of gene B.
   # Some providers of GFF3 files segregate each model into its own contiguous set of lines, while
   # others will interleave the lines for gene A within the lines of gene B. Downstream code
@@ -96,22 +106,20 @@ class Gff3Parser :
         # remove flushed items from the buffer
         self.buffer = self.buffer[len(flushed):]
         # start new group and add to buffer
-        grp = [f]
+        grp = []
         self.buffer.append(grp)
-        if 'ID' in attrs:
-            self.id2group[attrs['ID']] = grp
+        self.addToGroup(grp, f)
         return flushed
     else:
         # subfeature 
         for p in attrs['Parent']:
             grp = self.id2group.get(p, None)
             if not grp:
+                # My parent not seen yet. Add me to parent's pending list. 
                 self.pending.setdefault(p,[]).append(f)
             else:
-                grp.append(f)
-                if 'ID' in attrs:
-                    self.id2group[attrs['ID']] = grp
-                    grp += self.pending.pop(attrs['ID'],[])
+                # My parent has been seen. Add me to its group.
+                self.addToGroup(grp, f)
         return []
 
   #
