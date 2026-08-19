@@ -429,16 +429,10 @@ buildList:
         chr_re: ".*"
         filter: ncbiFrogAssemblyFilter
       -
-        source: xenbase
-        url: https://download.xenbase.org/xenbase/Genomics/JGI/Xenla10.1/XENLA_10.1_Xenbase.gff3.gz
-        track: models
-        filetype: gff
-        chr_re: ".*"
-        release: Xenla10.1
-        include_types: ["gene","mRNA","transcript","exon","CDS"]
-        provider: XBXT
+        << : *allianceGff
+        provider: XBXL
         filter: xenbaseGffFilter
-        chr_re: "Chr.*"
+        chr_re: "(^Chr.*)|(MT)"
         linkouts:
           - *linkXenbaseByCid
           - *linkAllianceByCid
@@ -453,16 +447,10 @@ buildList:
         chr_re: ".*"
         filter: ncbiFrogAssemblyFilter
       -
-        source: xenbase
-        url: https://download.xenbase.org/xenbase/Genomics/JGI/Xenla10.1/XENLA_10.1_Xenbase.gff3.gz
-        track: models
-        filetype: gff
-        chr_re: ".*"
-        release: Xenla10.1
-        include_types: ["gene","mRNA","transcript","exon","CDS"]
-        provider: XBXT
+        << : *allianceGff
+        provider: XBXL
         filter: xenbaseGffFilter
-        chr_re: "Chr.*"
+        chr_re: "(^Chr.*)|(MT)"
         linkouts:
           - *linkXenbaseByCid
           - *linkAllianceByCid
@@ -475,16 +463,10 @@ buildList:
     tracks:
       - << : *ensemblAssembly
       -
-        source: xenbase
-        url: https://download.xenbase.org/xenbase/Genomics/JGI/Xentr10.0/XENTR_10.0_Xenbase.gff3.gz
-        track: models
-        filetype: gff
-        chr_re: *chr_re
-        release: Xentr10.0
-        include_types: ["gene","mRNA","transcript","exon","CDS"]
+        << : *allianceGff
         provider: XBXT
         filter: xenbaseGffFilter
-        chr_re: "Chr.*"
+        chr_re: "(^Chr.*)|(MT)"
         linkouts:
           - *linkXenbaseByCid
           - *linkAllianceByCid
@@ -493,7 +475,7 @@ buildList:
     path: drosophila_melanogaster
     name: D. melanogaster
     taxonid: "7227"
-    build: BDGP6.32
+    build: BDGP6.54
     tracks:
       - << : *ensemblAssembly
       -
