@@ -167,11 +167,12 @@ buildList:
         remotePath: mus_musculus
       -
         track: models 
+        source: mgi
         filetype: gff
         url: *mgiCurrentModelsUrl
         chr_re: *chr_re
         filter: mgiGffFilter
-        release: "@@today"
+        release: "current"
         linkouts:
           - *linkMgiByCid
           - *linkMouseMineByID
