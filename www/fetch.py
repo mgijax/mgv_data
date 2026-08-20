@@ -128,7 +128,7 @@ def validateSequenceOptions (opts) :
         error("No descriptors.")
     ndescs = 0
     tLength = 0
-    region_re = re.compile("^([^:]+):(\d+)-(\d+)$")
+    region_re = re.compile(r'^([^:]+):(\d+)-(\d+)$')
     for d in opts.descriptors:
         rs = d["regions"].split()
         ndescs += len(rs)
